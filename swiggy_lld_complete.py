@@ -13,6 +13,7 @@ All classes from the guide in one place, in dependency order:
 """
 
 from abc import ABC, abstractmethod
+from dataclasses import dataclass
 from datetime import datetime
 from enum import Enum, auto
 from math import sqrt
@@ -60,7 +61,7 @@ class CancellationNotAllowedError(Exception): pass
 # ─────────────────────────────────────────────
 # 2. VALUE OBJECTS
 # ─────────────────────────────────────────────
-
+@dataclass
 class Address:
     """Pure data — no behavior, no mutable state."""
     def __init__(self, street: str, city: str, pincode: str,
@@ -71,7 +72,7 @@ class Address:
         self.latitude = latitude
         self.longitude = longitude
 
-
+@dataclass(frozen=True)
 class OrderItem:
     """
     Immutable price snapshot.
@@ -79,17 +80,11 @@ class OrderItem:
     """
     def __init__(self, item_id: str, name: str, quantity: int,
                  price_at_order: float):
-        self._locked = False
         self.item_id = item_id
         self.name = name
         self.quantity = quantity
         self.price_at_order = price_at_order
         self._locked = True
-
-    def __setattr__(self, name, value):
-        if getattr(self, "_locked", False):
-            raise AttributeError("OrderItem is immutable")
-        super().__setattr__(name, value)
 
     @property
     def subtotal(self) -> float:
