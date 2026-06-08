@@ -64,13 +64,12 @@ class CancellationNotAllowedError(Exception): pass
 @dataclass
 class Address:
     """Pure data — no behavior, no mutable state."""
-    def __init__(self, street: str, city: str, pincode: str,
-                 latitude: float, longitude: float):
-        self.street = street
-        self.city = city
-        self.pincode = pincode
-        self.latitude = latitude
-        self.longitude = longitude
+
+    street: str
+    city: str
+    pincode: str
+    latitude: float
+    longitude: float
 
 @dataclass(frozen=True)
 class OrderItem:
@@ -78,13 +77,10 @@ class OrderItem:
     Immutable price snapshot.
     This guarantees historical order accuracy regardless of future price changes.
     """
-    def __init__(self, item_id: str, name: str, quantity: int,
-                 price_at_order: float):
-        self.item_id = item_id
-        self.name = name
-        self.quantity = quantity
-        self.price_at_order = price_at_order
-        self._locked = True
+    item_id: str
+    name: str
+    quantity: int
+    price_at_order: float
 
     @property
     def subtotal(self) -> float:
