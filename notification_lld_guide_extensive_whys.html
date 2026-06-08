@@ -1,0 +1,1178 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Notification System LLD — Extensive Whys Edition</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Serif:ital,wght@0,400;0,600;1,400&family=JetBrains+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+:root {
+  --orange: #d4500f; --orange2: #f26522; --orange-bg: #fff7f0; --orange-border: #fbd0b3;
+  --bg: #faf9f7; --surface: #ffffff; --surface2: #f4f3ef; --surface3: #eceae4;
+  --border: #e3e0d8; --text: #1c1a17; --text2: #54514a; --text3: #9c9891;
+  --green: #2d6a4f; --green-bg: #edf7f2; --green-border: #b7dfc8;
+  --red: #9b1c1c; --red-bg: #fef2f2; --red-border: #fcc;
+  --blue: #1a4480; --blue-bg: #eff6ff; --blue-border: #bfdbfe;
+  --amber: #92400e; --amber-bg: #fffbeb; --amber-border: #fde68a;
+  --purple: #5b21b6; --purple-bg: #f5f3ff; --purple-border: #ddd6fe;
+  --mono: 'JetBrains Mono', monospace;
+  --sans: 'IBM Plex Sans', sans-serif;
+  --serif: 'IBM Plex Serif', serif;
+  --sidebar-w: 265px;
+  --r: 8px;
+}
+body { font-family: var(--sans); background: var(--bg); color: var(--text); display: flex; min-height: 100vh; }
+.sidebar {
+  width: var(--sidebar-w); position: fixed; top: 0; left: 0; bottom: 0;
+  background: var(--surface); border-right: 2px solid var(--border);
+  overflow-y: auto; z-index: 100; display: flex; flex-direction: column;
+}
+.logo-wrap { padding: 22px 18px 18px; border-bottom: 1px solid var(--border); }
+.logo { display: flex; align-items: center; gap: 10px; }
+.logo-icon { width: 36px; height: 36px; border-radius: 8px; background: var(--orange2); display: flex; align-items: center; justify-content: center; font-size: 18px; }
+.logo-name { font-size: 16px; font-weight: 600; font-family: var(--serif); }
+.logo-tag { font-size: 11px; color: var(--text3); margin-top: 3px; letter-spacing: 0.03em; }
+.nav-group { padding: 14px 18px 4px; font-size: 9px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.1em; color: var(--text3); }
+.nav-item { display: flex; align-items: center; gap: 9px; padding: 9px 18px; font-size: 13px; color: var(--text2); cursor: pointer; border-left: 3px solid transparent; transition: all 0.12s; }
+.nav-item:hover { background: var(--surface2); color: var(--text); }
+.nav-item.active { border-left-color: var(--orange2); background: var(--orange-bg); color: var(--orange); font-weight: 500; }
+.nav-item .step-num { font-size: 9px; font-weight: 700; background: var(--surface3); border-radius: 3px; padding: 1px 5px; margin-left: auto; color: var(--text3); }
+.nav-item.active .step-num { background: var(--orange-border); color: var(--orange); }
+.main { margin-left: var(--sidebar-w); padding: 52px 60px; max-width: 980px; width: 100%; }
+.section { display: none; }
+.section.active { display: block; }
+.sec-eyebrow { font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.1em; color: var(--orange2); margin-bottom: 10px; }
+.sec-title { font-family: var(--serif); font-size: 32px; font-weight: 600; line-height: 1.2; margin-bottom: 10px; }
+.sec-intro { font-size: 15px; color: var(--text2); line-height: 1.8; margin-bottom: 34px; border-left: 3px solid var(--border); padding-left: 16px; }
+h3 { font-family: var(--serif); font-size: 20px; font-weight: 600; margin: 40px 0 14px; padding-top: 16px; border-top: 1px solid var(--border); color: var(--text); }
+h4 { font-size: 13px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.06em; margin: 18px 0 8px; color: var(--text3); }
+p { font-size: 14px; color: var(--text2); line-height: 1.8; margin: 10px 0; }
+.prompt-box { background: var(--surface2); border: 1px solid var(--border); border-radius: var(--r); padding: 16px 20px; margin: 20px 0; }
+.prompt-box .plabel { font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.08em; color: var(--text3); margin-bottom: 7px; }
+.prompt-box .ptext { font-family: var(--serif); font-size: 16px; font-style: italic; color: var(--text); line-height: 1.6; }
+.dialogue { border: 1px solid var(--border); border-radius: var(--r); overflow: hidden; margin: 20px 0; }
+.d-row { padding: 14px 18px; border-bottom: 1px solid var(--border); font-size: 14px; line-height: 1.7; }
+.d-row:last-child { border-bottom: none; }
+.d-row.you { background: var(--surface); }
+.d-row.iv { background: var(--surface2); }
+.d-speaker { font-size: 9px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.09em; margin-bottom: 5px; }
+.d-row.you .d-speaker { color: var(--orange2); }
+.d-row.iv .d-speaker { color: var(--text3); }
+.why-inline {
+  margin-top: 12px; padding: 12px 14px;
+  background: var(--amber-bg); border-left: 3px solid #f59e0b;
+  border-radius: 0 6px 6px 0; font-size: 13px; color: var(--amber); line-height: 1.7;
+}
+.ann-wrap { margin: 22px 0; border: 1px solid var(--border); border-radius: var(--r); overflow: hidden; }
+.ann-header { background: #181825; padding: 10px 18px; display: flex; align-items: center; gap: 10px; border-bottom: 1px solid #2a2a3e; }
+.ann-header span { font-family: var(--mono); font-size: 12px; color: #a6adc8; }
+.ann-row { display: grid; grid-template-columns: 46% 54%; border-bottom: 1px solid #2a2a3e; }
+.ann-row:last-child { border-bottom: none; }
+.ann-code { background: #1e1e2e; padding: 14px 18px; font-family: var(--mono); font-size: 12.5px; line-height: 1.75; color: #cdd6f4; overflow-x: auto; white-space: pre; }
+.ann-why { background: var(--surface2); padding: 14px 16px; border-left: 1px solid var(--border); font-size: 13px; line-height: 1.7; color: var(--text2); display: flex; flex-direction: column; gap: 6px; }
+.ann-why .wlabel { font-size: 9px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.09em; color: var(--orange2); }
+.ann-why .wmain { color: var(--text2); }
+.wfail { background: var(--red-bg); border: 1px solid var(--red-border); border-radius: 5px; padding: 8px 10px; font-size: 12px; color: var(--red); }
+.wfix { background: var(--green-bg); border: 1px solid var(--green-border); border-radius: 5px; padding: 8px 10px; font-size: 12px; color: var(--green); }
+.code-block { background: #1e1e2e; border-radius: var(--r); padding: 18px 20px; font-family: var(--mono); font-size: 13px; line-height: 1.8; overflow-x: auto; margin: 14px 0; color: #cdd6f4; white-space: pre; }
+.why-box { background: var(--surface); border: 1px solid var(--border); border-radius: var(--r); padding: 18px 20px; margin: 18px 0; }
+.why-box .wl { display: flex; align-items: center; gap: 8px; font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.09em; color: var(--orange2); margin-bottom: 10px; }
+.why-box p { margin: 6px 0; }
+.etable { width: 100%; border-collapse: collapse; margin: 18px 0; font-size: 13.5px; }
+.etable th { text-align: left; padding: 10px 14px; background: var(--surface2); font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.07em; color: var(--text3); border-bottom: 2px solid var(--border); }
+.etable td { padding: 14px 14px; border-bottom: 1px solid var(--border); vertical-align: top; line-height: 1.7; color: var(--text2); }
+.etable td:first-child { font-weight: 500; color: var(--text); white-space: nowrap; }
+.badge { display: inline-block; font-size: 9px; font-weight: 700; padding: 2px 7px; border-radius: 20px; margin-right: 6px; text-transform: uppercase; letter-spacing: 0.05em; }
+.bk { background: var(--green-bg); color: var(--green); }
+.bs { background: var(--red-bg); color: var(--red); }
+.req-box { background: var(--surface2); border: 1px solid var(--border); border-radius: var(--r); padding: 18px 20px; margin: 14px 0; }
+.req-list { list-style: none; }
+.req-list li { font-size: 14px; color: var(--text2); padding: 6px 0; display: flex; gap: 10px; align-items: flex-start; line-height: 1.7; }
+.req-list li::before { content: "✓"; color: var(--green); font-weight: 700; flex-shrink: 0; margin-top: 1px; }
+.req-list.out li::before { content: "✗"; color: var(--red); }
+.state-row { display: flex; align-items: center; flex-wrap: wrap; gap: 6px; margin: 18px 0; }
+.sp { padding: 6px 14px; border-radius: 20px; font-size: 11px; font-weight: 600; border: 1px solid; }
+.sarrow { color: var(--text3); font-size: 12px; }
+.sg { background:#f3f2ef; border-color:#d0cdc7; color:#4a4845; }
+.sb { background:#eff6ff; border-color:#bfdbfe; color:#1a4480; }
+.spu{ background:#f5f3ff; border-color:#ddd6fe; color:#5b21b6; }
+.sam{ background:#fffbeb; border-color:#fde68a; color:#92400e; }
+.sco{ background:#fef2f2; border-color:#fecaca; color:#991b1b; }
+.ste{ background:#ecfdf5; border-color:#a7f3d0; color:#065f46; }
+.pcard { border: 1px solid var(--border); border-radius: var(--r); padding: 20px 22px; margin: 16px 0; background: var(--surface); }
+.ptitle { font-family: var(--serif); font-size: 17px; font-weight: 600; margin-bottom: 4px; display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+.ptag { font-size: 10px; background: var(--surface2); border-radius: 20px; padding: 2px 9px; font-weight: 500; color: var(--text3); font-family: var(--sans); }
+.solid-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin: 14px 0; }
+.solid-card { border: 1px solid var(--border); border-radius: var(--r); padding: 18px 20px; background: var(--surface); }
+.solid-letter { font-family: var(--serif); font-size: 32px; font-weight: 600; color: var(--orange2); line-height: 1; margin-bottom: 4px; }
+.solid-name { font-size: 13px; font-weight: 600; margin-bottom: 10px; }
+.solid-def { font-size: 13px; color: var(--text3); margin-bottom: 10px; font-style: italic; line-height: 1.6; }
+.solid-full { grid-column: 1 / -1; }
+.tsec { margin: 24px 0; border: 1px solid var(--border); border-radius: var(--r); overflow: hidden; }
+.thead { padding: 13px 18px; background: var(--surface2); border-bottom: 1px solid var(--border); font-size: 15px; font-weight: 600; font-family: var(--serif); }
+.tbody { padding: 16px 18px; }
+.scenario { background: var(--amber-bg); border-left: 3px solid #f59e0b; border-radius: 0 6px 6px 0; padding: 12px 15px; margin: 10px 0; font-size: 13px; color: var(--amber); line-height: 1.7; }
+.td-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin: 12px 0; }
+.tpro { background: var(--green-bg); border: 1px solid var(--green-border); border-radius: 6px; padding: 13px 15px; font-size: 13px; color: var(--green); line-height: 1.65; }
+.tcon { background: var(--amber-bg); border: 1px solid var(--amber-border); border-radius: 6px; padding: 13px 15px; font-size: 13px; color: var(--amber); line-height: 1.65; }
+.tlabel { font-size: 9px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 7px; display: block; }
+.qa { border: 1px solid var(--border); border-radius: var(--r); overflow: hidden; margin: 12px 0; }
+.qa-q { padding: 15px 18px; cursor: pointer; font-size: 14px; font-weight: 500; display: flex; justify-content: space-between; align-items: center; background: var(--surface); user-select: none; gap: 12px; }
+.qa-q:hover { background: var(--surface2); }
+.qa-a { display: none; padding: 18px 20px; font-size: 14px; line-height: 1.85; color: var(--text2); background: var(--surface2); border-top: 1px solid var(--border); }
+.qa-a.show { display: block; }
+code { font-family: var(--mono); font-size: 12px; background: var(--surface2); padding: 1px 5px; border-radius: 4px; color: var(--orange); border: 1px solid var(--border); }
+@media (max-width: 800px) {
+  .sidebar { position: relative; width: 100%; height: auto; border-right: none; border-bottom: 2px solid var(--border); }
+  body { display: block; }
+  .main { margin-left: 0; padding: 30px 20px; }
+  .ann-row, .solid-grid, .td-grid { grid-template-columns: 1fr; }
+}
+</style>
+</head>
+<body>
+
+<nav class="sidebar">
+  <div class="logo-wrap">
+    <div class="logo"><div class="logo-icon">🔔</div><div><div class="logo-name">Notification LLD</div><div class="logo-tag">Extensive Whys Edition</div></div></div>
+  </div>
+  <div class="nav-group">Foundations</div>
+  <div class="nav-item active" onclick="show('req',this)">Requirements <span class="step-num">01</span></div>
+  <div class="nav-item" onclick="show('ent',this)">Core Entities <span class="step-num">02</span></div>
+  <div class="nav-group">Implementation</div>
+  <div class="nav-item" onclick="show('cls',this)">Class Design <span class="step-num">03</span></div>
+  <div class="nav-item" onclick="show('flow',this)">Key Flows <span class="step-num">04</span></div>
+  <div class="nav-group">Deep Dives</div>
+  <div class="nav-item" onclick="show('pat',this)">Design Patterns <span class="step-num">05</span></div>
+  <div class="nav-item" onclick="show('sol',this)">SOLID Principles <span class="step-num">06</span></div>
+  <div class="nav-item" onclick="show('trd',this)">Trade-offs <span class="step-num">07</span></div>
+  <div class="nav-item" onclick="show('qa',this)">Interview Q&amp;A <span class="step-num">08</span></div>
+</nav>
+
+<main class="main">
+
+<div class="section active" id="s-req">
+  <div class="sec-eyebrow">Step 1 · Requirements</div>
+  <div class="sec-title">Requirements &amp; Clarifications</div>
+  <div class="sec-intro">A notification system sounds simple until you realize it touches user preferences, templates, multiple channels, retries, failures, provider APIs, rate limits, idempotency, and async processing. The design only becomes clean after you separate <em>what message should be sent</em> from <em>how it is delivered</em>.</div>
+
+  <div class="prompt-box">
+    <div class="plabel">The prompt you'll receive</div>
+    <div class="ptext">"Design a notification system. The system should send notifications to users through Email, SMS, Push, and WhatsApp."</div>
+  </div>
+
+  <p>This prompt hides almost all important decisions. Does one notification go through one channel or many? Are notifications sent immediately? Do users have channel preferences? Are templates static or dynamic? Do we retry failures? Does the caller need to know delivery status? Every answer changes the class diagram.</p>
+
+  <h3>Clarifying Questions — with deep reasoning</h3>
+  <div class="dialogue">
+
+    <div class="d-row you">
+      <div class="d-speaker">You</div>
+      "What types of notifications are we supporting? Are OTPs, marketing messages, order updates, and reminders all in scope?"
+      <div class="why-inline"><b>Why ask this first:</b> Notification type drives priority, retry policy, rate limits, and user preference rules. OTPs are high priority and should ignore most marketing preferences. Promotional messages are low priority and must obey opt-outs. If you treat all notifications equally, you create a design where an OTP and a discount coupon compete in the same queue with the same retry behavior — operationally terrible.</div>
+    </div>
+    <div class="d-row iv"><div class="d-speaker">Interviewer</div>"Support transactional notifications like OTPs, order updates, payment alerts, and low-priority promotional notifications."</div>
+
+    <div class="d-row you">
+      <div class="d-speaker">You</div>
+      "Can a notification be sent through multiple channels, or exactly one?"
+      <div class="why-inline"><b>Why this changes the data model:</b> If exactly one channel is allowed, <code>Notification.channel</code> can be a single enum. If multiple channels are allowed, you need <code>NotificationRequest.channels: list[ChannelType]</code> and separate delivery attempts per channel. This is not a small change. Email might succeed while SMS fails. The notification-level status and channel-level status are now different concepts.</div>
+    </div>
+    <div class="d-row iv"><div class="d-speaker">Interviewer</div>"Multiple channels are allowed. A single event can send Email + Push, or SMS + WhatsApp, etc."</div>
+
+    <div class="d-row you">
+      <div class="d-speaker">You</div>
+      "Do users have notification preferences per channel and per category?"
+      <div class="why-inline"><b>Why this is not optional:</b> User preferences are a business rule, not a UI detail. A user may allow payment alerts on SMS but disable marketing SMS. If you only store <code>sms_enabled: bool</code>, you cannot represent this. The right model is a preference matrix: channel × notification category. This keeps your system from spamming users and also creates a clean place to encode category-specific opt-out rules.</div>
+    </div>
+    <div class="d-row iv"><div class="d-speaker">Interviewer</div>"Yes. Preferences are per category and per channel. Transactional messages can be mandatory."</div>
+
+    <div class="d-row you">
+      <div class="d-speaker">You</div>
+      "Should messages be template-based with variables, or raw text passed by the caller?"
+      <div class="why-inline"><b>Why templates deserve their own object:</b> Raw strings seem simpler, but they scatter message content across callers. Tomorrow product wants to change "Your OTP is {otp}" to "Use {otp} to sign in." If content is hardcoded in 14 services, you change 14 places. Templates centralize message structure and let callers pass only variables. This is the Template Method idea applied to content.</div>
+    </div>
+    <div class="d-row iv"><div class="d-speaker">Interviewer</div>"Use templates. Callers pass template_id and variables."</div>
+
+    <div class="d-row you">
+      <div class="d-speaker">You</div>
+      "Should sending be synchronous inside the API call, or asynchronous using a queue and workers?"
+      <div class="why-inline"><b>Why this separates LLD from HLD but still matters:</b> In pure LLD, you can model dispatch synchronously. In real systems, provider APIs are slow and flaky. If your API waits for SMS and Email providers, user-facing latency explodes. The clean LLD answer is: <code>NotificationService</code> creates and queues a notification; <code>NotificationWorker</code> sends it. That preserves object design while acknowledging production reality.</div>
+    </div>
+    <div class="d-row iv"><div class="d-speaker">Interviewer</div>"Model asynchronous dispatch, but keep infra abstract. Use an in-memory queue or interface."</div>
+
+    <div class="d-row you">
+      <div class="d-speaker">You</div>
+      "Do we need retries for failed sends? If yes, should retry behavior differ by notification type or channel?"
+      <div class="why-inline"><b>Why retries must not live inside channel classes:</b> Retry policy changes for business reasons. OTPs may retry aggressively for 2 minutes. Marketing messages may not retry at all. WhatsApp may back off differently from Email. If retry logic is inside <code>EmailChannel.send()</code>, you mix transport logic with policy logic. A separate <code>RetryPolicy</code> keeps the design flexible.</div>
+    </div>
+    <div class="d-row iv"><div class="d-speaker">Interviewer</div>"Yes. Retry failed attempts up to a policy-defined limit."</div>
+
+    <div class="d-row you">
+      <div class="d-speaker">You</div>
+      "Do we track delivery status per channel?"
+      <div class="why-inline"><b>Why notification status alone is insufficient:</b> Suppose a notification is sent over Email and SMS. Email succeeds, SMS fails. Is the notification SENT or FAILED? Both are partly true. You need <code>DeliveryAttempt</code> or <code>ChannelDelivery</code> per channel so each channel has its own status, provider response, attempt count, and timestamps.</div>
+    </div>
+    <div class="d-row iv"><div class="d-speaker">Interviewer</div>"Yes. Track status per channel. Overall notification status can be derived."</div>
+
+    <div class="d-row you">
+      <div class="d-speaker">You</div>
+      "Do we need rate limiting and deduplication?"
+      <div class="why-inline"><b>Why this shows production awareness:</b> Without rate limiting, a bug can send 1000 SMS messages to one user. Without deduplication, a caller retrying the same request can send duplicate OTPs or duplicate payment alerts. In LLD, we can keep both as interfaces — <code>RateLimiter</code> and <code>IdempotencyStore</code> — without implementing distributed Redis logic.</div>
+    </div>
+    <div class="d-row iv"><div class="d-speaker">Interviewer</div>"Include basic rate limiting and idempotency, but keep implementation simple."</div>
+  </div>
+
+  <h3>Final Requirements</h3>
+  <div class="req-box">
+    <h4>In scope</h4>
+    <ul class="req-list">
+      <li>Support Email, SMS, Push, and WhatsApp channels.</li>
+      <li>Support notification categories: OTP, ORDER_UPDATE, PAYMENT_ALERT, PROMOTION.</li>
+      <li>Support multiple channels for one notification.</li>
+      <li>Render messages from templates with variables.</li>
+      <li>Check user preferences before sending, except mandatory transactional messages.</li>
+      <li>Track per-channel delivery attempts and statuses.</li>
+      <li>Retry failed attempts using a configurable retry policy.</li>
+      <li>Dispatch asynchronously through a queue abstraction.</li>
+      <li>Rate-limit notifications to avoid spam.</li>
+      <li>Use idempotency keys to avoid duplicate notifications.</li>
+    </ul>
+    <h4 style="margin-top:16px;">Out of scope</h4>
+    <ul class="req-list out">
+      <li>Real integrations with Twilio, SES, FCM, or WhatsApp Business API.</li>
+      <li>Distributed queue implementation like Kafka/SQS/RabbitMQ internals.</li>
+      <li>Provider webhook verification and signature validation.</li>
+      <li>Multi-language template localization.</li>
+      <li>A/B testing of message content.</li>
+      <li>Complex campaign scheduling.</li>
+    </ul>
+  </div>
+
+  <div class="why-box">
+    <div class="wl">Why this scope is interview-strong</div>
+    <p>It avoids overbuilding provider integrations while still modeling the hard parts: channel abstraction, preferences, retries, statuses, idempotency, and async dispatch. In interviews, this is the sweet spot: practical enough to show real-world thinking, small enough to implement in one whiteboard session.</p>
+  </div>
+</div>
+
+<div class="section" id="s-ent">
+  <div class="sec-eyebrow">Step 2 · Entities</div>
+  <div class="sec-title">Core Entities &amp; Relationships</div>
+  <div class="sec-intro">The trick in Notification LLD is not inventing many classes. The trick is putting each responsibility in the right class. Template rendering, sending, retrying, preference checking, and rate limiting are different reasons to change — so they should not all live inside one mega NotificationService.</div>
+
+  <h3>Noun-by-noun evaluation</h3>
+  <table class="etable">
+    <thead><tr><th>Noun</th><th>Decision</th><th>Deep reasoning — including what breaks if you get it wrong</th></tr></thead>
+    <tbody>
+      <tr>
+        <td><span class="badge bk">Keep</span>NotificationSystem</td>
+        <td>Orchestrator</td>
+        <td>The single entry point for external callers. It validates request, checks idempotency, creates Notification, and enqueues it. Without this facade, callers must know about templates, users, preferences, queues, and dispatchers directly. That leaks internal design to every caller.</td>
+      </tr>
+      <tr>
+        <td><span class="badge bk">Keep</span>NotificationRequest</td>
+        <td>Input DTO</td>
+        <td>Represents what the caller wants: user_id, template_id, variables, category, channels, idempotency_key. It should not track lifecycle. Mixing request data with runtime delivery status creates a confused object that is half command and half state record.</td>
+      </tr>
+      <tr>
+        <td><span class="badge bk">Keep</span>Notification</td>
+        <td>Lifecycle entity</td>
+        <td>Represents the created notification after validation. It owns delivery attempts, category, status, timestamps, and rendered message. If you skip this class, there is no durable object to retry or audit. Logs are not enough because retries need structured state.</td>
+      </tr>
+      <tr>
+        <td><span class="badge bk">Keep</span>DeliveryAttempt</td>
+        <td>Full class / dataclass</td>
+        <td>One notification can go to multiple channels, and each channel can have multiple attempts. Email attempt 1 can fail while Push attempt 1 succeeds. Without DeliveryAttempt, you either lose history or incorrectly collapse all channels into one status.</td>
+      </tr>
+      <tr>
+        <td><span class="badge bk">Keep</span>User</td>
+        <td>Entity</td>
+        <td>Holds contact endpoints: email address, phone number, device token, WhatsApp phone. The sender needs these destinations. If these are passed loosely in every request, every caller becomes responsible for correctness and privacy.</td>
+      </tr>
+      <tr>
+        <td><span class="badge bk">Keep</span>UserPreference</td>
+        <td>Policy data + behavior</td>
+        <td>Determines whether a user allows a category over a channel. It is not just flags. It enforces a rule: mandatory transactional categories may bypass opt-out. Keeping this rule here avoids duplicating preference checks across all channels.</td>
+      </tr>
+      <tr>
+        <td><span class="badge bk">Keep</span>MessageTemplate</td>
+        <td>Value object</td>
+        <td>Stores template_id, body, required variables, category, and supported channels. If message content is hardcoded in service code, product copy changes require code deploys. Templates separate business content from delivery logic.</td>
+      </tr>
+      <tr>
+        <td><span class="badge bk">Keep</span>TemplateRenderer</td>
+        <td>Service</td>
+        <td>Turns a template + variables into final text. If rendering is inside channels, Email and SMS duplicate the same variable replacement logic. Rendering is channel-independent, so it deserves one reusable component.</td>
+      </tr>
+      <tr>
+        <td><span class="badge bk">Keep</span>NotificationChannel</td>
+        <td>Interface</td>
+        <td>Defines <code>send()</code>. Email, SMS, Push, and WhatsApp vary in transport details but share the same contract. This is exactly Strategy pattern territory.</td>
+      </tr>
+      <tr>
+        <td><span class="badge bk">Keep</span>NotificationDispatcher</td>
+        <td>Coordinator</td>
+        <td>Consumes queued notifications and coordinates rendering, preference checks, channel sending, retries, and status updates. Without it, <code>NotificationSystem</code> becomes a god class.</td>
+      </tr>
+      <tr>
+        <td><span class="badge bk">Keep</span>RetryPolicy</td>
+        <td>Policy</td>
+        <td>Retry behavior depends on category and channel. OTP, payment alert, and promotion should not share identical retry behavior. Policy belongs in a dedicated object because it changes for operational reasons.</td>
+      </tr>
+      <tr>
+        <td><span class="badge bk">Keep</span>RateLimiter</td>
+        <td>Guard service</td>
+        <td>Prevents spam and provider abuse. It is separate from sending because rate limiting is a pre-send decision; channels should not know business limits like "max 3 OTP SMS per minute."</td>
+      </tr>
+      <tr>
+        <td><span class="badge bk">Keep</span>IdempotencyStore</td>
+        <td>Guard service</td>
+        <td>Prevents duplicate notifications when callers retry API requests. Without it, network retries can send multiple OTPs or payment alerts.</td>
+      </tr>
+      <tr>
+        <td><span class="badge bs">Skip</span>Provider</td>
+        <td>Internal detail</td>
+        <td>For LLD, provider can be hidden inside concrete channel classes. Unless the interviewer asks for multi-provider fallback like Twilio → Exotel, making Provider a separate abstraction too early adds noise.</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <div class="why-box">
+    <div class="wl">The class-vs-field test for this problem</div>
+    <p>Ask: <strong>Does this thing own a rule that can change independently?</strong> RetryPolicy owns retry rules. RateLimiter owns spam-control rules. UserPreference owns opt-in rules. These should be classes. ChannelType is just a label like EMAIL or SMS, so it should be an enum.</p>
+  </div>
+</div>
+
+<div class="section" id="s-cls">
+  <div class="sec-eyebrow">Step 3 · Class Design</div>
+  <div class="sec-title">Class Design — Every Line Justified</div>
+  <div class="sec-intro">Start with enums and data objects, then interfaces, then orchestrators. The key is dependency direction: high-level workflow classes should depend on abstractions like <code>NotificationChannel</code>, not concrete classes like <code>EmailChannel</code>.</div>
+
+  <h3>Enums — make invalid states unrepresentable</h3>
+  <div class="ann-wrap">
+    <div class="ann-header"><span>Enums</span></div>
+    <div class="ann-row">
+      <div class="ann-code">class ChannelType(Enum):
+    EMAIL = auto()
+    SMS = auto()
+    PUSH = auto()
+    WHATSAPP = auto()</div>
+      <div class="ann-why">
+        <span class="wlabel">Why Enum?</span>
+        <span class="wmain">Channels are a fixed vocabulary. A string allows <code>"whatsap"</code> typo. An enum fails immediately. It also lets dictionaries use <code>ChannelType</code> keys safely, e.g. <code>channels[ChannelType.EMAIL]</code>.</span>
+      </div>
+    </div>
+    <div class="ann-row">
+      <div class="ann-code">class NotificationCategory(Enum):
+    OTP = auto()
+    ORDER_UPDATE = auto()
+    PAYMENT_ALERT = auto()
+    PROMOTION = auto()</div>
+      <div class="ann-why">
+        <span class="wlabel">Why category?</span>
+        <span class="wmain">Category drives policy. OTPs may bypass preferences and use high priority. Promotions must obey opt-out. Payment alerts may have stronger retry guarantees. Without category, every notification becomes indistinguishable.</span>
+      </div>
+    </div>
+    <div class="ann-row">
+      <div class="ann-code">class DeliveryStatus(Enum):
+    CREATED = auto()
+    QUEUED = auto()
+    SENDING = auto()
+    SENT = auto()
+    FAILED = auto()
+    RETRY_SCHEDULED = auto()
+    SKIPPED = auto()</div>
+      <div class="ann-why">
+        <span class="wlabel">Why these states?</span>
+        <span class="wmain">They model operational truth. <code>SKIPPED</code> is especially important: not every unsent notification is a failure. A promotional SMS skipped due to user preference is expected behavior, not an error.</span>
+      </div>
+    </div>
+  </div>
+
+  <h3>NotificationRequest — input command, not lifecycle state</h3>
+  <div class="ann-wrap">
+    <div class="ann-header"><span>NotificationRequest</span></div>
+    <div class="ann-row">
+      <div class="ann-code">@dataclass(frozen=True)
+class NotificationRequest:
+    user_id: str
+    template_id: str
+    variables: dict[str, str]
+    category: NotificationCategory
+    channels: list[ChannelType]
+    idempotency_key: str</div>
+      <div class="ann-why">
+        <span class="wlabel">Why frozen dataclass?</span>
+        <span class="wmain">A request is a command from a caller. Once received, it should not mutate. If the variables or channels change midway, debugging becomes a nightmare. <code>frozen=True</code> makes the command stable.</span>
+        <div class="wfail"><b>Without freezing:</b> A caller passes a request object, another component mutates channels from SMS to EMAIL before enqueue. The audit trail says SMS was requested but Email was sent. Ghost bug.</div>
+      </div>
+    </div>
+    <div class="ann-row">
+      <div class="ann-code">idempotency_key: str</div>
+      <div class="ann-why">
+        <span class="wlabel">Why not rely on generated notification_id?</span>
+        <span class="wmain">Generated IDs are created after the request arrives, so they cannot identify duplicate caller retries. Idempotency key comes from caller context, like <code>order_123_payment_alert_v1</code>. Same operation, same key, same result.</span>
+      </div>
+    </div>
+  </div>
+
+  <h3>Notification — lifecycle aggregate</h3>
+  <div class="ann-wrap">
+    <div class="ann-header"><span>Notification</span></div>
+    <div class="ann-row">
+      <div class="ann-code">class Notification:
+    notification_id: str
+    user_id: str
+    template_id: str
+    variables: dict[str, str]
+    category: NotificationCategory
+    created_at: datetime
+    attempts: list[DeliveryAttempt]</div>
+      <div class="ann-why">
+        <span class="wlabel">Why this class exists?</span>
+        <span class="wmain">This is the durable lifecycle record. Requests are input. Notifications are stateful records. A notification can be queued, attempted, retried, partially delivered, skipped, or failed. Those facts must live somewhere queryable.</span>
+      </div>
+    </div>
+    <div class="ann-row">
+      <div class="ann-code">def overall_status(self) -> DeliveryStatus:
+    if any(a.status == SENT for a in self.attempts):
+        return SENT
+    if all(a.status in [FAILED, SKIPPED]
+           for a in self.attempts):
+        return FAILED
+    return QUEUED</div>
+      <div class="ann-why">
+        <span class="wlabel">Why derive overall status?</span>
+        <span class="wmain">Overall status is a summary of per-channel attempts. Storing it separately creates two sources of truth. If Email succeeds and SMS fails, the attempts already contain the truth. Derive the summary instead of storing another field that can become stale.</span>
+      </div>
+    </div>
+  </div>
+
+  <h3>DeliveryAttempt — status per channel per try</h3>
+  <div class="ann-wrap">
+    <div class="ann-header"><span>DeliveryAttempt</span></div>
+    <div class="ann-row">
+      <div class="ann-code">@dataclass
+class DeliveryAttempt:
+    attempt_id: str
+    notification_id: str
+    channel: ChannelType
+    attempt_number: int
+    status: DeliveryStatus
+    provider_message_id: str | None
+    failure_reason: str | None
+    attempted_at: datetime | None</div>
+      <div class="ann-why">
+        <span class="wlabel">Why not just store status on Notification?</span>
+        <span class="wmain">Because each channel has its own fate. Push can succeed instantly, SMS can fail due to provider outage, Email can be retried. One status field cannot represent this without lying.</span>
+        <div class="wfail"><b>If Notification has only one status:</b> Email SENT, SMS FAILED. If you mark notification SENT, SMS failure disappears. If you mark FAILED, Email success disappears.</div>
+      </div>
+    </div>
+    <div class="ann-row">
+      <div class="ann-code">provider_message_id: str | None</div>
+      <div class="ann-why">
+        <span class="wlabel">Why store provider ID?</span>
+        <span class="wmain">Provider IDs are needed to reconcile delivery receipts and support debugging. If Twilio says message <code>abc123</code> failed, you need to map that callback to your attempt. Without this field, provider callbacks are orphaned.</span>
+      </div>
+    </div>
+  </div>
+
+  <h3>MessageTemplate and TemplateRenderer</h3>
+  <div class="ann-wrap">
+    <div class="ann-header"><span>Templates</span></div>
+    <div class="ann-row">
+      <div class="ann-code">@dataclass(frozen=True)
+class MessageTemplate:
+    template_id: str
+    body: str
+    required_variables: set[str]
+    supported_channels: set[ChannelType]</div>
+      <div class="ann-why">
+        <span class="wlabel">Why required_variables?</span>
+        <span class="wmain">It lets the system fail before sending. If template body needs <code>{otp}</code> but caller forgot it, you should raise a validation error before enqueueing. Otherwise the user receives "Your OTP is {otp}" — embarrassing and dangerous.</span>
+      </div>
+    </div>
+    <div class="ann-row">
+      <div class="ann-code">class TemplateRenderer:
+    def render(self, template, variables):
+        missing = template.required_variables - variables.keys()
+        if missing:
+            raise MissingVariableError(missing)
+        return template.body.format(**variables)</div>
+      <div class="ann-why">
+        <span class="wlabel">Why renderer instead of template.render()?</span>
+        <span class="wmain">Both are acceptable. A separate renderer is useful when rendering becomes richer: escaping, channel-specific formatting, localization, markdown-to-HTML, truncation for SMS. It keeps templates as data and rendering as behavior.</span>
+      </div>
+    </div>
+  </div>
+
+  <h3>NotificationChannel — Strategy interface</h3>
+  <div class="ann-wrap">
+    <div class="ann-header"><span>Channel Interface and Concrete Channels</span></div>
+    <div class="ann-row">
+      <div class="ann-code">class NotificationChannel(ABC):
+    @abstractmethod
+    def send(self, message: str, user: User) -> SendResult:
+        pass</div>
+      <div class="ann-why">
+        <span class="wlabel">Why return SendResult?</span>
+        <span class="wmain">A send call needs structured output: success/failure, provider_message_id, and error message. Returning bool loses information. Raising exceptions for provider failures can work, but then normal provider failures become control-flow exceptions. A <code>SendResult</code> is explicit and testable.</span>
+      </div>
+    </div>
+    <div class="ann-row">
+      <div class="ann-code">class EmailChannel(NotificationChannel):
+    def send(self, message, user):
+        if not user.email:
+            return SendResult.failure("missing email")
+        return SendResult.success("email-provider-id")</div>
+      <div class="ann-why">
+        <span class="wlabel">Why validate destination here?</span>
+        <span class="wmain">Only EmailChannel knows what email needs. SMS needs phone number. Push needs device token. Putting all destination validation in Dispatcher creates a bloated switch statement that knows channel-specific details. Channel-specific validation belongs inside the channel.</span>
+      </div>
+    </div>
+  </div>
+
+  <h3>UserPreference — policy around consent</h3>
+  <div class="ann-wrap">
+    <div class="ann-header"><span>UserPreference</span></div>
+    <div class="ann-row">
+      <div class="ann-code">class UserPreference:
+    preferences: dict[
+        NotificationCategory,
+        set[ChannelType]
+    ]
+
+    def allows(self, category, channel):
+        if category in MANDATORY_CATEGORIES:
+            return True
+        return channel in self.preferences.get(category, set())</div>
+      <div class="ann-why">
+        <span class="wlabel">Why method, not raw dict access?</span>
+        <span class="wmain">The rule is not "look up a value." The rule is "mandatory categories bypass preferences, optional categories obey preferences." That logic deserves a method. Callers should ask <code>preference.allows()</code>, not inspect internal dictionaries.</span>
+      </div>
+    </div>
+  </div>
+
+  <h3>NotificationSystem — public API facade</h3>
+  <div class="ann-wrap">
+    <div class="ann-header"><span>NotificationSystem</span></div>
+    <div class="ann-row">
+      <div class="ann-code">class NotificationSystem:
+    users: dict[str, User]
+    templates: dict[str, MessageTemplate]
+    notifications: dict[str, Notification]
+    queue: NotificationQueue
+    idempotency_store: IdempotencyStore</div>
+      <div class="ann-why">
+        <span class="wlabel">Why own these registries?</span>
+        <span class="wmain">The public API needs to validate users and templates before creating notifications. It also needs to deduplicate requests before creating a new record. These are system-level responsibilities, not channel responsibilities.</span>
+      </div>
+    </div>
+    <div class="ann-row">
+      <div class="ann-code">def create_notification(self, request):
+    if idempotency_store.exists(request.idempotency_key):
+        return idempotency_store.get(request.idempotency_key)
+
+    self.validate(request)
+    notification = Notification.from_request(request)
+    self.notifications[notification.id] = notification
+    self.queue.enqueue(notification.id)
+    idempotency_store.save(request.idempotency_key, notification.id)
+    return notification</div>
+      <div class="ann-why">
+        <span class="wlabel">Why create then enqueue?</span>
+        <span class="wmain">Workers need a durable notification ID to process. If you enqueue raw request data without storing the notification first, a worker crash can lose state. Create record first, then enqueue its ID. The queue contains references to durable work, not the work itself.</span>
+        <div class="wfail"><b>If you enqueue before storing:</b> Worker wakes up, tries to fetch notification_id, but record does not exist yet. Race condition.</div>
+      </div>
+    </div>
+  </div>
+
+  <h3>NotificationDispatcher — worker-side coordinator</h3>
+  <div class="ann-wrap">
+    <div class="ann-header"><span>NotificationDispatcher</span></div>
+    <div class="ann-row">
+      <div class="ann-code">class NotificationDispatcher:
+    channels: dict[ChannelType, NotificationChannel]
+    renderer: TemplateRenderer
+    retry_policy: RetryPolicy
+    rate_limiter: RateLimiter</div>
+      <div class="ann-why">
+        <span class="wlabel">Why dispatcher has dependencies?</span>
+        <span class="wmain">Dispatcher coordinates the workflow but should not implement every detail. It delegates rendering to renderer, sending to channels, retry decisions to RetryPolicy, and spam prevention to RateLimiter. This keeps it a coordinator, not a god object.</span>
+      </div>
+    </div>
+    <div class="ann-row">
+      <div class="ann-code">def dispatch(self, notification_id):
+    notification = store.get(notification_id)
+    user = users[notification.user_id]
+    template = templates[notification.template_id]
+    message = renderer.render(template, notification.variables)
+
+    for channel_type in notification.requested_channels:
+        self.dispatch_channel(notification, user, message, channel_type)</div>
+      <div class="ann-why">
+        <span class="wlabel">Why loop per channel?</span>
+        <span class="wmain">Each channel is independently skippable, sendable, retryable, and auditable. A loop over requested channels creates one delivery path per channel. This naturally supports Email + SMS without special-case code.</span>
+      </div>
+    </div>
+    <div class="ann-row">
+      <div class="ann-code">def dispatch_channel(...):
+    if not user.preference.allows(category, channel):
+        mark_skipped()
+        return
+
+    if not rate_limiter.allow(user.id, category, channel):
+        mark_retry_scheduled()
+        return
+
+    result = channels[channel].send(message, user)
+    update_attempt(result)</div>
+      <div class="ann-why">
+        <span class="wlabel">Why this ordering?</span>
+        <span class="wmain">Preference check comes before rate limit because skipped messages should not consume quota. Rate limit comes before send because provider calls cost money. Send happens only after policy gates pass. This ordering prevents waste and respects user preferences.</span>
+      </div>
+    </div>
+  </div>
+
+  <h3>Complete skeleton code</h3>
+  <div class="code-block">from __future__ import annotations
+from dataclasses import dataclass, field
+from datetime import datetime
+from enum import Enum, auto
+from abc import ABC, abstractmethod
+from uuid import uuid4
+
+
+class ChannelType(Enum):
+    EMAIL = auto()
+    SMS = auto()
+    PUSH = auto()
+    WHATSAPP = auto()
+
+
+class NotificationCategory(Enum):
+    OTP = auto()
+    ORDER_UPDATE = auto()
+    PAYMENT_ALERT = auto()
+    PROMOTION = auto()
+
+
+class DeliveryStatus(Enum):
+    CREATED = auto()
+    QUEUED = auto()
+    SENDING = auto()
+    SENT = auto()
+    FAILED = auto()
+    RETRY_SCHEDULED = auto()
+    SKIPPED = auto()
+
+
+MANDATORY_CATEGORIES = {
+    NotificationCategory.OTP,
+    NotificationCategory.PAYMENT_ALERT,
+}
+
+
+@dataclass(frozen=True)
+class NotificationRequest:
+    user_id: str
+    template_id: str
+    variables: dict[str, str]
+    category: NotificationCategory
+    channels: list[ChannelType]
+    idempotency_key: str
+
+
+@dataclass(frozen=True)
+class MessageTemplate:
+    template_id: str
+    body: str
+    required_variables: set[str]
+    supported_channels: set[ChannelType]
+
+
+@dataclass
+class SendResult:
+    success: bool
+    provider_message_id: str | None = None
+    error: str | None = None
+
+    @staticmethod
+    def ok(provider_message_id: str):
+        return SendResult(True, provider_message_id, None)
+
+    @staticmethod
+    def fail(error: str):
+        return SendResult(False, None, error)
+
+
+@dataclass
+class UserPreference:
+    preferences: dict[NotificationCategory, set[ChannelType]]
+
+    def allows(self, category: NotificationCategory, channel: ChannelType) -> bool:
+        if category in MANDATORY_CATEGORIES:
+            return True
+        return channel in self.preferences.get(category, set())
+
+
+@dataclass
+class User:
+    user_id: str
+    email: str | None
+    phone: str | None
+    device_token: str | None
+    preference: UserPreference
+
+
+@dataclass
+class DeliveryAttempt:
+    attempt_id: str
+    notification_id: str
+    channel: ChannelType
+    attempt_number: int
+    status: DeliveryStatus = DeliveryStatus.CREATED
+    provider_message_id: str | None = None
+    failure_reason: str | None = None
+    attempted_at: datetime | None = None
+
+
+@dataclass
+class Notification:
+    notification_id: str
+    user_id: str
+    template_id: str
+    variables: dict[str, str]
+    category: NotificationCategory
+    requested_channels: list[ChannelType]
+    created_at: datetime
+    attempts: list[DeliveryAttempt] = field(default_factory=list)
+
+    @staticmethod
+    def from_request(request: NotificationRequest) -> "Notification":
+        return Notification(
+            notification_id=str(uuid4()),
+            user_id=request.user_id,
+            template_id=request.template_id,
+            variables=request.variables,
+            category=request.category,
+            requested_channels=request.channels,
+            created_at=datetime.now(),
+        )
+
+
+class TemplateRenderer:
+    def render(self, template: MessageTemplate, variables: dict[str, str]) -> str:
+        missing = template.required_variables - variables.keys()
+        if missing:
+            raise ValueError(f"Missing variables: {missing}")
+        return template.body.format(**variables)
+
+
+class NotificationChannel(ABC):
+    @abstractmethod
+    def send(self, message: str, user: User) -> SendResult:
+        pass
+
+
+class EmailChannel(NotificationChannel):
+    def send(self, message: str, user: User) -> SendResult:
+        if not user.email:
+            return SendResult.fail("Missing email")
+        return SendResult.ok("email-provider-message-id")
+
+
+class SmsChannel(NotificationChannel):
+    def send(self, message: str, user: User) -> SendResult:
+        if not user.phone:
+            return SendResult.fail("Missing phone")
+        return SendResult.ok("sms-provider-message-id")
+
+
+class PushChannel(NotificationChannel):
+    def send(self, message: str, user: User) -> SendResult:
+        if not user.device_token:
+            return SendResult.fail("Missing device token")
+        return SendResult.ok("push-provider-message-id")
+
+
+class RetryPolicy:
+    def max_attempts(self, category: NotificationCategory, channel: ChannelType) -> int:
+        if category == NotificationCategory.OTP:
+            return 3
+        if category == NotificationCategory.PROMOTION:
+            return 1
+        return 2
+
+    def should_retry(self, category, channel, attempt_number) -> bool:
+        return attempt_number < self.max_attempts(category, channel)
+
+
+class RateLimiter:
+    def allow(self, user_id: str, category: NotificationCategory, channel: ChannelType) -> bool:
+        return True
+
+
+class IdempotencyStore:
+    def __init__(self):
+        self.key_to_notification_id = {}
+
+    def exists(self, key: str) -> bool:
+        return key in self.key_to_notification_id
+
+    def get(self, key: str) -> str:
+        return self.key_to_notification_id[key]
+
+    def save(self, key: str, notification_id: str):
+        self.key_to_notification_id[key] = notification_id
+
+
+class NotificationQueue:
+    def __init__(self):
+        self.items = []
+
+    def enqueue(self, notification_id: str):
+        self.items.append(notification_id)
+
+    def dequeue(self) -> str | None:
+        if not self.items:
+            return None
+        return self.items.pop(0)</div>
+</div>
+
+<div class="section" id="s-flow">
+  <div class="sec-eyebrow">Step 4 · Flows</div>
+  <div class="sec-title">Key Flows — Every Step Justified</div>
+  <div class="sec-intro">Flows reveal whether the class design actually works. In notification systems, the two most important flows are: create notification and dispatch notification. Creation is caller-facing. Dispatch is worker-facing.</div>
+
+  <h3>Flow 1 — Create Notification</h3>
+  <div class="ann-wrap">
+    <div class="ann-header"><span>create_notification()</span></div>
+    <div class="ann-row">
+      <div class="ann-code">1. Caller sends NotificationRequest</div>
+      <div class="ann-why"><span class="wlabel">Why request object?</span><span class="wmain">A request object keeps the method signature stable. Without it, <code>create_notification(user_id, template_id, variables, category, channels, idempotency_key)</code> becomes long and brittle. Add priority tomorrow and every caller signature changes.</span></div>
+    </div>
+    <div class="ann-row">
+      <div class="ann-code">2. Check idempotency key</div>
+      <div class="ann-why"><span class="wlabel">Why first?</span><span class="wmain">If the request is duplicate, you should return the original notification immediately. Doing validations or enqueueing before this can create duplicate work.</span></div>
+    </div>
+    <div class="ann-row">
+      <div class="ann-code">3. Validate user_id and template_id</div>
+      <div class="ann-why"><span class="wlabel">Why before creating Notification?</span><span class="wmain">A Notification should represent valid work. Creating records for invalid users/templates pollutes the store and creates dead queue items workers can never process.</span></div>
+    </div>
+    <div class="ann-row">
+      <div class="ann-code">4. Validate requested channels supported by template</div>
+      <div class="ann-why"><span class="wlabel">Why template-channel compatibility?</span><span class="wmain">Some templates may be too long for SMS or contain deep links only useful for Push. Sending a channel-incompatible template causes bad user experience and provider failures.</span></div>
+    </div>
+    <div class="ann-row">
+      <div class="ann-code">5. Create Notification record</div>
+      <div class="ann-why"><span class="wlabel">Why durable record before queue?</span><span class="wmain">Queues should reference durable work. If a worker receives an ID, it must be able to fetch the notification. Create first, enqueue second.</span></div>
+    </div>
+    <div class="ann-row">
+      <div class="ann-code">6. Enqueue notification_id</div>
+      <div class="ann-why"><span class="wlabel">Why enqueue ID not full object?</span><span class="wmain">Passing full objects through a queue creates serialization/versioning problems. Passing ID lets the worker fetch latest state from the store.</span></div>
+    </div>
+  </div>
+
+  <h3>Flow 2 — Dispatch Notification</h3>
+  <div class="state-row">
+    <span class="sp sg">QUEUED</span><span class="sarrow">→</span>
+    <span class="sp sb">SENDING</span><span class="sarrow">→</span>
+    <span class="sp ste">SENT</span>
+    <span class="sarrow">or</span>
+    <span class="sp sco">FAILED</span>
+    <span class="sarrow">or</span>
+    <span class="sp sam">RETRY_SCHEDULED</span>
+    <span class="sarrow">or</span>
+    <span class="sp spu">SKIPPED</span>
+  </div>
+
+  <div class="ann-wrap">
+    <div class="ann-header"><span>dispatch()</span></div>
+    <div class="ann-row">
+      <div class="ann-code">1. Worker dequeues notification_id</div>
+      <div class="ann-why"><span class="wlabel">Why worker?</span><span class="wmain">Provider APIs are slow. Worker processing prevents user-facing API latency from depending on SMS/Email provider latency.</span></div>
+    </div>
+    <div class="ann-row">
+      <div class="ann-code">2. Fetch Notification, User, Template</div>
+      <div class="ann-why"><span class="wlabel">Why fetch fresh?</span><span class="wmain">User preferences or contact info may have changed between enqueue and dispatch. Fetching fresh state improves correctness. For certain compliance-heavy systems, you may instead snapshot preferences at creation time; that is a tradeoff.</span></div>
+    </div>
+    <div class="ann-row">
+      <div class="ann-code">3. Render template</div>
+      <div class="ann-why"><span class="wlabel">Why before channel loop?</span><span class="wmain">If all channels share the same plain message, render once. If channels need custom formatting, renderer can expose <code>render_for_channel()</code>. Do not duplicate rendering inside every channel.</span></div>
+    </div>
+    <div class="ann-row">
+      <div class="ann-code">4. For each channel:
+   check preference</div>
+      <div class="ann-why"><span class="wlabel">Why per-channel preference?</span><span class="wmain">A user may allow Email promotions but block SMS promotions. Preference is channel-specific, so the check must happen inside the channel loop.</span></div>
+    </div>
+    <div class="ann-row">
+      <div class="ann-code">5. Check rate limit</div>
+      <div class="ann-why"><span class="wlabel">Why after preference?</span><span class="wmain">Skipped messages should not consume rate limit quota. Otherwise a disabled promotional SMS could block a later important transactional SMS.</span></div>
+    </div>
+    <div class="ann-row">
+      <div class="ann-code">6. Create DeliveryAttempt</div>
+      <div class="ann-why"><span class="wlabel">Why before sending?</span><span class="wmain">If the process crashes during provider call, you still have a record that an attempt began. This makes stuck/in-flight attempts observable.</span></div>
+    </div>
+    <div class="ann-row">
+      <div class="ann-code">7. Call channel.send()</div>
+      <div class="ann-why"><span class="wlabel">Why channel abstraction?</span><span class="wmain">Dispatcher does not care whether Email uses SES, SMS uses Twilio, or Push uses FCM. It only cares about <code>SendResult</code>. This is dependency inversion.</span></div>
+    </div>
+    <div class="ann-row">
+      <div class="ann-code">8. Update attempt result</div>
+      <div class="ann-why"><span class="wlabel">Why structured result?</span><span class="wmain">You want to store provider message ID on success and failure reason on failure. A boolean cannot carry that operational detail.</span></div>
+    </div>
+    <div class="ann-row">
+      <div class="ann-code">9. Retry if policy allows</div>
+      <div class="ann-why"><span class="wlabel">Why policy-driven?</span><span class="wmain">Retry behavior changes by category/channel. The dispatcher asks policy instead of hardcoding numbers. This keeps retry decisions configurable and testable.</span></div>
+    </div>
+  </div>
+
+  <h3>Flow 3 — Idempotent caller retry</h3>
+  <div class="why-box">
+    <div class="wl">Scenario</div>
+    <p>Payment service calls NotificationSystem to send "Payment successful." Network times out before it receives response. Payment service retries the same request.</p>
+  </div>
+  <div class="ann-wrap">
+    <div class="ann-header"><span>Idempotency flow</span></div>
+    <div class="ann-row">
+      <div class="ann-code">request.idempotency_key =
+"payment_123_success_v1"</div>
+      <div class="ann-why"><span class="wlabel">Why caller-provided?</span><span class="wmain">The caller knows the business operation. The notification system only sees generic requests. Business uniqueness comes from the caller.</span></div>
+    </div>
+    <div class="ann-row">
+      <div class="ann-code">if key exists:
+    return existing_notification</div>
+      <div class="ann-why"><span class="wlabel">Why return existing?</span><span class="wmain">Idempotency does not mean "ignore duplicate." It means "same request produces same result." Returning the existing notification lets caller continue normally.</span></div>
+    </div>
+  </div>
+</div>
+
+<div class="section" id="s-pat">
+  <div class="sec-eyebrow">Step 5 · Patterns</div>
+  <div class="sec-title">Design Patterns Used</div>
+  <div class="sec-intro">Do not name-drop patterns. In interviews, explain the problem each pattern solves. A pattern is useful only if it removes a concrete pain.</div>
+
+  <div class="pcard">
+    <div class="ptitle">Facade Pattern <span class="ptag">NotificationSystem</span></div>
+    <p><b>Problem:</b> External callers should not know about templates, queues, idempotency stores, and dispatchers.</p>
+    <p><b>Solution:</b> Expose one public API: <code>create_notification(request)</code>.</p>
+    <p><b>Why it matters:</b> Caller code remains simple and stable even if internals change from in-memory queue to Kafka later.</p>
+  </div>
+
+  <div class="pcard">
+    <div class="ptitle">Strategy Pattern <span class="ptag">NotificationChannel</span></div>
+    <p><b>Problem:</b> Email, SMS, Push, and WhatsApp have different sending logic.</p>
+    <p><b>Solution:</b> Common <code>NotificationChannel.send()</code> interface with concrete strategies.</p>
+    <p><b>Why it matters:</b> Add Slack/Discord/In-app notifications without modifying dispatcher logic.</p>
+  </div>
+
+  <div class="pcard">
+    <div class="ptitle">Policy Object <span class="ptag">RetryPolicy / RateLimiter</span></div>
+    <p><b>Problem:</b> Retry and rate-limit rules change often and differ by category/channel.</p>
+    <p><b>Solution:</b> Put these rules in dedicated policy objects.</p>
+    <p><b>Why it matters:</b> Changing "OTP SMS max attempts from 3 to 2" should not require editing SMS sending code.</p>
+  </div>
+
+  <div class="pcard">
+    <div class="ptitle">Command Object <span class="ptag">NotificationRequest</span></div>
+    <p><b>Problem:</b> Many input parameters make method signatures unstable.</p>
+    <p><b>Solution:</b> Bundle request data into a frozen command object.</p>
+    <p><b>Why it matters:</b> Adding priority, schedule_at, or tenant_id later changes one class, not every method signature.</p>
+  </div>
+
+  <div class="pcard">
+    <div class="ptitle">State Machine <span class="ptag">DeliveryStatus</span></div>
+    <p><b>Problem:</b> Delivery has meaningful lifecycle states.</p>
+    <p><b>Solution:</b> Explicit statuses like QUEUED, SENDING, SENT, FAILED, RETRY_SCHEDULED, SKIPPED.</p>
+    <p><b>Why it matters:</b> Debugging and retries need state. "Boolean sent" is too primitive.</p>
+  </div>
+</div>
+
+<div class="section" id="s-sol">
+  <div class="sec-eyebrow">Step 6 · SOLID</div>
+  <div class="sec-title">SOLID Principles Applied</div>
+  <div class="sec-intro">Notification systems are a perfect SOLID question because bad designs naturally become giant if-else monsters. Good designs separate policy, transport, orchestration, and data.</div>
+
+  <div class="solid-grid">
+    <div class="solid-card">
+      <div class="solid-letter">S</div>
+      <div class="solid-name">Single Responsibility</div>
+      <div class="solid-def">One class should have one reason to change.</div>
+      <div class="wfail"><b>Violation:</b> NotificationService renders templates, checks preferences, sends SMS, retries, and rate-limits.</div>
+      <div class="wfix"><b>Fix:</b> Renderer renders. Channel sends. RetryPolicy retries. Dispatcher coordinates.</div>
+    </div>
+
+    <div class="solid-card">
+      <div class="solid-letter">O</div>
+      <div class="solid-name">Open/Closed</div>
+      <div class="solid-def">Open for extension, closed for modification.</div>
+      <div class="wfail"><b>Violation:</b> Adding Slack requires editing <code>if channel == ...</code> in Dispatcher.</div>
+      <div class="wfix"><b>Fix:</b> Add <code>SlackChannel</code> implementing <code>NotificationChannel</code>.</div>
+    </div>
+
+    <div class="solid-card">
+      <div class="solid-letter">L</div>
+      <div class="solid-name">Liskov Substitution</div>
+      <div class="solid-def">Subtypes should be usable wherever the base type is expected.</div>
+      <div class="wfail"><b>Violation:</b> PushChannel requires a completely different method signature.</div>
+      <div class="wfix"><b>Fix:</b> All channels implement <code>send(message, user) -> SendResult</code>.</div>
+    </div>
+
+    <div class="solid-card">
+      <div class="solid-letter">I</div>
+      <div class="solid-name">Interface Segregation</div>
+      <div class="solid-def">Clients should not depend on methods they do not use.</div>
+      <div class="wfail"><b>Violation:</b> Channel interface has <code>send_email</code>, <code>send_sms</code>, <code>send_push</code>.</div>
+      <div class="wfix"><b>Fix:</b> One minimal method: <code>send()</code>.</div>
+    </div>
+
+    <div class="solid-card solid-full">
+      <div class="solid-letter">D</div>
+      <div class="solid-name">Dependency Inversion</div>
+      <div class="solid-def">High-level modules should depend on abstractions, not concrete classes.</div>
+      <div class="wfail"><b>Violation:</b> Dispatcher creates <code>EmailChannel()</code> internally and directly knows every provider.</div>
+      <div class="wfix"><b>Fix:</b> Dispatcher receives <code>dict[ChannelType, NotificationChannel]</code>. It depends on the interface.</div>
+    </div>
+  </div>
+</div>
+
+<div class="section" id="s-trd">
+  <div class="sec-eyebrow">Step 7 · Trade-offs</div>
+  <div class="sec-title">Important Trade-offs</div>
+  <div class="sec-intro">Trade-offs are where interviewers see maturity. Do not just say what you chose. Say what you rejected and why.</div>
+
+  <div class="tsec">
+    <div class="thead">Synchronous send vs asynchronous queue</div>
+    <div class="tbody">
+      <div class="scenario"><b>Scenario:</b> User signs up and needs an OTP.</div>
+      <div class="td-grid">
+        <div class="tpro"><span class="tlabel">Async queue</span>Better throughput, isolates provider latency, enables retries. API returns quickly after enqueueing.</div>
+        <div class="tcon"><span class="tlabel">Synchronous send</span>Simpler but user-facing request waits for provider. Provider slowness becomes app slowness.</div>
+      </div>
+      <p><b>Chosen:</b> Async queue for production-like design. In small demos, synchronous can be acceptable, but mention the limitation.</p>
+    </div>
+  </div>
+
+  <div class="tsec">
+    <div class="thead">Store rendered message vs render at send time</div>
+    <div class="tbody">
+      <div class="scenario"><b>Scenario:</b> Template changes after notification is queued but before worker sends it.</div>
+      <div class="td-grid">
+        <div class="tpro"><span class="tlabel">Store rendered message</span>Guarantees user receives the exact content produced at creation time. Better auditability.</div>
+        <div class="tcon"><span class="tlabel">Render at send time</span>Uses latest template. Useful for corrections, but can make audit confusing.</div>
+      </div>
+      <p><b>Interview answer:</b> For transactional notifications, store rendered message or template version. For promotions, render-late can be acceptable.</p>
+    </div>
+  </div>
+
+  <div class="tsec">
+    <div class="thead">Overall status as field vs derived from attempts</div>
+    <div class="tbody">
+      <div class="td-grid">
+        <div class="tpro"><span class="tlabel">Derived</span>No duplicate source of truth. Correct summary from attempts.</div>
+        <div class="tcon"><span class="tlabel">Stored</span>Faster queries but risks inconsistency unless transactionally updated.</div>
+      </div>
+      <p><b>Chosen:</b> Derive in LLD. In production, you may store a denormalized summary for query performance, but update it carefully.</p>
+    </div>
+  </div>
+
+  <div class="tsec">
+    <div class="thead">One DeliveryAttempt per channel vs per retry</div>
+    <div class="tbody">
+      <div class="td-grid">
+        <div class="tpro"><span class="tlabel">Per retry</span>Full history: attempt 1 failed timeout, attempt 2 succeeded.</div>
+        <div class="tcon"><span class="tlabel">Per channel only</span>Simpler but overwrites failure history.</div>
+      </div>
+      <p><b>Chosen:</b> Per retry attempt because debugging provider failures requires history.</p>
+    </div>
+  </div>
+
+  <div class="tsec">
+    <div class="thead">Preferences checked at creation vs dispatch</div>
+    <div class="tbody">
+      <div class="td-grid">
+        <div class="tpro"><span class="tlabel">Creation time</span>Stable decision. User preference changes after enqueue do not affect already-created notifications.</div>
+        <div class="tcon"><span class="tlabel">Dispatch time</span>More respectful of latest user preference but can change behavior after creation.</div>
+      </div>
+      <p><b>Chosen:</b> Dispatch-time for freshness in this guide. For strict compliance/audit, snapshot preference decision at creation.</p>
+    </div>
+  </div>
+</div>
+
+<div class="section" id="s-qa">
+  <div class="sec-eyebrow">Step 8 · Interview Q&amp;A</div>
+  <div class="sec-title">Common Interview Questions</div>
+  <div class="sec-intro">These are the questions interviewers use to test whether you understand the design or merely memorized the class diagram.</div>
+
+  <div class="qa">
+    <div class="qa-q" onclick="toggleQA(this)">Why not just have one NotificationService with sendEmail(), sendSms(), sendPush()?</div>
+    <div class="qa-a">Because every new channel modifies the same class. That violates Open/Closed Principle and creates a god service. The better design is a <code>NotificationChannel</code> interface with concrete channel implementations. The dispatcher works with the abstraction, not individual methods.</div>
+  </div>
+
+  <div class="qa">
+    <div class="qa-q" onclick="toggleQA(this)">Why separate NotificationRequest and Notification?</div>
+    <div class="qa-a"><code>NotificationRequest</code> is the caller's command. <code>Notification</code> is the system's lifecycle record. Requests should be immutable input. Notifications need runtime state like attempts, timestamps, and statuses. Mixing them creates a confused object.</div>
+  </div>
+
+  <div class="qa">
+    <div class="qa-q" onclick="toggleQA(this)">How do you add Slack notifications?</div>
+    <div class="qa-a">Add <code>ChannelType.SLACK</code>, implement <code>SlackChannel(NotificationChannel)</code>, register it in the channel map, and add user destination data if needed. Dispatcher logic should not change.</div>
+  </div>
+
+  <div class="qa">
+    <div class="qa-q" onclick="toggleQA(this)">How do you prevent duplicate OTPs?</div>
+    <div class="qa-a">Use caller-provided idempotency keys. For example, authentication service sends <code>login_otp_user123_1700000000</code>. If the same request is retried due to timeout, NotificationSystem returns the existing notification instead of creating a new one.</div>
+  </div>
+
+  <div class="qa">
+    <div class="qa-q" onclick="toggleQA(this)">How do you prioritize OTP over promotions?</div>
+    <div class="qa-a">Add priority to NotificationRequest or derive priority from category. Queue can become a priority queue. OTP and payment alerts get high priority; promotions get low priority. In LLD, model this with a <code>priority</code> field or method on category policy.</div>
+  </div>
+
+  <div class="qa">
+    <div class="qa-q" onclick="toggleQA(this)">Where should retry logic live?</div>
+    <div class="qa-a">In <code>RetryPolicy</code>, not channels. Channels know how to send. RetryPolicy knows whether to retry. Dispatcher coordinates the two. This separation lets retry rules change without touching provider logic.</div>
+  </div>
+
+  <div class="qa">
+    <div class="qa-q" onclick="toggleQA(this)">How do you handle user preferences?</div>
+    <div class="qa-a">Use <code>UserPreference.allows(category, channel)</code>. Preferences should be category-channel specific. Mandatory transactional categories like OTP can bypass opt-out; promotional categories must obey opt-out.</div>
+  </div>
+
+  <div class="qa">
+    <div class="qa-q" onclick="toggleQA(this)">How do you handle provider outage?</div>
+    <div class="qa-a">Channel returns failure result. Dispatcher records attempt failure. RetryPolicy decides whether to retry. For advanced design, introduce provider fallback inside a channel, e.g. SMSChannel tries Twilio then Exotel. Keep fallback hidden behind the same <code>NotificationChannel</code> interface.</div>
+  </div>
+
+  <div class="qa">
+    <div class="qa-q" onclick="toggleQA(this)">How would you scale this system?</div>
+    <div class="qa-a">Use durable queues, multiple workers, idempotency store, rate limiter, provider-specific worker pools, retry queues with delay, and partitioning by user or tenant. But for LLD, keep these as interfaces so the class design does not depend on Kafka/SQS specifics.</div>
+  </div>
+
+  <h3>Final interview summary</h3>
+  <div class="why-box">
+    <div class="wl">What to say in 60 seconds</div>
+    <p>I would model NotificationSystem as the facade that accepts a NotificationRequest, validates it, enforces idempotency, creates a Notification record, and enqueues it. A worker-side NotificationDispatcher processes queued notifications. It renders a MessageTemplate, checks UserPreference, checks RateLimiter, then sends through channel strategies like EmailChannel, SmsChannel, PushChannel, and WhatsAppChannel. DeliveryAttempt tracks per-channel status and retries. RetryPolicy owns retry rules so channel logic stays clean. This design separates orchestration, transport, policy, rendering, and lifecycle state.</p>
+  </div>
+</div>
+
+</main>
+
+<script>
+function show(id, el) {
+  document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
+  document.getElementById('s-' + id).classList.add('active');
+  document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+  el.classList.add('active');
+  window.scrollTo(0,0);
+}
+function toggleQA(el) {
+  const ans = el.nextElementSibling;
+  ans.classList.toggle('show');
+}
+</script>
+</body>
+</html>

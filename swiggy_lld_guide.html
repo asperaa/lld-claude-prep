@@ -1,0 +1,901 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Swiggy LLD Guide</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --orange: #E8541A;
+    --orange-light: #FFF0E8;
+    --bg: #f9f8f6;
+    --surface: #ffffff;
+    --surface2: #f3f2ef;
+    --border: #e5e2dc;
+    --text: #1a1917;
+    --text2: #5c5a55;
+    --text3: #999793;
+    --mono: 'JetBrains Mono', monospace;
+    --sans: 'Inter', sans-serif;
+    --radius: 10px;
+    --sidebar-w: 240px;
+  }
+
+  body {
+    font-family: var(--sans);
+    background: var(--bg);
+    color: var(--text);
+    line-height: 1.6;
+    display: flex;
+    min-height: 100vh;
+  }
+
+  /* ---- SIDEBAR ---- */
+  .sidebar {
+    width: var(--sidebar-w);
+    position: fixed;
+    top: 0; left: 0; bottom: 0;
+    background: var(--surface);
+    border-right: 1px solid var(--border);
+    overflow-y: auto;
+    z-index: 100;
+    display: flex;
+    flex-direction: column;
+  }
+
+  .sidebar-logo {
+    padding: 24px 20px 20px;
+    border-bottom: 1px solid var(--border);
+  }
+  .brand {
+    display: flex; align-items: center; gap: 10px;
+    font-size: 17px; font-weight: 600; color: var(--text);
+  }
+  .brand-icon {
+    width: 32px; height: 32px; border-radius: 8px;
+    background: var(--orange); display: flex; align-items: center;
+    justify-content: center; font-size: 16px;
+  }
+  .brand-sub { font-size: 12px; color: var(--text3); margin-top: 4px; }
+
+  .nav-section {
+    padding: 16px 20px 6px;
+    font-size: 10px; font-weight: 600;
+    text-transform: uppercase; letter-spacing: 0.08em;
+    color: var(--text3);
+  }
+  .nav-item {
+    display: flex; align-items: center; gap: 10px;
+    padding: 9px 20px;
+    font-size: 13px; color: var(--text2);
+    cursor: pointer;
+    border-left: 3px solid transparent;
+    transition: all 0.15s;
+    text-decoration: none;
+  }
+  .nav-item:hover { background: var(--surface2); color: var(--text); }
+  .nav-item.active {
+    border-left-color: var(--orange);
+    background: var(--orange-light);
+    color: var(--orange);
+    font-weight: 500;
+  }
+  .nav-item i { width: 16px; text-align: center; font-size: 13px; }
+
+  /* ---- MAIN ---- */
+  .main {
+    margin-left: var(--sidebar-w);
+    padding: 48px 56px;
+    max-width: 900px;
+    width: 100%;
+  }
+
+  .section { display: none; }
+  .section.active { display: block; }
+
+  /* ---- SECTION HEADER ---- */
+  .section-tag {
+    display: inline-block;
+    font-size: 11px; font-weight: 600;
+    padding: 3px 10px; border-radius: 20px;
+    background: var(--orange-light); color: var(--orange);
+    margin-bottom: 12px;
+  }
+  .section-title { font-size: 26px; font-weight: 600; line-height: 1.25; margin-bottom: 8px; }
+  .section-sub { font-size: 15px; color: var(--text2); line-height: 1.7; margin-bottom: 32px; }
+
+  /* ---- TYPOGRAPHY ---- */
+  h3 { font-size: 17px; font-weight: 600; margin: 32px 0 14px; }
+  h4 { font-size: 14px; font-weight: 600; margin: 20px 0 10px; }
+  p { font-size: 14px; color: var(--text2); line-height: 1.75; margin: 10px 0; }
+
+  /* ---- CALLOUT ---- */
+  .callout {
+    border-left: 3px solid var(--orange);
+    padding: 14px 18px;
+    background: var(--orange-light);
+    border-radius: 0 var(--radius) var(--radius) 0;
+    margin: 20px 0;
+    font-size: 14px; line-height: 1.65;
+  }
+  .callout b { font-weight: 600; }
+
+  /* ---- DIALOGUE ---- */
+  .dialogue {
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    overflow: hidden; margin: 20px 0;
+  }
+  .dialogue-row {
+    padding: 14px 18px;
+    border-bottom: 1px solid var(--border);
+    font-size: 14px; line-height: 1.65;
+  }
+  .dialogue-row:last-child { border-bottom: none; }
+  .dialogue-row.you { background: var(--surface); }
+  .dialogue-row.iv { background: var(--surface2); }
+  .dialogue-speaker {
+    font-size: 10px; font-weight: 700;
+    text-transform: uppercase; letter-spacing: 0.07em;
+    margin-bottom: 5px;
+  }
+  .dialogue-row.you .dialogue-speaker { color: var(--orange); }
+  .dialogue-row.iv .dialogue-speaker { color: var(--text3); }
+
+  /* ---- WHY BOX ---- */
+  .why-box {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 16px 18px; margin: 20px 0;
+  }
+  .why-label {
+    font-size: 11px; font-weight: 600;
+    text-transform: uppercase; letter-spacing: 0.06em;
+    color: var(--orange); margin-bottom: 8px;
+    display: flex; align-items: center; gap: 6px;
+  }
+  .why-box p { margin: 0; }
+
+  /* ---- ENTITY TABLE ---- */
+  .entity-table { width: 100%; border-collapse: collapse; margin: 20px 0; font-size: 14px; }
+  .entity-table th {
+    text-align: left; padding: 10px 14px;
+    background: var(--surface2);
+    font-size: 11px; font-weight: 600;
+    text-transform: uppercase; letter-spacing: 0.06em;
+    color: var(--text3);
+    border-bottom: 1px solid var(--border);
+  }
+  .entity-table td {
+    padding: 12px 14px;
+    border-bottom: 1px solid var(--border);
+    vertical-align: top; line-height: 1.65;
+  }
+  .entity-table td:first-child { font-weight: 500; white-space: nowrap; }
+  .entity-table tr:last-child td { border-bottom: none; }
+
+  .badge {
+    display: inline-block; font-size: 10px; font-weight: 600;
+    padding: 2px 8px; border-radius: 20px; margin-right: 6px;
+  }
+  .badge-keep { background: #e8f5e9; color: #2e7d32; }
+  .badge-skip { background: #fce4ec; color: #c62828; }
+
+  /* ---- CODE BLOCK ---- */
+  .code-block {
+    background: #1e1e2e;
+    border-radius: var(--radius);
+    padding: 20px 22px;
+    font-family: var(--mono);
+    font-size: 13px; line-height: 1.8;
+    overflow-x: auto; margin: 16px 0;
+    color: #cdd6f4;
+  }
+  .kw { color: #cba6f7; }
+  .cls { color: #a6e3a1; font-weight: 500; }
+  .cm { color: #6c7086; font-style: italic; }
+  .st { color: #f38ba8; }
+  .nm { color: #89b4fa; }
+
+  /* ---- REQ BOX ---- */
+  .req-box {
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 20px 22px; margin: 16px 0;
+  }
+  .req-box h4 { margin-top: 0; }
+  .req-list { list-style: none; }
+  .req-list li {
+    font-size: 14px; color: var(--text2);
+    padding: 5px 0; line-height: 1.65;
+    display: flex; gap: 10px;
+  }
+  .req-list li::before { font-weight: 600; flex-shrink: 0; }
+  .req-list li::before { content: "✓"; color: #2e7d32; }
+  .req-list.out li::before { content: "✗"; color: #c62828; }
+
+  /* ---- PATTERN CARD ---- */
+  .pattern-card {
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 18px 20px; margin: 14px 0;
+    background: var(--surface);
+  }
+  .pattern-card .ptitle {
+    font-size: 15px; font-weight: 600;
+    color: var(--text); margin-bottom: 10px;
+    display: flex; align-items: center; gap: 10px; flex-wrap: wrap;
+  }
+  .pattern-card .ptag {
+    font-size: 11px; background: var(--surface2);
+    border-radius: 20px; padding: 2px 9px;
+    font-weight: 500; color: var(--text3);
+  }
+  .pattern-card p { margin: 6px 0; }
+  .pattern-card b { font-weight: 600; color: var(--text); }
+
+  /* ---- SOLID GRID ---- */
+  .solid-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin: 16px 0; }
+  .solid-card {
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 16px 18px;
+    background: var(--surface);
+  }
+  .solid-card .sletter {
+    font-size: 22px; font-weight: 700; color: var(--orange);
+    margin-bottom: 4px;
+  }
+  .solid-card .sname { font-size: 13px; font-weight: 600; margin-bottom: 6px; }
+  .solid-card .sdesc { font-size: 13px; color: var(--text2); line-height: 1.6; }
+  .solid-full { grid-column: 1 / -1; }
+
+  /* ---- TRADEOFF ---- */
+  .tradeoff-row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin: 12px 0; }
+  .tradeoff-card { border-radius: var(--radius); padding: 14px 16px; font-size: 13px; line-height: 1.6; }
+  .tradeoff-card.pro { background: #e8f5e9; border: 1px solid #c8e6c9; color: #1b5e20; }
+  .tradeoff-card.con { background: #fff8e1; border: 1px solid #ffe082; color: #5d4037; }
+  .tradeoff-card .tlabel { font-weight: 700; margin-bottom: 6px; font-size: 11px; text-transform: uppercase; letter-spacing: 0.06em; }
+
+  /* ---- Q&A ---- */
+  .qa-item { border: 1px solid var(--border); border-radius: var(--radius); overflow: hidden; margin: 10px 0; }
+  .qa-q {
+    padding: 15px 18px; cursor: pointer;
+    font-size: 14px; font-weight: 500; color: var(--text);
+    display: flex; justify-content: space-between; align-items: center;
+    background: var(--surface); user-select: none;
+  }
+  .qa-q:hover { background: var(--surface2); }
+  .qa-q i { color: var(--text3); transition: transform 0.2s; font-size: 12px; }
+  .qa-q.open i { transform: rotate(180deg); }
+  .qa-a {
+    display: none; padding: 16px 18px;
+    font-size: 14px; line-height: 1.75;
+    color: var(--text2); background: var(--surface2);
+    border-top: 1px solid var(--border);
+  }
+  .qa-a.visible { display: block; }
+
+  /* ---- SVG diagram container ---- */
+  .diagram-wrap { margin: 24px 0; background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 20px; overflow-x: auto; }
+
+  /* ---- state machine pill row ---- */
+  .state-row { display: flex; align-items: center; flex-wrap: wrap; gap: 6px; margin: 20px 0; }
+  .state-pill {
+    padding: 6px 14px; border-radius: 20px;
+    font-size: 12px; font-weight: 600;
+    border: 1px solid;
+  }
+  .state-arrow { color: var(--text3); font-size: 14px; }
+  .sp-gray   { background: #f3f2ef; border-color: #d0cdc7; color: #4a4845; }
+  .sp-blue   { background: #e3f0fb; border-color: #90caf9; color: #0d47a1; }
+  .sp-purple { background: #f3e8ff; border-color: #ce93d8; color: #6a1b9a; }
+  .sp-amber  { background: #fff8e1; border-color: #ffe082; color: #e65100; }
+  .sp-coral  { background: #fce4ec; border-color: #f48fb1; color: #880e4f; }
+  .sp-teal   { background: #e0f2f1; border-color: #80cbc4; color: #004d40; }
+  .sp-red    { background: #ffebee; border-color: #ef9a9a; color: #b71c1c; }
+
+  /* ---- code inline ---- */
+  code { font-family: var(--mono); font-size: 12px; background: var(--surface2); padding: 1px 5px; border-radius: 4px; color: var(--text); }
+
+  /* ---- scrollbar ---- */
+  ::-webkit-scrollbar { width: 6px; height: 6px; }
+  ::-webkit-scrollbar-track { background: transparent; }
+  ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+</style>
+</head>
+<body>
+
+<!-- SIDEBAR -->
+<nav class="sidebar">
+  <div class="sidebar-logo">
+    <div class="brand"><div class="brand-icon">🍔</div> Swiggy LLD</div>
+    <div class="brand-sub">Low Level Design Guide</div>
+  </div>
+  <div class="nav-section">Foundations</div>
+  <div class="nav-item active" onclick="show('requirements', this)"><i class="fa-solid fa-list-check"></i> 1. Requirements</div>
+  <div class="nav-item" onclick="show('entities', this)"><i class="fa-solid fa-diagram-project"></i> 2. Core Entities</div>
+  <div class="nav-section">Implementation</div>
+  <div class="nav-item" onclick="show('class-design', this)"><i class="fa-solid fa-code"></i> 3. Class Design</div>
+  <div class="nav-item" onclick="show('flow', this)"><i class="fa-solid fa-arrow-right-arrow-left"></i> 4. Key Flows</div>
+  <div class="nav-section">Deep Dives</div>
+  <div class="nav-item" onclick="show('patterns', this)"><i class="fa-solid fa-puzzle-piece"></i> 5. Design Patterns</div>
+  <div class="nav-item" onclick="show('solid', this)"><i class="fa-solid fa-layer-group"></i> 6. SOLID Principles</div>
+  <div class="nav-item" onclick="show('tradeoffs', this)"><i class="fa-solid fa-scale-balanced"></i> 7. Trade-offs</div>
+  <div class="nav-item" onclick="show('qa', this)"><i class="fa-solid fa-circle-question"></i> 8. Interview Q&amp;A</div>
+</nav>
+
+<!-- MAIN -->
+<main class="main">
+
+<!-- ====== 1. REQUIREMENTS ====== -->
+<div class="section active" id="s-requirements">
+  <div class="section-tag">Step 1 · 5 min</div>
+  <div class="section-title">Requirements &amp; Clarifications</div>
+  <div class="section-sub">Before writing a single line of code, nail down exactly what you're building. The interviewer gives you a vague prompt — your job is to turn it into a concrete spec.</div>
+
+  <div class="callout"><b>The prompt:</b> "Design a food ordering app like Swiggy. Users should be able to browse restaurants, place orders, and track delivery."</div>
+
+  <p>That's too vague. Ask questions structured around four areas: core operations, error handling, scope boundaries, and extensibility.</p>
+
+  <h3>Clarifying Questions</h3>
+  <div class="dialogue">
+    <div class="dialogue-row you"><div class="dialogue-speaker">You</div>"What are the core actions in this system? Is it just order placement, or does it include restaurant management and delivery tracking too?"</div>
+    <div class="dialogue-row iv"><div class="dialogue-speaker">Interviewer</div>"Yes — users browse restaurants and menus, place orders, and get real-time status updates. Restaurants manage their own menus. Delivery agents pick up and drop off orders."</div>
+    <div class="dialogue-row you"><div class="dialogue-speaker">You</div>"Does a single order span multiple restaurants, or is it one restaurant per order?"</div>
+    <div class="dialogue-row iv"><div class="dialogue-speaker">Interviewer</div>"One restaurant per order. Keep it simple."</div>
+    <div class="dialogue-row you"><div class="dialogue-speaker">You</div>"What order states exist? How does the order move through the system?"</div>
+    <div class="dialogue-row iv"><div class="dialogue-speaker">Interviewer</div>"Think: PLACED → ACCEPTED → PREPARING → READY → PICKED_UP → DELIVERED. Also CANCELLED if the restaurant rejects or the user cancels before PREPARING."</div>
+    <div class="dialogue-row you"><div class="dialogue-speaker">You</div>"Who can cancel an order — only the user, or also the restaurant?"</div>
+    <div class="dialogue-row iv"><div class="dialogue-speaker">Interviewer</div>"Both, but only before the order is in PREPARING state."</div>
+    <div class="dialogue-row you"><div class="dialogue-speaker">You</div>"Should we model payment processing, or just track payment state?"</div>
+    <div class="dialogue-row iv"><div class="dialogue-speaker">Interviewer</div>"Just track it — PENDING, PAID, REFUNDED. Don't integrate with a real payment gateway."</div>
+    <div class="dialogue-row you"><div class="dialogue-speaker">You</div>"Do restaurants have operating hours? Should we reject orders outside those hours?"</div>
+    <div class="dialogue-row iv"><div class="dialogue-speaker">Interviewer</div>"Good question — yes, restaurants have an open/closed status. Reject orders if the restaurant is closed."</div>
+    <div class="dialogue-row you"><div class="dialogue-speaker">You</div>"Is delivery agent assignment automatic or manual?"</div>
+    <div class="dialogue-row iv"><div class="dialogue-speaker">Interviewer</div>"Automatic — the system assigns the nearest available agent when the order is READY."</div>
+    <div class="dialogue-row you"><div class="dialogue-speaker">You</div>"Do we need to handle concurrent orders? Like, two users ordering the last item at the same time?"</div>
+    <div class="dialogue-row iv"><div class="dialogue-speaker">Interviewer</div>"Great question — menu items have inventory counts. Decrement on order, raise an error if stock hits zero."</div>
+  </div>
+
+  <div class="why-box">
+    <div class="why-label"><i class="fa-solid fa-lightbulb"></i> Why ask about the cancellation window?</div>
+    <p>Because it reveals a state machine constraint. Once you know "cancel only before PREPARING," you immediately understand the state machine needs guards — not every transition is always valid. This shapes your entire <code>Order</code> class design.</p>
+  </div>
+
+  <h3>Final Requirements</h3>
+  <div class="req-box">
+    <h4>In scope</h4>
+    <ul class="req-list">
+      <li>Users browse restaurants filtered by city/cuisine. Menus show items with price and description.</li>
+      <li>Users place an order from one restaurant. Order can contain multiple items with quantities.</li>
+      <li>Order state machine: PLACED → ACCEPTED → PREPARING → READY → PICKED_UP → DELIVERED (+ CANCELLED).</li>
+      <li>Restaurants can accept/reject orders and update status up to READY.</li>
+      <li>Cancellation allowed only before PREPARING. Both user and restaurant can cancel.</li>
+      <li>Delivery agent auto-assigned when order reaches READY. Agent updates to PICKED_UP and DELIVERED.</li>
+      <li>Menu items have inventory. Orders decrement stock; reject if insufficient.</li>
+      <li>Payment state tracked: PENDING → PAID → REFUNDED (on cancel).</li>
+      <li>Restaurants have an open/closed flag. Reject orders if closed.</li>
+    </ul>
+    <h4 style="margin-top:18px;">Out of scope</h4>
+    <ul class="req-list out">
+      <li>Real payment gateway integration (Razorpay, Stripe).</li>
+      <li>Multi-restaurant orders / cart merging.</li>
+      <li>Surge pricing, promotions, or coupons.</li>
+      <li>GPS and route optimization for delivery.</li>
+      <li>User authentication and sessions.</li>
+      <li>Ratings, reviews, and recommendations.</li>
+      <li>UI / rendering layer.</li>
+    </ul>
+  </div>
+
+  <div class="why-box">
+    <div class="why-label"><i class="fa-solid fa-lightbulb"></i> Why call out "out of scope" explicitly?</div>
+    <p>Like in the Amazon Locker breakdown, calling out what you're <em>not</em> building signals maturity. It shows you considered GPS routing, coupon logic, and auth — and made a deliberate choice. Interviewers reward this. It mirrors a real-world project scoping call.</p>
+  </div>
+</div>
+
+<!-- ====== 2. ENTITIES ====== -->
+<div class="section" id="s-entities">
+  <div class="section-tag">Step 2 · 5 min</div>
+  <div class="section-title">Core Entities &amp; Relationships</div>
+  <div class="section-sub">Look at the requirements and spot the nouns. Not every noun deserves a class — some are just fields. The key question: does this thing have <em>behavior</em> or just <em>data</em>?</div>
+
+  <h3>Evaluating Candidates</h3>
+  <table class="entity-table">
+    <thead><tr><th>Candidate</th><th>Decision</th><th>Reasoning</th></tr></thead>
+    <tbody>
+      <tr><td><span class="badge badge-keep">Entity</span>User</td><td>Full class</td><td>Has state (name, address, order history) and actions (place order, cancel order).</td></tr>
+      <tr><td><span class="badge badge-keep">Entity</span>Restaurant</td><td>Full class</td><td>Has state (menu, open/closed, location) and behavior (accept/reject orders).</td></tr>
+      <tr><td><span class="badge badge-keep">Entity</span>MenuItem</td><td>Full class</td><td>Has inventory count that changes. Owns the logic of whether it's in stock. Not just a string.</td></tr>
+      <tr><td><span class="badge badge-keep">Entity</span>Order</td><td>Full class</td><td>The most complex entity. Owns the state machine, items list, total calculation, and cancellation logic.</td></tr>
+      <tr><td><span class="badge badge-keep">Entity</span>OrderItem</td><td>Full class</td><td>A pairing of (MenuItem, quantity). Freezes the price at time-of-order — MenuItem price could change later.</td></tr>
+      <tr><td><span class="badge badge-keep">Entity</span>DeliveryAgent</td><td>Full class</td><td>Has availability state and location. Gets assigned to orders. Updates order status.</td></tr>
+      <tr><td><span class="badge badge-keep">Entity</span>Payment</td><td>Full class</td><td>Has its own state (PENDING→PAID→REFUNDED). Separate from Order so payment logic stays isolated.</td></tr>
+      <tr><td><span class="badge badge-skip">Skip</span>City/Cuisine</td><td>Enum/string</td><td>No behavior. Just attributes used for filtering. Keep as fields on Restaurant.</td></tr>
+      <tr><td><span class="badge badge-skip">Skip</span>Address</td><td>Dataclass</td><td>Pure data — street, city, lat/lng. No behavior. A named tuple or simple dataclass is enough.</td></tr>
+    </tbody>
+  </table>
+
+  <div class="why-box">
+    <div class="why-label"><i class="fa-solid fa-lightbulb"></i> Why is OrderItem a separate entity?</div>
+    <p>This is the kind of insight interviewers love. If you store only <code>MenuItem</code> references in an order, and the restaurant later changes the price of a burger from ₹120 to ₹150, your order history shows the wrong amount. <code>OrderItem</code> <em>snapshots</em> the price at the time of ordering. This is called temporal data integrity — it appears constantly in real e-commerce systems.</p>
+  </div>
+
+  <h3>Entity Relationship Diagram</h3>
+  <div class="diagram-wrap">
+    <svg width="100%" viewBox="0 0 720 360" xmlns="http://www.w3.org/2000/svg">
+      <defs>
+        <marker id="arr" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+          <path d="M2 1L8 5L2 9" fill="none" stroke="#999793" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+        </marker>
+      </defs>
+      <!-- User -->
+      <rect x="20" y="145" width="110" height="44" rx="8" fill="#f3e8ff" stroke="#ce93d8" stroke-width="1"/>
+      <text x="75" y="162" text-anchor="middle" font-family="Inter,sans-serif" font-size="13" font-weight="600" fill="#6a1b9a">User</text>
+      <text x="75" y="178" text-anchor="middle" font-family="Inter,sans-serif" font-size="11" fill="#9c4dcc">name, address</text>
+      <!-- Order -->
+      <rect x="280" y="60" width="160" height="44" rx="8" fill="#e0f2f1" stroke="#80cbc4" stroke-width="1"/>
+      <text x="360" y="77" text-anchor="middle" font-family="Inter,sans-serif" font-size="13" font-weight="600" fill="#004d40">Order</text>
+      <text x="360" y="93" text-anchor="middle" font-family="Inter,sans-serif" font-size="11" fill="#00695c">status, total_amount</text>
+      <!-- Restaurant -->
+      <rect x="280" y="210" width="160" height="44" rx="8" fill="#fce4ec" stroke="#f48fb1" stroke-width="1"/>
+      <text x="360" y="227" text-anchor="middle" font-family="Inter,sans-serif" font-size="13" font-weight="600" fill="#880e4f">Restaurant</text>
+      <text x="360" y="243" text-anchor="middle" font-family="Inter,sans-serif" font-size="11" fill="#ad1457">is_open, location</text>
+      <!-- OrderItem -->
+      <rect x="540" y="60" width="150" height="44" rx="8" fill="#fff8e1" stroke="#ffe082" stroke-width="1"/>
+      <text x="615" y="77" text-anchor="middle" font-family="Inter,sans-serif" font-size="13" font-weight="600" fill="#e65100">OrderItem</text>
+      <text x="615" y="93" text-anchor="middle" font-family="Inter,sans-serif" font-size="11" fill="#bf360c">qty, price_at_order</text>
+      <!-- MenuItem -->
+      <rect x="540" y="210" width="150" height="44" rx="8" fill="#e3f0fb" stroke="#90caf9" stroke-width="1"/>
+      <text x="615" y="227" text-anchor="middle" font-family="Inter,sans-serif" font-size="13" font-weight="600" fill="#0d47a1">MenuItem</text>
+      <text x="615" y="243" text-anchor="middle" font-family="Inter,sans-serif" font-size="11" fill="#1565c0">price, inventory</text>
+      <!-- DeliveryAgent -->
+      <rect x="280" y="295" width="160" height="44" rx="8" fill="#e8f5e9" stroke="#a5d6a7" stroke-width="1"/>
+      <text x="360" y="312" text-anchor="middle" font-family="Inter,sans-serif" font-size="13" font-weight="600" fill="#1b5e20">DeliveryAgent</text>
+      <text x="360" y="328" text-anchor="middle" font-family="Inter,sans-serif" font-size="11" fill="#2e7d32">status, location</text>
+      <!-- Payment -->
+      <rect x="20" y="295" width="110" height="44" rx="8" fill="#f3f2ef" stroke="#d0cdc7" stroke-width="1"/>
+      <text x="75" y="312" text-anchor="middle" font-family="Inter,sans-serif" font-size="13" font-weight="600" fill="#4a4845">Payment</text>
+      <text x="75" y="328" text-anchor="middle" font-family="Inter,sans-serif" font-size="11" fill="#6b6866">PENDING→PAID</text>
+      <!-- Arrows -->
+      <line x1="130" y1="167" x2="278" y2="100" stroke="#999793" stroke-width="1" marker-end="url(#arr)"/>
+      <text x="192" y="120" text-anchor="middle" font-family="Inter,sans-serif" font-size="11" fill="#999793">places</text>
+      <line x1="440" y1="82" x2="538" y2="82" stroke="#999793" stroke-width="1" marker-end="url(#arr)"/>
+      <text x="488" y="75" text-anchor="middle" font-family="Inter,sans-serif" font-size="11" fill="#999793">has many</text>
+      <line x1="360" y1="104" x2="360" y2="208" stroke="#999793" stroke-width="1" marker-end="url(#arr)"/>
+      <text x="378" y="160" text-anchor="start" font-family="Inter,sans-serif" font-size="11" fill="#999793">from</text>
+      <line x1="615" y1="104" x2="615" y2="208" stroke="#999793" stroke-width="1" marker-end="url(#arr)"/>
+      <text x="620" y="160" text-anchor="start" font-family="Inter,sans-serif" font-size="11" fill="#999793">refs</text>
+      <line x1="360" y1="254" x2="360" y2="293" stroke="#999793" stroke-width="1" marker-end="url(#arr)"/>
+      <text x="378" y="278" text-anchor="start" font-family="Inter,sans-serif" font-size="11" fill="#999793">assigned</text>
+      <line x1="280" y1="317" x2="132" y2="317" stroke="#999793" stroke-width="1" marker-end="url(#arr)"/>
+      <text x="206" y="310" text-anchor="middle" font-family="Inter,sans-serif" font-size="11" fill="#999793">1:1</text>
+      <line x1="75" y1="295" x2="280" y2="110" stroke="#999793" stroke-width="1" marker-end="url(#arr)"/>
+      <text x="152" y="196" text-anchor="middle" font-family="Inter,sans-serif" font-size="11" fill="#999793">for</text>
+    </svg>
+  </div>
+</div>
+
+<!-- ====== 3. CLASS DESIGN ====== -->
+<div class="section" id="s-class-design">
+  <div class="section-tag">Step 3 · 15 min</div>
+  <div class="section-title">Class Design</div>
+  <div class="section-sub">Start top-down — the orchestrator first, then supporting classes. For each class ask: what does it need to <em>remember</em> (state) and what does it need to <em>do</em> (methods)?</div>
+
+  <h3>SwiggySystem — the Orchestrator</h3>
+  <p>Every well-designed LLD has one entry point. Like the <code>Locker</code> class in Amazon Locker, <code>SwiggySystem</code> owns all registries and coordinates high-level flows. It doesn't implement business logic — it delegates to the right entity.</p>
+
+  <div class="code-block"><span class="kw">class</span> <span class="cls">SwiggySystem</span>:
+    <span class="cm"># Registries (like Locker's compartments + accessTokenMapping)</span>
+    restaurants: <span class="nm">dict</span>[str, Restaurant]       <span class="cm"># restaurant_id → Restaurant</span>
+    users: <span class="nm">dict</span>[str, User]                   <span class="cm"># user_id → User</span>
+    orders: <span class="nm">dict</span>[str, Order]                 <span class="cm"># order_id → Order</span>
+    agents: <span class="nm">dict</span>[str, DeliveryAgent]          <span class="cm"># agent_id → DeliveryAgent</span>
+
+    <span class="cm"># Core operations</span>
+    <span class="kw">def</span> <span class="nm">place_order</span>(user_id, restaurant_id, items) → Order
+    <span class="kw">def</span> <span class="nm">cancel_order</span>(order_id, cancelled_by) → <span class="nm">bool</span>
+    <span class="kw">def</span> <span class="nm">update_order_status</span>(order_id, new_status, actor_id) → <span class="nm">bool</span>
+    <span class="kw">def</span> <span class="nm">search_restaurants</span>(city, cuisine) → <span class="nm">list</span>[Restaurant]
+    <span class="kw">def</span> <span class="nm">assign_delivery_agent</span>(order_id) → DeliveryAgent</div>
+
+  <div class="why-box">
+    <div class="why-label"><i class="fa-solid fa-lightbulb"></i> Why not put all logic in SwiggySystem?</div>
+    <p>That creates a "God Class" — one class that knows everything. Instead, <code>SwiggySystem</code> only coordinates: finds the right restaurant, calls the right method. The actual business logic (is this transition valid? is stock available?) lives on the entity itself. This is the Single Responsibility Principle.</p>
+  </div>
+
+  <h3>Order — the Heart of the System</h3>
+  <div class="code-block"><span class="kw">from</span> enum <span class="kw">import</span> Enum, auto
+
+<span class="kw">class</span> <span class="cls">OrderStatus</span>(Enum):
+    PLACED     = auto()
+    ACCEPTED   = auto()
+    PREPARING  = auto()
+    READY      = auto()
+    PICKED_UP  = auto()
+    DELIVERED  = auto()
+    CANCELLED  = auto()
+
+<span class="kw">class</span> <span class="cls">Order</span>:
+    order_id: str
+    user_id: str
+    restaurant_id: str
+    items: <span class="nm">list</span>[OrderItem]         <span class="cm"># snapshot of (item, qty, price_at_order)</span>
+    status: OrderStatus
+    payment: Payment
+    delivery_agent_id: <span class="nm">str</span> | <span class="nm">None</span>
+    created_at: datetime
+    total_amount: <span class="nm">float</span>
+
+    <span class="cm"># State machine — declarative transition rules</span>
+    VALID_TRANSITIONS = {
+        OrderStatus.PLACED:    [OrderStatus.ACCEPTED, OrderStatus.CANCELLED],
+        OrderStatus.ACCEPTED:  [OrderStatus.PREPARING, OrderStatus.CANCELLED],
+        OrderStatus.PREPARING: [OrderStatus.READY],
+        OrderStatus.READY:     [OrderStatus.PICKED_UP],
+        OrderStatus.PICKED_UP: [OrderStatus.DELIVERED],
+    }
+
+    <span class="kw">def</span> <span class="nm">update_status</span>(self, new_status: OrderStatus) → <span class="nm">bool</span>:
+        <span class="kw">if</span> new_status <span class="kw">not in</span> self.VALID_TRANSITIONS.get(self.status, []):
+            <span class="kw">raise</span> InvalidTransitionError(
+                <span class="st">f"Cannot go from {self.status} to {new_status}"</span>)
+        self.status = new_status
+        <span class="kw">return True</span>
+
+    <span class="kw">def</span> <span class="nm">can_cancel</span>(self) → <span class="nm">bool</span>:
+        <span class="kw">return</span> self.status <span class="kw">in</span> [OrderStatus.PLACED, OrderStatus.ACCEPTED]
+
+    <span class="kw">def</span> <span class="nm">calculate_total</span>(self) → <span class="nm">float</span>:
+        <span class="kw">return</span> <span class="nm">sum</span>(item.price_at_order * item.quantity <span class="kw">for</span> item <span class="kw">in</span> self.items)</div>
+
+  <div class="why-box">
+    <div class="why-label"><i class="fa-solid fa-lightbulb"></i> Why a VALID_TRANSITIONS dictionary?</div>
+    <p>This is the State Machine pattern. Instead of spaghetti <code>if/else</code> inside every method, the rules live in one declarative data structure. Adding a new state is a one-line change. The Elevator problem uses a similar pattern for its direction-based movement logic.</p>
+  </div>
+
+  <h3>MenuItem — with Inventory</h3>
+  <div class="code-block"><span class="kw">class</span> <span class="cls">MenuItem</span>:
+    item_id: str
+    name: str
+    price: <span class="nm">float</span>
+    is_available: <span class="nm">bool</span>
+    inventory_count: <span class="nm">int</span>        <span class="cm"># in prod, use DB row locking for concurrency</span>
+
+    <span class="kw">def</span> <span class="nm">is_in_stock</span>(self, quantity: <span class="nm">int</span>) → <span class="nm">bool</span>:
+        <span class="kw">return</span> self.is_available <span class="kw">and</span> self.inventory_count >= quantity
+
+    <span class="kw">def</span> <span class="nm">deduct_stock</span>(self, quantity: <span class="nm">int</span>) → <span class="nm">None</span>:
+        <span class="kw">if not</span> self.is_in_stock(quantity):
+            <span class="kw">raise</span> InsufficientStockError(self.name)
+        self.inventory_count -= quantity
+
+    <span class="kw">def</span> <span class="nm">restore_stock</span>(self, quantity: <span class="nm">int</span>) → <span class="nm">None</span>:
+        <span class="cm"># Called on order cancellation</span>
+        self.inventory_count += quantity</div>
+
+  <h3>DeliveryAgent — with Availability</h3>
+  <div class="code-block"><span class="kw">class</span> <span class="cls">AgentStatus</span>(Enum):
+    AVAILABLE   = auto()
+    ON_DELIVERY = auto()
+    OFFLINE     = auto()
+
+<span class="kw">class</span> <span class="cls">DeliveryAgent</span>:
+    agent_id: str
+    name: str
+    status: AgentStatus
+    current_order_id: <span class="nm">str</span> | <span class="nm">None</span>
+    location: Address
+
+    <span class="kw">def</span> <span class="nm">is_available</span>(self) → <span class="nm">bool</span>:
+        <span class="kw">return</span> self.status == AgentStatus.AVAILABLE
+
+    <span class="kw">def</span> <span class="nm">assign_order</span>(self, order_id: str) → <span class="nm">None</span>:
+        self.current_order_id = order_id
+        self.status = AgentStatus.ON_DELIVERY
+
+    <span class="kw">def</span> <span class="nm">complete_delivery</span>(self) → <span class="nm">None</span>:
+        self.current_order_id = <span class="nm">None</span>
+        self.status = AgentStatus.AVAILABLE</div>
+
+  <h3>OrderItem — Price Snapshot</h3>
+  <div class="code-block"><span class="nm">@dataclass</span>
+<span class="kw">class</span> <span class="cls">OrderItem</span>:
+    item_id: str
+    name: str
+    quantity: <span class="nm">int</span>
+    price_at_order: <span class="nm">float</span>   <span class="cm"># frozen at time of order — never changes</span>
+
+    <span class="nm">@property</span>
+    <span class="kw">def</span> <span class="nm">subtotal</span>(self) → <span class="nm">float</span>:
+        <span class="kw">return</span> self.quantity * self.price_at_order</div>
+</div>
+
+<!-- ====== 4. FLOWS ====== -->
+<div class="section" id="s-flow">
+  <div class="section-tag">Step 4 · 10 min</div>
+  <div class="section-title">Key Flows</div>
+  <div class="section-sub">Walk through the two most important operations end-to-end. This is where your entity design gets stress-tested.</div>
+
+  <h3>Flow 1 — Placing an Order</h3>
+  <div class="diagram-wrap">
+    <svg width="100%" viewBox="0 0 660 440" xmlns="http://www.w3.org/2000/svg">
+      <defs>
+        <marker id="arr2" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+          <path d="M2 1L8 5L2 9" fill="none" stroke="#999793" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+        </marker>
+        <marker id="arrerr" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+          <path d="M2 1L8 5L2 9" fill="none" stroke="#c62828" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+        </marker>
+      </defs>
+      <!-- Steps -->
+      <rect x="200" y="20" width="260" height="48" rx="8" fill="#f3e8ff" stroke="#ce93d8" stroke-width="1"/>
+      <text x="330" y="39" text-anchor="middle" font-family="Inter,sans-serif" font-size="13" font-weight="600" fill="#6a1b9a">SwiggySystem.place_order()</text>
+      <text x="330" y="57" text-anchor="middle" font-family="Inter,sans-serif" font-size="11" fill="#9c4dcc">entry point</text>
+
+      <line x1="330" y1="68" x2="330" y2="96" stroke="#999793" stroke-width="1" marker-end="url(#arr2)"/>
+
+      <rect x="200" y="96" width="260" height="48" rx="8" fill="#f3f2ef" stroke="#d0cdc7" stroke-width="1"/>
+      <text x="330" y="115" text-anchor="middle" font-family="Inter,sans-serif" font-size="13" font-weight="600" fill="#4a4845">Validate restaurant</text>
+      <text x="330" y="133" text-anchor="middle" font-family="Inter,sans-serif" font-size="11" fill="#6b6866">exists? is_open?</text>
+
+      <line x1="330" y1="144" x2="330" y2="172" stroke="#999793" stroke-width="1" marker-end="url(#arr2)"/>
+
+      <rect x="200" y="172" width="260" height="48" rx="8" fill="#fce4ec" stroke="#f48fb1" stroke-width="1"/>
+      <text x="330" y="191" text-anchor="middle" font-family="Inter,sans-serif" font-size="13" font-weight="600" fill="#880e4f">Check inventory</text>
+      <text x="330" y="209" text-anchor="middle" font-family="Inter,sans-serif" font-size="11" fill="#ad1457">item.is_in_stock(qty) for each item</text>
+
+      <line x1="330" y1="220" x2="330" y2="248" stroke="#999793" stroke-width="1" marker-end="url(#arr2)"/>
+
+      <rect x="200" y="248" width="260" height="48" rx="8" fill="#fff8e1" stroke="#ffe082" stroke-width="1"/>
+      <text x="330" y="267" text-anchor="middle" font-family="Inter,sans-serif" font-size="13" font-weight="600" fill="#e65100">Deduct stock</text>
+      <text x="330" y="285" text-anchor="middle" font-family="Inter,sans-serif" font-size="11" fill="#bf360c">item.deduct_stock(qty)</text>
+
+      <line x1="330" y1="296" x2="330" y2="324" stroke="#999793" stroke-width="1" marker-end="url(#arr2)"/>
+
+      <rect x="200" y="324" width="260" height="48" rx="8" fill="#e0f2f1" stroke="#80cbc4" stroke-width="1"/>
+      <text x="330" y="343" text-anchor="middle" font-family="Inter,sans-serif" font-size="13" font-weight="600" fill="#004d40">Create Order object</text>
+      <text x="330" y="361" text-anchor="middle" font-family="Inter,sans-serif" font-size="11" fill="#00695c">status=PLACED, snapshot prices</text>
+
+      <line x1="330" y1="372" x2="330" y2="400" stroke="#999793" stroke-width="1" marker-end="url(#arr2)"/>
+
+      <rect x="200" y="400" width="260" height="36" rx="8" fill="#e3f0fb" stroke="#90caf9" stroke-width="1"/>
+      <text x="330" y="423" text-anchor="middle" font-family="Inter,sans-serif" font-size="13" font-weight="600" fill="#0d47a1">Create Payment (PENDING)</text>
+
+      <!-- Error labels -->
+      <line x1="462" y1="120" x2="490" y2="120" stroke="#c62828" stroke-width="1" marker-end="url(#arrerr)"/>
+      <text x="494" y="124" font-family="Inter,sans-serif" font-size="11" fill="#c62828">RestaurantNotOpen</text>
+      <line x1="462" y1="196" x2="490" y2="196" stroke="#c62828" stroke-width="1" marker-end="url(#arrerr)"/>
+      <text x="494" y="200" font-family="Inter,sans-serif" font-size="11" fill="#c62828">InsufficientStock</text>
+    </svg>
+  </div>
+
+  <div class="callout"><b>Key insight:</b> We deduct stock <em>before</em> creating the Order object. If stock deduction fails, no Order is created — no orphan orders in a bad state. On cancellation, <code>restore_stock()</code> reverses it.</div>
+
+  <h3>Flow 2 — Order State Machine</h3>
+  <div class="state-row">
+    <span class="state-pill sp-gray">PLACED</span>
+    <span class="state-arrow">→</span>
+    <span class="state-pill sp-blue">ACCEPTED</span>
+    <span class="state-arrow">→</span>
+    <span class="state-pill sp-purple">PREPARING</span>
+    <span class="state-arrow">→</span>
+    <span class="state-pill sp-amber">READY</span>
+    <span class="state-arrow">→</span>
+    <span class="state-pill sp-coral">PICKED_UP</span>
+    <span class="state-arrow">→</span>
+    <span class="state-pill sp-teal">DELIVERED</span>
+  </div>
+  <p style="margin-top: 0;">↳ PLACED or ACCEPTED can also transition to <span class="state-pill sp-red" style="font-size:11px; padding: 3px 10px;">CANCELLED</span> — the cancel window closes once PREPARING begins.</p>
+
+  <div class="why-box">
+    <div class="why-label"><i class="fa-solid fa-lightbulb"></i> Why reject invalid transitions explicitly?</div>
+    <p>Silent ignoring of bad input creates subtle bugs. If <code>update_status(DELIVERED)</code> is called on a PLACED order and you just return False, the caller doesn't know why it failed and may retry. Raising <code>InvalidTransitionError</code> forces the caller to handle the failure correctly. This mirrors how Connect Four rejects moves on a full column — not silently, but with a clear error.</p>
+  </div>
+
+  <h3>Flow 3 — Agent Assignment</h3>
+  <div class="code-block"><span class="kw">def</span> <span class="nm">assign_delivery_agent</span>(self, order_id: str) → DeliveryAgent:
+    order = self.orders[order_id]
+    restaurant = self.restaurants[order.restaurant_id]
+
+    available = [a <span class="kw">for</span> a <span class="kw">in</span> self.agents.values() <span class="kw">if</span> a.is_available()]
+    <span class="kw">if not</span> available:
+        <span class="kw">raise</span> NoAgentAvailableError()
+
+    <span class="cm"># Simple strategy: nearest to restaurant</span>
+    <span class="cm"># In prod: inject an AgentAssignmentStrategy (Strategy pattern)</span>
+    nearest = min(available, key=<span class="kw">lambda</span> a: distance(a.location, restaurant.location))
+    nearest.assign_order(order_id)
+    order.delivery_agent_id = nearest.agent_id
+    <span class="kw">return</span> nearest</div>
+</div>
+
+<!-- ====== 5. PATTERNS ====== -->
+<div class="section" id="s-patterns">
+  <div class="section-tag">Step 5 · Deep Dive</div>
+  <div class="section-title">Design Patterns Applied</div>
+  <div class="section-sub">Don't sprinkle patterns randomly. Each pattern should solve a specific problem. Here's why each one was chosen — not just what it is.</div>
+
+  <div class="pattern-card">
+    <div class="ptitle">State Machine (State Pattern) <span class="ptag">used in Order</span></div>
+    <p><b>Problem it solves:</b> Without it, every method on <code>Order</code> would have a tangle of <code>if status == X and new_status == Y</code> checks that are easy to get wrong and hard to extend.</p>
+    <p><b>How it's used:</b> The <code>VALID_TRANSITIONS</code> dict in <code>Order</code> is a declarative state machine. <code>update_status()</code> consults it before allowing any transition. Adding a new state (like RETURNED) is a one-line dict entry.</p>
+    <p><b>Interview cue:</b> "I'm using the State Machine pattern here. The transition rules are centralized, so invalid operations are caught immediately and the logic doesn't leak into other classes."</p>
+  </div>
+
+  <div class="pattern-card">
+    <div class="ptitle">Observer Pattern <span class="ptag">for notifications</span></div>
+    <p><b>Problem it solves:</b> When an order moves to ACCEPTED, you might want to notify the user by push, SMS, and in-app badge simultaneously. Hardcoding all three into <code>update_status()</code> violates the Open/Closed Principle.</p>
+    <p><b>How it's used:</b> <code>Order</code> maintains a list of <code>OrderObserver</code> objects. When status changes, it calls <code>on_status_change(order, new_status)</code> on each. You can add a <code>PushNotificationObserver</code> or <code>SMSObserver</code> without touching Order.</p>
+    <div class="code-block" style="margin-top:12px; font-size:12px;"><span class="kw">class</span> <span class="cls">OrderObserver</span>:
+    <span class="kw">def</span> <span class="nm">on_status_change</span>(self, order: Order, new_status: OrderStatus): ...
+
+<span class="kw">class</span> <span class="cls">PushNotificationObserver</span>(OrderObserver):
+    <span class="kw">def</span> <span class="nm">on_status_change</span>(self, order, new_status):
+        send_push(order.user_id, <span class="st">f"Order {new_status.name}"</span>)</div>
+  </div>
+
+  <div class="pattern-card">
+    <div class="ptitle">Strategy Pattern <span class="ptag">for agent assignment</span></div>
+    <p><b>Problem it solves:</b> "Pick the nearest agent" is one possible algorithm. "Pick the agent with fewest deliveries today" is another. You don't want to rewrite <code>SwiggySystem</code> every time this changes.</p>
+    <p><b>How it's used:</b> Define an <code>AgentAssignmentStrategy</code> interface with <code>find_agent(agents, order)</code>. Inject it into <code>SwiggySystem</code> at construction. Swapping algorithms is a one-line change at the call site.</p>
+  </div>
+
+  <div class="pattern-card">
+    <div class="ptitle">Factory Pattern <span class="ptag">for Order creation</span></div>
+    <p><b>Problem it solves:</b> Creating an Order involves multiple steps — generate UUID, snapshot prices, deduct inventory, set timestamp, create Payment. Scattered logic means steps get skipped.</p>
+    <p><b>How it's used:</b> <code>OrderFactory.create(user, restaurant, cart)</code> encapsulates all creation steps. Nothing can create an <code>Order</code> in a half-initialized state.</p>
+  </div>
+
+  <div class="pattern-card">
+    <div class="ptitle">Repository Pattern <span class="ptag">for data access</span></div>
+    <p><b>Problem it solves:</b> Right now <code>SwiggySystem</code> uses plain dicts. In production, you'd use a database. Without Repository, switching storage touches business logic.</p>
+    <p><b>How it's used:</b> Define <code>OrderRepository</code> with <code>get(id)</code>, <code>save(order)</code>, <code>find_by_user(user_id)</code>. <code>SwiggySystem</code> talks to the interface — swap the implementation for a DB-backed version at any time.</p>
+  </div>
+</div>
+
+<!-- ====== 6. SOLID ====== -->
+<div class="section" id="s-solid">
+  <div class="section-tag">Step 6 · Deep Dive</div>
+  <div class="section-title">SOLID Principles</div>
+  <div class="section-sub">Show you're not applying SOLID as a checklist — explain how each principle shaped a specific decision in this design.</div>
+
+  <div class="solid-grid">
+    <div class="solid-card">
+      <div class="sletter">S</div>
+      <div class="sname">Single Responsibility</div>
+      <div class="sdesc"><code>Order</code> handles state transitions. <code>Payment</code> handles money state. <code>MenuItem</code> handles inventory. None bleeds into the others. <code>SwiggySystem</code> coordinates but doesn't implement rules.</div>
+    </div>
+    <div class="solid-card">
+      <div class="sletter">O</div>
+      <div class="sname">Open / Closed</div>
+      <div class="sdesc">Adding <code>PushNotificationObserver</code> doesn't change <code>Order</code>. Adding a new <code>AgentAssignmentStrategy</code> doesn't change <code>SwiggySystem</code>. Extend by adding new classes, not editing existing ones.</div>
+    </div>
+    <div class="solid-card">
+      <div class="sletter">L</div>
+      <div class="sname">Liskov Substitution</div>
+      <div class="sdesc">Any <code>AgentAssignmentStrategy</code> subclass must work wherever the base is expected. <code>NearestAgentStrategy</code> and <code>HighestRatedStrategy</code> fulfill the same contract — substitution is safe.</div>
+    </div>
+    <div class="solid-card">
+      <div class="sletter">I</div>
+      <div class="sname">Interface Segregation</div>
+      <div class="sdesc">A <code>DeliveryAgent</code> doesn't need to implement <code>cancel_order()</code>. Interfaces are narrow: <code>OrderObserver</code> has one method, not ten.</div>
+    </div>
+    <div class="solid-card solid-full">
+      <div class="sletter">D</div>
+      <div class="sname">Dependency Inversion</div>
+      <div class="sdesc"><code>SwiggySystem</code> depends on <code>AgentAssignmentStrategy</code> (an abstraction), not <code>NearestAgentStrategy</code> (a concrete class). <code>Order</code> depends on <code>OrderObserver</code> (abstract), not <code>PushNotificationObserver</code>. High-level modules don't depend on low-level details.</div>
+    </div>
+  </div>
+</div>
+
+<!-- ====== 7. TRADEOFFS ====== -->
+<div class="section" id="s-tradeoffs">
+  <div class="section-tag">Step 7 · Deep Dive</div>
+  <div class="section-title">Trade-offs &amp; Design Decisions</div>
+  <div class="section-sub">Every design decision is a trade-off. Naming them explicitly makes you look senior. Here are the key ones in Swiggy's LLD.</div>
+
+  <h3>1. OrderItem vs direct MenuItem reference</h3>
+  <div class="tradeoff-row">
+    <div class="tradeoff-card pro"><div class="tlabel">✓ Chosen: OrderItem snapshot</div>Prices are frozen at order time. If the restaurant changes the burger price next week, old orders still show ₹120. Supports refunds and invoice generation correctly.</div>
+    <div class="tradeoff-card con"><div class="tlabel">✗ Alternative: direct MenuItem ref</div>Simpler. But if you run <code>order.items[0].price</code> 3 months later and the price changed, your order history is wrong. Never do this in a commerce system.</div>
+  </div>
+
+  <h3>2. State Machine in Order vs separate class</h3>
+  <div class="tradeoff-row">
+    <div class="tradeoff-card pro"><div class="tlabel">✓ Chosen: state machine inside Order</div>All order logic in one place. Easy to understand. The state and the transitions that govern it live together — high cohesion.</div>
+    <div class="tradeoff-card con"><div class="tlabel">✗ Alternative: separate OrderStateMachine</div>More extensible if states get very complex. But over-engineering for an LLD interview unless the interviewer explicitly asks for it.</div>
+  </div>
+
+  <h3>3. In-memory dict vs Repository</h3>
+  <div class="tradeoff-row">
+    <div class="tradeoff-card pro"><div class="tlabel">✓ For LLD interview: plain dict</div>Fast to code, easy to reason about. Works perfectly for interview scope. Mention Repository as the upgrade path and you've covered both worlds.</div>
+    <div class="tradeoff-card con"><div class="tlabel">Production: Repository pattern</div>Required for persistence, transactions, and concurrent access. Swap the dict for a PostgreSQL-backed repo without changing business logic.</div>
+  </div>
+
+  <h3>4. Inventory — check-then-deduct vs atomic lock</h3>
+  <div class="tradeoff-row">
+    <div class="tradeoff-card pro"><div class="tlabel">✓ For LLD: simple deduct_stock()</div>Simple, clear, testable. Covers the single-threaded case perfectly for an interview scope.</div>
+    <div class="tradeoff-card con"><div class="tlabel">Production: DB-level locking</div>Two threads can both pass <code>is_in_stock()</code> and both deduct, going negative. Real systems use SELECT FOR UPDATE or optimistic locking. Mention this — it shows you know the gap.</div>
+  </div>
+
+  <h3>5. Agent assignment — eager vs lazy</h3>
+  <div class="tradeoff-row">
+    <div class="tradeoff-card pro"><div class="tlabel">✓ Chosen: assign when READY</div>Only assign once food is ready — reduces idle agent time. Agent doesn't wait at the restaurant during prep.</div>
+    <div class="tradeoff-card con"><div class="tlabel">Alternative: assign when ACCEPTED</div>Agent can head to restaurant earlier. But agent might wait idle if prep takes long. Real Swiggy uses dynamic re-assignment based on ETA predictions.</div>
+  </div>
+</div>
+
+<!-- ====== 8. Q&A ====== -->
+<div class="section" id="s-qa">
+  <div class="section-tag">Step 8 · Interview Prep</div>
+  <div class="section-title">Interview Q&amp;A</div>
+  <div class="section-sub">Common follow-up questions interviewers ask. Click each to reveal the answer.</div>
+
+  <div class="qa-item">
+    <div class="qa-q" onclick="toggleQA(this)">How would you handle concurrent orders for the same item? <i class="fa-solid fa-chevron-down"></i></div>
+    <div class="qa-a">In the current design, <code>MenuItem.deduct_stock()</code> is not thread-safe — two threads could both pass the <code>is_in_stock()</code> check before either deducts. In production, use database-level row locking: <code>SELECT FOR UPDATE</code> in PostgreSQL, or optimistic locking with a version counter. The LLD interview answer: mention this gap explicitly and propose the DB-level fix. Don't pretend the dict solution is production-safe.</div>
+  </div>
+
+  <div class="qa-item">
+    <div class="qa-q" onclick="toggleQA(this)">Why did you separate Payment from Order? <i class="fa-solid fa-chevron-down"></i></div>
+    <div class="qa-a">Single Responsibility. Order manages food lifecycle (state machine, items, agent). Payment manages money lifecycle (PENDING → PAID → REFUNDED). They change for different reasons — a new payment gateway integration shouldn't touch Order logic. Also, payment state can outlive the order: REFUNDED happens after DELIVERED or CANCELLED. Keeping them separate avoids conflicts.</div>
+  </div>
+
+  <div class="qa-item">
+    <div class="qa-q" onclick="toggleQA(this)">How would you add coupon / discount support? <i class="fa-solid fa-chevron-down"></i></div>
+    <div class="qa-a">Add a <code>Coupon</code> entity with a <code>code</code>, <code>discount_type</code> (flat/percent), <code>discount_value</code>, and <code>is_valid()</code> method. In <code>Order.calculate_total()</code>, accept an optional coupon and apply it. <code>SwiggySystem.place_order()</code> accepts a coupon code, validates it, and passes it to <code>OrderFactory</code>. This doesn't require changing any existing class — just extending — which respects the Open/Closed Principle.</div>
+  </div>
+
+  <div class="qa-item">
+    <div class="qa-q" onclick="toggleQA(this)">What if the restaurant rejects the order? <i class="fa-solid fa-chevron-down"></i></div>
+    <div class="qa-a">The order moves from PLACED → CANCELLED via <code>update_status(OrderStatus.CANCELLED)</code> — already a valid transition in the state machine. On cancellation: (1) restore inventory via <code>item.restore_stock(qty)</code>, (2) trigger refund by setting payment to REFUNDED, (3) notify user via Observer. All three steps happen in <code>SwiggySystem.cancel_order()</code> which orchestrates them.</div>
+  </div>
+
+  <div class="qa-item">
+    <div class="qa-q" onclick="toggleQA(this)">How would you support multiple addresses per user? <i class="fa-solid fa-chevron-down"></i></div>
+    <div class="qa-a">Change <code>User.address</code> from a single <code>Address</code> to a <code>list[Address]</code> with a <code>default_address_id</code>. Add <code>add_address()</code>, <code>remove_address()</code>, and <code>set_default()</code> methods. <code>place_order()</code> takes an optional <code>delivery_address_id</code>, defaulting to the user's default address. No other class needs to change.</div>
+  </div>
+
+  <div class="qa-item">
+    <div class="qa-q" onclick="toggleQA(this)">How would you track order history per user? <i class="fa-solid fa-chevron-down"></i></div>
+    <div class="qa-a">Two options. Simple: <code>User</code> has a <code>list[str]</code> of <code>order_ids</code>. Fetch Order objects from <code>SwiggySystem.orders</code> when needed. Better with Repository: <code>OrderRepository.find_by_user(user_id)</code> queries the database directly. For an LLD interview the simple option is fine — mention the Repository approach as a production upgrade to impress the interviewer.</div>
+  </div>
+
+  <div class="qa-item">
+    <div class="qa-q" onclick="toggleQA(this)">What design pattern did you use for notifications, and why not just call them directly? <i class="fa-solid fa-chevron-down"></i></div>
+    <div class="qa-a">Observer pattern. If you call notification methods directly inside <code>Order.update_status()</code>, Order becomes tightly coupled to notification logic. Adding email notifications means editing Order. Removing SMS means editing Order. With Observer, Order doesn't know who's listening — it just broadcasts. Each notification channel is an independent Observer. You can add, remove, or mock them without touching Order at all.</div>
+  </div>
+
+  <div class="qa-item">
+    <div class="qa-q" onclick="toggleQA(this)">Walk me through what happens when an order is cancelled mid-preparation. <i class="fa-solid fa-chevron-down"></i></div>
+    <div class="qa-a">If status is PREPARING, <code>order.can_cancel()</code> returns <code>False</code> because PREPARING is not in the allowed-cancel states list. <code>SwiggySystem.cancel_order()</code> checks this first and raises a <code>CancellationNotAllowedError</code>. This is by design — once the restaurant is actively making the food, cancellation isn't fair to them. If asked "what if the user really wants to cancel?" — that would need a separate manual escalation flow, which is out of scope for this design.</div>
+  </div>
+</div>
+
+</main>
+
+<script>
+  function show(id, el) {
+    document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
+    document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+    document.getElementById('s-' + id).classList.add('active');
+    el.classList.add('active');
+    window.scrollTo(0, 0);
+  }
+
+  function toggleQA(el) {
+    el.classList.toggle('open');
+    el.nextElementSibling.classList.toggle('visible');
+  }
+</script>
+</body>
+</html>

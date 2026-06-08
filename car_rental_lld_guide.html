@@ -1,0 +1,1310 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Car Rental System — LLD Interview Guide</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"/>
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
+<link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=JetBrains+Mono:wght@400;600&family=Outfit:wght@300;400;500;600&display=swap" rel="stylesheet"/>
+<style>
+  *{box-sizing:border-box;margin:0;padding:0}
+  :root{
+    --ink:#1a1a2e;--ink2:#3d3d5c;--ink3:#6b6b8a;
+    --surface:#f8f7ff;--surface2:#ededf8;--surface3:#e2e1f5;
+    --accent:#5c4de8;--accent2:#8b7cf6;--accent3:#c4bfff;
+    --teal:#1a9e8a;--teal2:#4dc4b0;--teal3:#b8ede7;
+    --amber:#c47a1a;--amber2:#f0a840;--amber3:#fde8be;
+    --coral:#d94f3d;--coral2:#f07d6e;--coral3:#fdd5cf;
+    --green:#2a8c4e;--green2:#5bba80;--green3:#c5edda;
+    --border:rgba(92,77,232,0.15);--border2:rgba(92,77,232,0.25);
+    --radius:10px;--radius-lg:16px;
+    --mono:'JetBrains Mono',monospace;
+    --serif:'DM Serif Display',serif;
+    --sans:'Outfit',sans-serif;
+  }
+  body{font-family:var(--sans);background:var(--surface);color:var(--ink);font-size:15px;line-height:1.7}
+  
+  /* ── HEADER ── */
+  .hero{background:var(--ink);color:#fff;padding:3rem 2rem 2.5rem;position:relative;overflow:hidden}
+  .hero::before{content:'';position:absolute;top:-60px;right:-60px;width:320px;height:320px;border-radius:50%;background:radial-gradient(circle,rgba(92,77,232,0.35) 0%,transparent 70%);pointer-events:none}
+  .hero::after{content:'';position:absolute;bottom:-80px;left:40%;width:240px;height:240px;border-radius:50%;background:radial-gradient(circle,rgba(29,158,138,0.2) 0%,transparent 70%);pointer-events:none}
+  .hero-eyebrow{font-size:11px;letter-spacing:2.5px;text-transform:uppercase;color:var(--accent3);margin-bottom:0.5rem;font-weight:500}
+  .hero h1{font-family:var(--serif);font-size:2.6rem;line-height:1.15;margin-bottom:1rem;color:#fff}
+  .hero h1 em{font-style:italic;color:var(--accent3)}
+  .hero-sub{font-size:14px;color:rgba(255,255,255,0.6);max-width:520px;line-height:1.6}
+  .hero-tags{display:flex;gap:8px;flex-wrap:wrap;margin-top:1.25rem}
+  .hero-tag{font-size:11px;padding:4px 10px;border-radius:20px;border:1px solid rgba(255,255,255,0.2);color:rgba(255,255,255,0.7);font-weight:400}
+
+  /* ── NAV TABS ── */
+  .tab-bar{display:flex;gap:0;background:#fff;border-bottom:1px solid var(--border);overflow-x:auto;position:sticky;top:0;z-index:100}
+  .tab-btn{padding:0.85rem 1.25rem;font-size:13px;font-weight:500;color:var(--ink3);border:none;background:none;cursor:pointer;white-space:nowrap;border-bottom:2px solid transparent;transition:all 0.18s;font-family:var(--sans)}
+  .tab-btn:hover{color:var(--accent);background:var(--surface)}
+  .tab-btn.active{color:var(--accent);border-bottom-color:var(--accent)}
+
+  /* ── SECTIONS ── */
+  .section{display:none;padding:2rem;max-width:900px;margin:0 auto}
+  .section.active{display:block}
+  .section-title{font-family:var(--serif);font-size:1.65rem;color:var(--ink);margin-bottom:0.4rem}
+  .section-sub{font-size:13px;color:var(--ink3);margin-bottom:2rem;line-height:1.5}
+
+  /* ── CARDS ── */
+  .card{background:#fff;border:1px solid var(--border);border-radius:var(--radius-lg);padding:1.5rem;margin-bottom:1.25rem}
+  .card-header{display:flex;align-items:flex-start;gap:12px;margin-bottom:1rem}
+  .card-icon{width:38px;height:38px;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0}
+  .card-title{font-size:1rem;font-weight:600;color:var(--ink);margin-bottom:2px}
+  .card-desc{font-size:13px;color:var(--ink3);line-height:1.5}
+  .icon-purple{background:var(--surface3);color:var(--accent)}
+  .icon-teal{background:var(--teal3);color:var(--teal)}
+  .icon-amber{background:var(--amber3);color:var(--amber)}
+  .icon-coral{background:var(--coral3);color:var(--coral)}
+  .icon-green{background:var(--green3);color:var(--green)}
+
+  /* ── CODE BLOCKS ── */
+  .code-wrap{background:#0d1117;border-radius:var(--radius);overflow:hidden;margin:1rem 0}
+  .code-label{background:#161b22;padding:6px 14px;font-size:11px;color:#8b949e;font-family:var(--mono);letter-spacing:1px;display:flex;justify-content:space-between;align-items:center}
+  .code-label span{color:#58a6ff;font-weight:600}
+  pre{padding:1.25rem 1.5rem;overflow-x:auto;font-family:var(--mono);font-size:12.5px;line-height:1.8;color:#e6edf3}
+  .kw{color:#ff7b72}
+  .fn{color:#d2a8ff}
+  .st{color:#a5d6ff}
+  .cm{color:#8b949e;font-style:italic}
+  .num{color:#79c0ff}
+  .dt{color:#ffa657}
+  .cls{color:#ffd700}
+  .dec{color:#7ee787}
+
+  /* ── UML DIAGRAM ── */
+  .uml-container{background:#fff;border:1px solid var(--border);border-radius:var(--radius-lg);overflow:auto;padding:1.5rem}
+  .uml-container svg{max-width:100%;height:auto}
+
+  /* ── PATTERN CARDS ── */
+  .pattern-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:1rem;margin-bottom:1.5rem}
+  .pattern-card{background:#fff;border:1px solid var(--border);border-radius:var(--radius-lg);padding:1.25rem;cursor:pointer;transition:all 0.2s}
+  .pattern-card:hover{border-color:var(--accent2);box-shadow:0 4px 20px rgba(92,77,232,0.1);transform:translateY(-2px)}
+  .pattern-card.selected{border-color:var(--accent);background:var(--surface)}
+  .pattern-name{font-size:14px;font-weight:600;color:var(--ink);margin-bottom:4px}
+  .pattern-role{font-size:12px;color:var(--ink3);margin-bottom:10px}
+  .pattern-tag{display:inline-block;font-size:11px;padding:3px 8px;border-radius:20px;font-weight:500}
+  .tag-creational{background:var(--green3);color:var(--green)}
+  .tag-structural{background:var(--teal3);color:var(--teal)}
+  .tag-behavioral{background:var(--surface3);color:var(--accent)}
+
+  /* ── PATTERN DETAIL ── */
+  .pattern-detail{background:#fff;border:1px solid var(--border);border-radius:var(--radius-lg);padding:1.5rem;display:none}
+  .pattern-detail.show{display:block}
+  
+  /* ── FLOW STEPS ── */
+  .flow-steps{display:flex;flex-direction:column;gap:0}
+  .flow-step{display:flex;gap:16px;position:relative}
+  .flow-step::before{content:'';position:absolute;left:17px;top:36px;width:2px;height:calc(100% - 12px);background:var(--border2);z-index:0}
+  .flow-step:last-child::before{display:none}
+  .flow-num{width:36px;height:36px;border-radius:50%;background:var(--accent);color:#fff;font-size:13px;font-weight:600;display:flex;align-items:center;justify-content:center;flex-shrink:0;position:relative;z-index:1}
+  .flow-content{padding:0 0 1.5rem;flex:1}
+  .flow-title{font-size:14px;font-weight:600;color:var(--ink);margin-bottom:4px}
+  .flow-desc{font-size:13px;color:var(--ink2);line-height:1.6}
+
+  /* ── Q&A CARDS ── */
+  .qa-item{background:#fff;border:1px solid var(--border);border-radius:var(--radius-lg);margin-bottom:0.75rem;overflow:hidden}
+  .qa-question{padding:1rem 1.25rem;font-size:14px;font-weight:500;color:var(--ink);cursor:pointer;display:flex;justify-content:space-between;align-items:center;gap:8px}
+  .qa-question:hover{background:var(--surface)}
+  .qa-arrow{color:var(--ink3);transition:transform 0.2s;font-size:18px;flex-shrink:0}
+  .qa-item.open .qa-arrow{transform:rotate(180deg)}
+  .qa-answer{display:none;padding:0 1.25rem 1rem;font-size:13px;color:var(--ink2);line-height:1.7;border-top:1px solid var(--border)}
+  .qa-item.open .qa-answer{display:block}
+  .qa-answer code{font-family:var(--mono);font-size:12px;background:var(--surface2);padding:2px 6px;border-radius:4px;color:var(--accent)}
+
+  /* ── ENUMS / BADGES ── */
+  .enum-row{display:flex;flex-wrap:wrap;gap:8px;margin:0.75rem 0}
+  .enum-badge{font-size:12px;padding:4px 12px;border-radius:20px;font-weight:500;font-family:var(--mono)}
+  .badge-blue{background:#dbeafe;color:#1e40af}
+  .badge-amber{background:var(--amber3);color:var(--amber)}
+  .badge-green{background:var(--green3);color:var(--green)}
+  .badge-coral{background:var(--coral3);color:var(--coral)}
+  .badge-purple{background:var(--surface3);color:var(--accent)}
+  .badge-teal{background:var(--teal3);color:var(--teal)}
+
+  /* ── MISC ── */
+  .info-box{background:var(--surface2);border-left:3px solid var(--accent);border-radius:0 var(--radius) var(--radius) 0;padding:0.9rem 1.1rem;margin:1rem 0;font-size:13px;color:var(--ink2)}
+  .warn-box{background:var(--amber3);border-left:3px solid var(--amber);border-radius:0 var(--radius) var(--radius) 0;padding:0.9rem 1.1rem;margin:1rem 0;font-size:13px;color:#7a4a0a}
+  .two-col{display:grid;grid-template-columns:1fr 1fr;gap:1rem}
+  @media(max-width:600px){.two-col{grid-template-columns:1fr}}
+  h3{font-size:1.05rem;font-weight:600;color:var(--ink);margin:1.5rem 0 0.75rem}
+  h4{font-size:0.9rem;font-weight:600;color:var(--ink2);margin:1rem 0 0.5rem;text-transform:uppercase;letter-spacing:0.5px}
+  ul,ol{padding-left:1.4rem;color:var(--ink2);font-size:13.5px;line-height:1.8}
+  li{margin-bottom:2px}
+  strong{color:var(--ink);font-weight:600}
+  .divider{height:1px;background:var(--border);margin:1.5rem 0}
+</style>
+</head>
+<body>
+
+<div class="hero">
+  <div class="hero-eyebrow">LLD Interview Prep</div>
+  <h1>Car Rental<br/><em>System Design</em></h1>
+  <p class="hero-sub">A complete low-level design guide with Python dataclasses, UML diagram, design patterns, thread safety, test cases, and interview Q&amp;A.</p>
+  <div class="hero-tags">
+    <span class="hero-tag">Strategy Pattern</span>
+    <span class="hero-tag">Factory Pattern</span>
+    <span class="hero-tag">State Pattern</span>
+    <span class="hero-tag">Observer Pattern</span>
+    <span class="hero-tag">Singleton Pattern</span>
+    <span class="hero-tag">Decorator Pattern</span>
+  </div>
+</div>
+
+<div class="tab-bar">
+  <button class="tab-btn active" onclick="switchTab('overview')">📋 Overview</button>
+  <button class="tab-btn" onclick="switchTab('models')">🧱 Data Models</button>
+  <button class="tab-btn" onclick="switchTab('uml')">🗺️ UML Diagram</button>
+  <button class="tab-btn" onclick="switchTab('patterns')">🧩 Design Patterns</button>
+  <button class="tab-btn" onclick="switchTab('flow')">⚙️ Rental Flow</button>
+  <button class="tab-btn" onclick="switchTab('tests')">🧪 Tests</button>
+  <button class="tab-btn" onclick="switchTab('qa')">💬 Interview Q&amp;A</button>
+</div>
+
+<!-- ============================================================ OVERVIEW -->
+<div id="tab-overview" class="section active">
+  <p class="section-title">System Overview</p>
+  <p class="section-sub">Understand the requirements before jumping into code — this is what separates a great interview answer.</p>
+
+  <div class="card">
+    <div class="card-header">
+      <div class="card-icon icon-purple">📋</div>
+      <div>
+        <div class="card-title">Functional Requirements</div>
+        <div class="card-desc">What the system must do</div>
+      </div>
+    </div>
+    <ul>
+      <li>Customer can <strong>search for available cars</strong> by type, location, and date range</li>
+      <li>Customer can <strong>reserve and rent</strong> a car for a specific period</li>
+      <li>System must track <strong>car availability</strong> in real time</li>
+      <li>Customer can <strong>return</strong> a car and receive a bill</li>
+      <li>System supports multiple <strong>pricing strategies</strong> (daily, hourly, premium)</li>
+      <li>System can apply <strong>add-ons</strong>: insurance, GPS, child seat</li>
+      <li><strong>Notifications</strong> sent on booking confirmation, return, and overdue alerts</li>
+    </ul>
+  </div>
+
+  <div class="two-col">
+    <div class="card">
+      <div class="card-header">
+        <div class="card-icon icon-teal">⚡</div>
+        <div>
+          <div class="card-title">Non-Functional Requirements</div>
+          <div class="card-desc">Quality attributes</div>
+        </div>
+      </div>
+      <ul>
+        <li>Thread-safe reservation (prevent double booking)</li>
+        <li>Extensible pricing (add new strategies easily)</li>
+        <li>Separation of concerns across modules</li>
+        <li>Easily testable with pytest</li>
+      </ul>
+    </div>
+    <div class="card">
+      <div class="card-header">
+        <div class="card-icon icon-amber">🧩</div>
+        <div>
+          <div class="card-title">Core Entities</div>
+          <div class="card-desc">Domain objects</div>
+        </div>
+      </div>
+      <ul>
+        <li><code>Car</code>, <code>CarType</code>, <code>CarStatus</code></li>
+        <li><code>Customer</code>, <code>DrivingLicense</code></li>
+        <li><code>Reservation</code>, <code>ReservationStatus</code></li>
+        <li><code>Invoice</code>, <code>Payment</code></li>
+        <li><code>Branch</code>, <code>RentalSystem</code></li>
+        <li><code>PricingStrategy</code>, <code>AddOn</code></li>
+      </ul>
+    </div>
+  </div>
+
+  <h3>Key Design Decisions</h3>
+  <div class="card">
+    <div class="info-box">💡 <strong>Think out loud in interviews.</strong> Explain WHY you're making a decision, not just what the decision is.</div>
+    <ul>
+      <li><strong>Strategy Pattern for Pricing:</strong> Different rates (daily, hourly, weekend) can be swapped without touching the Car or Reservation class.</li>
+      <li><strong>State Pattern for Car:</strong> A car transitions through AVAILABLE → RESERVED → RENTED → MAINTENANCE. Each state controls what operations are valid.</li>
+      <li><strong>Decorator for Add-Ons:</strong> Base rental cost + GPS + Insurance stacks cleanly using the Decorator pattern instead of hardcoded boolean flags.</li>
+      <li><strong>Singleton for RentalSystem:</strong> One central registry of cars and reservations across the whole application.</li>
+      <li><strong>Observer for Notifications:</strong> Reservation changes trigger customer notifications without coupling those concerns together.</li>
+      <li><strong>Factory for Car creation:</strong> Centralizes creation logic and ensures all cars are properly initialized.</li>
+    </ul>
+  </div>
+</div>
+
+<!-- ============================================================ MODELS -->
+<div id="tab-models" class="section">
+  <p class="section-title">Data Models</p>
+  <p class="section-sub">Python dataclasses, enums, and core domain objects.</p>
+
+  <h3>Enums — the vocabulary of the system</h3>
+  <div class="card">
+    <h4>CarType</h4>
+    <div class="enum-row">
+      <span class="enum-badge badge-blue">ECONOMY</span>
+      <span class="enum-badge badge-teal">COMPACT</span>
+      <span class="enum-badge badge-amber">SUV</span>
+      <span class="enum-badge badge-purple">LUXURY</span>
+      <span class="enum-badge badge-green">VAN</span>
+    </div>
+    <h4>CarStatus</h4>
+    <div class="enum-row">
+      <span class="enum-badge badge-green">AVAILABLE</span>
+      <span class="enum-badge badge-amber">RESERVED</span>
+      <span class="enum-badge badge-coral">RENTED</span>
+      <span class="enum-badge badge-blue">MAINTENANCE</span>
+    </div>
+    <h4>ReservationStatus</h4>
+    <div class="enum-row">
+      <span class="enum-badge badge-amber">PENDING</span>
+      <span class="enum-badge badge-green">CONFIRMED</span>
+      <span class="enum-badge badge-blue">ACTIVE</span>
+      <span class="enum-badge badge-teal">COMPLETED</span>
+      <span class="enum-badge badge-coral">CANCELLED</span>
+    </div>
+  </div>
+
+  <div class="code-wrap">
+    <div class="code-label"><span>enums.py</span> Core enumerations</div>
+    <pre><span class="kw">from</span> <span class="dt">enum</span> <span class="kw">import</span> <span class="cls">Enum</span>, auto
+
+<span class="kw">class</span> <span class="cls">CarType</span>(<span class="cls">Enum</span>):
+    ECONOMY  = auto()
+    COMPACT  = auto()
+    SUV      = auto()
+    LUXURY   = auto()
+    VAN      = auto()
+
+<span class="kw">class</span> <span class="cls">CarStatus</span>(<span class="cls">Enum</span>):
+    AVAILABLE   = <span class="st">"available"</span>
+    RESERVED    = <span class="st">"reserved"</span>
+    RENTED      = <span class="st">"rented"</span>
+    MAINTENANCE = <span class="st">"maintenance"</span>
+
+<span class="kw">class</span> <span class="cls">ReservationStatus</span>(<span class="cls">Enum</span>):
+    PENDING   = <span class="st">"pending"</span>
+    CONFIRMED = <span class="st">"confirmed"</span>
+    ACTIVE    = <span class="st">"active"</span>
+    COMPLETED = <span class="st">"completed"</span>
+    CANCELLED = <span class="st">"cancelled"</span>
+
+<span class="kw">class</span> <span class="cls">AddOnType</span>(<span class="cls">Enum</span>):
+    GPS       = <span class="st">"gps"</span>
+    INSURANCE = <span class="st">"insurance"</span>
+    CHILD_SEAT = <span class="st">"child_seat"</span></pre>
+  </div>
+
+  <div class="code-wrap">
+    <div class="code-label"><span>models.py</span> Domain dataclasses</div>
+    <pre><span class="kw">from</span> <span class="dt">dataclasses</span> <span class="kw">import</span> dataclass, field
+<span class="kw">from</span> <span class="dt">datetime</span> <span class="kw">import</span> <span class="cls">datetime</span>
+<span class="kw">from</span> <span class="dt">typing</span> <span class="kw">import</span> <span class="cls">Optional</span>, <span class="cls">List</span>
+<span class="kw">import</span> uuid
+
+<span class="dec">@dataclass</span>
+<span class="kw">class</span> <span class="cls">DrivingLicense</span>:
+    license_id: str
+    customer_id: str
+    expiry_date: datetime
+    country: str
+
+    <span class="kw">def</span> <span class="fn">is_valid</span>(self) -> <span class="dt">bool</span>:
+        <span class="kw">return</span> self.expiry_date > datetime.now()
+
+<span class="dec">@dataclass</span>
+<span class="kw">class</span> <span class="cls">Customer</span>:
+    customer_id: str = field(default_factory=<span class="kw">lambda</span>: str(uuid.uuid4()))
+    name: str = <span class="st">""</span>
+    email: str = <span class="st">""</span>
+    phone: str = <span class="st">""</span>
+    license: <span class="cls">Optional</span>[<span class="cls">DrivingLicense</span>] = <span class="kw">None</span>
+    reservations: <span class="cls">List</span>[str] = field(default_factory=list)  <span class="cm"># reservation IDs</span>
+
+<span class="dec">@dataclass</span>
+<span class="kw">class</span> <span class="cls">Car</span>:
+    car_id: str = field(default_factory=<span class="kw">lambda</span>: str(uuid.uuid4()))
+    make: str = <span class="st">""</span>
+    model: str = <span class="st">""</span>
+    year: <span class="dt">int</span> = <span class="num">2020</span>
+    car_type: <span class="cls">CarType</span> = <span class="cls">CarType</span>.ECONOMY
+    status: <span class="cls">CarStatus</span> = <span class="cls">CarStatus</span>.AVAILABLE
+    mileage: <span class="dt">float</span> = <span class="num">0.0</span>
+    branch_id: str = <span class="st">""</span>
+    daily_rate: <span class="dt">float</span> = <span class="num">50.0</span>  <span class="cm"># base rate, Strategy overrides this</span>
+
+<span class="dec">@dataclass</span>
+<span class="kw">class</span> <span class="cls">Reservation</span>:
+    reservation_id: str = field(default_factory=<span class="kw">lambda</span>: str(uuid.uuid4()))
+    customer_id: str = <span class="st">""</span>
+    car_id: str = <span class="st">""</span>
+    pickup_date: <span class="cls">Optional</span>[datetime] = <span class="kw">None</span>
+    return_date: <span class="cls">Optional</span>[datetime] = <span class="kw">None</span>
+    actual_return: <span class="cls">Optional</span>[datetime] = <span class="kw">None</span>
+    status: <span class="cls">ReservationStatus</span> = <span class="cls">ReservationStatus</span>.PENDING
+    add_ons: <span class="cls">List</span>[<span class="cls">AddOnType</span>] = field(default_factory=list)
+    total_cost: <span class="dt">float</span> = <span class="num">0.0</span>
+
+<span class="dec">@dataclass</span>
+<span class="kw">class</span> <span class="cls">Branch</span>:
+    branch_id: str = field(default_factory=<span class="kw">lambda</span>: str(uuid.uuid4()))
+    name: str = <span class="st">""</span>
+    location: str = <span class="st">""</span>
+    cars: <span class="cls">List</span>[str] = field(default_factory=list)  <span class="cm"># car IDs</span>
+
+<span class="dec">@dataclass</span>
+<span class="kw">class</span> <span class="cls">Invoice</span>:
+    invoice_id: str = field(default_factory=<span class="kw">lambda</span>: str(uuid.uuid4()))
+    reservation_id: str = <span class="st">""</span>
+    base_cost: <span class="dt">float</span> = <span class="num">0.0</span>
+    add_on_cost: <span class="dt">float</span> = <span class="num">0.0</span>
+    late_fee: <span class="dt">float</span> = <span class="num">0.0</span>
+    total: <span class="dt">float</span> = <span class="num">0.0</span>
+    created_at: datetime = field(default_factory=datetime.now)</pre>
+  </div>
+</div>
+
+<!-- ============================================================ UML -->
+<div id="tab-uml" class="section">
+  <p class="section-title">UML Class Diagram</p>
+  <p class="section-sub">Visual map of all classes and their relationships.</p>
+
+  <div class="uml-container">
+    <svg viewBox="0 0 860 780" xmlns="http://www.w3.org/2000/svg" style="width:100%;font-family:'Outfit',sans-serif">
+      <defs>
+        <marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto">
+          <path d="M0,0 L10,5 L0,10 Z" fill="#5c4de8"/>
+        </marker>
+        <marker id="arrow-gray" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto">
+          <path d="M0,0 L10,5 L0,10 Z" fill="#8b8bad"/>
+        </marker>
+        <marker id="diamond" viewBox="0 0 14 10" refX="0" refY="5" markerWidth="10" markerHeight="8" orient="auto">
+          <polygon points="0,5 7,0 14,5 7,10" fill="none" stroke="#5c4de8" stroke-width="1.5"/>
+        </marker>
+      </defs>
+
+      <!-- RentalSystem (Singleton) -->
+      <rect x="310" y="10" width="180" height="95" rx="8" fill="#ededf8" stroke="#5c4de8" stroke-width="1.5"/>
+      <rect x="310" y="10" width="180" height="26" rx="8" fill="#5c4de8"/>
+      <rect x="310" y="28" width="180" height="8" fill="#5c4de8"/>
+      <text x="400" y="27" text-anchor="middle" font-size="12" font-weight="600" fill="#fff">«singleton»</text>
+      <text x="400" y="45" text-anchor="middle" font-size="13" font-weight="600" fill="#3d3d5c">RentalSystem</text>
+      <line x1="310" y1="52" x2="490" y2="52" stroke="#5c4de8" stroke-width="0.8"/>
+      <text x="320" y="66" font-size="10.5" fill="#5c4de8">- _instance</text>
+      <text x="320" y="79" font-size="10.5" fill="#5c4de8">- cars: Dict</text>
+      <text x="320" y="92" font-size="10.5" fill="#5c4de8">- reservations: Dict</text>
+
+      <!-- Car -->
+      <rect x="40" y="160" width="170" height="130" rx="8" fill="#e8f4f1" stroke="#1a9e8a" stroke-width="1.5"/>
+      <rect x="40" y="160" width="170" height="26" rx="8" fill="#1a9e8a"/>
+      <rect x="40" y="178" width="170" height="8" fill="#1a9e8a"/>
+      <text x="125" y="177" text-anchor="middle" font-size="13" font-weight="600" fill="#fff">Car</text>
+      <line x1="40" y1="186" x2="210" y2="186" stroke="#1a9e8a" stroke-width="0.8"/>
+      <text x="50" y="200" font-size="10.5" fill="#0f6e56">- car_id: str</text>
+      <text x="50" y="213" font-size="10.5" fill="#0f6e56">- make: str</text>
+      <text x="50" y="226" font-size="10.5" fill="#0f6e56">- car_type: CarType</text>
+      <text x="50" y="239" font-size="10.5" fill="#0f6e56">- status: CarStatus</text>
+      <text x="50" y="252" font-size="10.5" fill="#0f6e56">- daily_rate: float</text>
+      <line x1="40" y1="258" x2="210" y2="258" stroke="#1a9e8a" stroke-width="0.8"/>
+      <text x="50" y="273" font-size="10.5" fill="#085041">+ change_status()</text>
+      <text x="50" y="283" font-size="10.5" fill="#085041">+ is_available()</text>
+
+      <!-- Customer -->
+      <rect x="240" y="160" width="170" height="130" rx="8" fill="#ededf8" stroke="#5c4de8" stroke-width="1.5"/>
+      <rect x="240" y="160" width="170" height="26" rx="8" fill="#5c4de8"/>
+      <rect x="240" y="178" width="170" height="8" fill="#5c4de8"/>
+      <text x="325" y="177" text-anchor="middle" font-size="13" font-weight="600" fill="#fff">Customer</text>
+      <line x1="240" y1="186" x2="410" y2="186" stroke="#5c4de8" stroke-width="0.8"/>
+      <text x="250" y="200" font-size="10.5" fill="#3d3d5c">- customer_id: str</text>
+      <text x="250" y="213" font-size="10.5" fill="#3d3d5c">- name: str</text>
+      <text x="250" y="226" font-size="10.5" fill="#3d3d5c">- email: str</text>
+      <text x="250" y="239" font-size="10.5" fill="#3d3d5c">- license: DrivingLicense</text>
+      <text x="250" y="252" font-size="10.5" fill="#3d3d5c">- reservations: List</text>
+      <line x1="240" y1="258" x2="410" y2="258" stroke="#5c4de8" stroke-width="0.8"/>
+      <text x="250" y="273" font-size="10.5" fill="#26215c">+ validate_license()</text>
+
+      <!-- Reservation -->
+      <rect x="440" y="160" width="185" height="145" rx="8" fill="#fdf6e8" stroke="#c47a1a" stroke-width="1.5"/>
+      <rect x="440" y="160" width="185" height="26" rx="8" fill="#c47a1a"/>
+      <rect x="440" y="178" width="185" height="8" fill="#c47a1a"/>
+      <text x="532" y="177" text-anchor="middle" font-size="13" font-weight="600" fill="#fff">Reservation</text>
+      <line x1="440" y1="186" x2="625" y2="186" stroke="#c47a1a" stroke-width="0.8"/>
+      <text x="450" y="200" font-size="10.5" fill="#7a4a0a">- reservation_id: str</text>
+      <text x="450" y="213" font-size="10.5" fill="#7a4a0a">- customer_id: str</text>
+      <text x="450" y="226" font-size="10.5" fill="#7a4a0a">- car_id: str</text>
+      <text x="450" y="239" font-size="10.5" fill="#7a4a0a">- pickup_date: datetime</text>
+      <text x="450" y="252" font-size="10.5" fill="#7a4a0a">- return_date: datetime</text>
+      <text x="450" y="265" font-size="10.5" fill="#7a4a0a">- status: ReservationStatus</text>
+      <line x1="440" y1="271" x2="625" y2="271" stroke="#c47a1a" stroke-width="0.8"/>
+      <text x="450" y="285" font-size="10.5" fill="#633806">+ calculate_cost()</text>
+      <text x="450" y="298" font-size="10.5" fill="#633806">+ cancel()</text>
+
+      <!-- PricingStrategy (abstract) -->
+      <rect x="640" y="160" width="180" height="90" rx="8" fill="#f5f0ff" stroke="#7c6fd0" stroke-width="1.5" stroke-dasharray="6,3"/>
+      <rect x="640" y="160" width="180" height="26" rx="8" fill="#7c6fd0"/>
+      <rect x="640" y="178" width="180" height="8" fill="#7c6fd0"/>
+      <text x="730" y="172" text-anchor="middle" font-size="11" fill="#fff">«interface»</text>
+      <text x="730" y="188" text-anchor="middle" font-size="13" font-weight="600" fill="#fff">PricingStrategy</text>
+      <line x1="640" y1="186" x2="820" y2="186" stroke="#7c6fd0" stroke-width="0.8"/>
+      <text x="650" y="205" font-size="10.5" fill="#534ab7" font-style="italic">+ calculate(days, rate)</text>
+      <text x="650" y="222" font-size="10.5" fill="#534ab7" font-style="italic">  : float</text>
+
+      <!-- DailyPricing -->
+      <rect x="640" y="295" width="155" height="56" rx="8" fill="#f5f0ff" stroke="#5c4de8" stroke-width="1.5"/>
+      <text x="717" y="320" text-anchor="middle" font-size="12" font-weight="600" fill="#26215c">DailyPricing</text>
+      <line x1="640" y1="326" x2="795" y2="326" stroke="#5c4de8" stroke-width="0.8"/>
+      <text x="650" y="342" font-size="10.5" fill="#3c3489">+ calculate()</text>
+
+      <!-- HourlyPricing -->
+      <rect x="640" y="370" width="155" height="56" rx="8" fill="#f5f0ff" stroke="#5c4de8" stroke-width="1.5"/>
+      <text x="717" y="395" text-anchor="middle" font-size="12" font-weight="600" fill="#26215c">HourlyPricing</text>
+      <line x1="640" y1="401" x2="795" y2="401" stroke="#5c4de8" stroke-width="0.8"/>
+      <text x="650" y="417" font-size="10.5" fill="#3c3489">+ calculate()</text>
+
+      <!-- AddOn Decorator -->
+      <rect x="40" y="360" width="185" height="110" rx="8" fill="#fde8e5" stroke="#d94f3d" stroke-width="1.5" stroke-dasharray="6,3"/>
+      <rect x="40" y="360" width="185" height="26" rx="8" fill="#d94f3d"/>
+      <rect x="40" y="378" width="185" height="8" fill="#d94f3d"/>
+      <text x="132" y="373" text-anchor="middle" font-size="11" fill="#fff">«abstract»</text>
+      <text x="132" y="389" text-anchor="middle" font-size="13" font-weight="600" fill="#fff">RentalCostDecorator</text>
+      <line x1="40" y1="386" x2="225" y2="386" stroke="#d94f3d" stroke-width="0.8"/>
+      <text x="50" y="403" font-size="10.5" fill="#99200e">- _wrapped: cost_fn</text>
+      <line x1="40" y1="410" x2="225" y2="410" stroke="#d94f3d" stroke-width="0.8"/>
+      <text x="50" y="427" font-size="10.5" fill="#4a1b0c" font-style="italic">+ calculate()</text>
+      <text x="50" y="443" font-size="10.5" fill="#4a1b0c" font-style="italic">+ add_on_cost()</text>
+      <text x="50" y="459" font-size="10.5" fill="#4a1b0c" font-style="italic">+ name()</text>
+
+      <!-- InsuranceDecorator -->
+      <rect x="40" y="495" width="140" height="50" rx="8" fill="#fde8e5" stroke="#d94f3d" stroke-width="1.5"/>
+      <text x="110" y="516" text-anchor="middle" font-size="12" font-weight="600" fill="#711313">InsuranceAddon</text>
+      <line x1="40" y1="522" x2="180" y2="522" stroke="#d94f3d" stroke-width="0.8"/>
+      <text x="50" y="537" font-size="10.5" fill="#4a1b0c">+ calculate()</text>
+
+      <!-- GPSDecorator -->
+      <rect x="190" y="495" width="115" height="50" rx="8" fill="#fde8e5" stroke="#d94f3d" stroke-width="1.5"/>
+      <text x="247" y="516" text-anchor="middle" font-size="12" font-weight="600" fill="#711313">GPSAddon</text>
+      <line x1="190" y1="522" x2="305" y2="522" stroke="#d94f3d" stroke-width="0.8"/>
+      <text x="200" y="537" font-size="10.5" fill="#4a1b0c">+ calculate()</text>
+
+      <!-- Invoice -->
+      <rect x="360" y="370" width="155" height="100" rx="8" fill="#e8f5eb" stroke="#2a8c4e" stroke-width="1.5"/>
+      <rect x="360" y="370" width="155" height="26" rx="8" fill="#2a8c4e"/>
+      <rect x="360" y="388" width="155" height="8" fill="#2a8c4e"/>
+      <text x="437" y="387" text-anchor="middle" font-size="13" font-weight="600" fill="#fff">Invoice</text>
+      <line x1="360" y1="396" x2="515" y2="396" stroke="#2a8c4e" stroke-width="0.8"/>
+      <text x="370" y="410" font-size="10.5" fill="#176834">- base_cost: float</text>
+      <text x="370" y="423" font-size="10.5" fill="#176834">- add_on_cost: float</text>
+      <text x="370" y="436" font-size="10.5" fill="#176834">- late_fee: float</text>
+      <text x="370" y="449" font-size="10.5" fill="#176834">- total: float</text>
+      <line x1="360" y1="455" x2="515" y2="455" stroke="#2a8c4e" stroke-width="0.8"/>
+      <text x="370" y="463" font-size="10.5" fill="#176834">+ generate()</text>
+
+      <!-- Observer -->
+      <rect x="360" y="510" width="170" height="90" rx="8" fill="#e1f5ee" stroke="#1a9e8a" stroke-width="1.5" stroke-dasharray="6,3"/>
+      <text x="430" y="538" text-anchor="middle" font-size="11" fill="#1a9e8a">«interface»</text>
+      <text x="430" y="555" text-anchor="middle" font-size="13" font-weight="600" fill="#085041">ReservationObserver</text>
+      <line x1="360" y1="562" x2="530" y2="562" stroke="#1a9e8a" stroke-width="0.8"/>
+      <text x="370" y="578" font-size="10.5" fill="#0f6e56" font-style="italic">+ on_status_change()</text>
+      <text x="370" y="592" font-size="10.5" fill="#0f6e56">EmailNotifier</text>
+      <text x="370" y="603" font-size="10.5" fill="#0f6e56">SMSNotifier</text>
+
+      <!-- Connections -->
+      <!-- RentalSystem → Car -->
+      <line x1="370" y1="105" x2="200" y2="160" stroke="#8b8bad" stroke-width="1" stroke-dasharray="5,3" marker-end="url(#arrow-gray)"/>
+      <!-- RentalSystem → Reservation -->
+      <line x1="450" y1="105" x2="490" y2="160" stroke="#8b8bad" stroke-width="1" stroke-dasharray="5,3" marker-end="url(#arrow-gray)"/>
+      <!-- Reservation → Customer -->
+      <line x1="440" y1="225" x2="410" y2="225" stroke="#8b8bad" stroke-width="1" marker-end="url(#arrow-gray)"/>
+      <!-- Reservation → Car -->
+      <line x1="440" y1="205" x2="210" y2="205" stroke="#8b8bad" stroke-width="1" marker-end="url(#arrow-gray)"/>
+      <!-- Reservation → Invoice -->
+      <line x1="500" y1="305" x2="437" y2="370" stroke="#2a8c4e" stroke-width="1.2" marker-end="url(#arrow-gray)"/>
+      <!-- PricingStrategy → DailyPricing (implements) -->
+      <line x1="717" y1="250" x2="717" y2="295" stroke="#7c6fd0" stroke-width="1.2" stroke-dasharray="5,3" marker-end="url(#arrow)"/>
+      <line x1="717" y1="250" x2="717" y2="370" stroke="#7c6fd0" stroke-width="1.2" stroke-dasharray="5,3" marker-end="url(#arrow)"/>
+      <!-- Reservation uses PricingStrategy -->
+      <line x1="625" y1="210" x2="640" y2="210" stroke="#5c4de8" stroke-width="1.2" stroke-dasharray="5,3" marker-end="url(#arrow)"/>
+      <!-- Decorator inheritance -->
+      <line x1="110" y1="495" x2="110" y2="470" stroke="#d94f3d" stroke-width="1.2" marker-end="url(#arrow-gray)"/>
+      <line x1="247" y1="495" x2="180" y2="470" stroke="#d94f3d" stroke-width="1.2" marker-end="url(#arrow-gray)"/>
+
+      <!-- Legend -->
+      <rect x="20" y="640" width="820" height="130" rx="8" fill="#f8f7ff" stroke="#e2e1f5" stroke-width="1"/>
+      <text x="35" y="662" font-size="11" font-weight="600" fill="#3d3d5c">Legend</text>
+      <line x1="35" y1="675" x2="75" y2="675" stroke="#8b8bad" stroke-width="1" stroke-dasharray="5,3" marker-end="url(#arrow-gray)"/>
+      <text x="82" y="679" font-size="10.5" fill="#6b6b8a">uses / association</text>
+      <line x1="35" y1="695" x2="75" y2="695" stroke="#7c6fd0" stroke-width="1.5" stroke-dasharray="5,3" marker-end="url(#arrow)"/>
+      <text x="82" y="699" font-size="10.5" fill="#6b6b8a">implements interface</text>
+      <line x1="35" y1="715" x2="75" y2="715" stroke="#d94f3d" stroke-width="1.5" marker-end="url(#arrow-gray)"/>
+      <text x="82" y="719" font-size="10.5" fill="#6b6b8a">inherits / extends</text>
+      <rect x="220" y="665" width="12" height="12" rx="2" fill="#1a9e8a" stroke="#1a9e8a"/>
+      <text x="238" y="676" font-size="10.5" fill="#6b6b8a">Car / Branch / Observer</text>
+      <rect x="220" y="685" width="12" height="12" rx="2" fill="#5c4de8" stroke="#5c4de8"/>
+      <text x="238" y="696" font-size="10.5" fill="#6b6b8a">Customer / Core entities</text>
+      <rect x="220" y="705" width="12" height="12" rx="2" fill="#c47a1a" stroke="#c47a1a"/>
+      <text x="238" y="716" font-size="10.5" fill="#6b6b8a">Reservation</text>
+      <rect x="220" y="725" width="12" height="12" rx="2" fill="#d94f3d" stroke="#d94f3d"/>
+      <text x="238" y="736" font-size="10.5" fill="#6b6b8a">Decorator add-ons</text>
+      <rect x="400" y="665" width="12" height="12" rx="2" fill="#2a8c4e" stroke="#2a8c4e"/>
+      <text x="418" y="676" font-size="10.5" fill="#6b6b8a">Invoice</text>
+      <rect x="400" y="685" width="12" height="12" rx="2" fill="#7c6fd0" stroke="#7c6fd0"/>
+      <text x="418" y="696" font-size="10.5" fill="#6b6b8a">Pricing Strategy</text>
+      <text x="418" y="716" font-size="10.5" fill="#8b8bad">Dashed border = abstract/interface</text>
+    </svg>
+  </div>
+
+  <div class="info-box">🎯 <strong>Interview tip:</strong> When asked to draw a UML diagram on a whiteboard, start with the most important classes first (Car, Reservation, Customer), draw their relationships, then add patterns and supporting classes. Narrate your thinking as you go.</div>
+</div>
+
+<!-- ============================================================ PATTERNS -->
+<div id="tab-patterns" class="section">
+  <p class="section-title">Design Patterns</p>
+  <p class="section-sub">Click any pattern card to explore how it's applied in this system with Python code.</p>
+
+  <div class="pattern-grid">
+    <div class="pattern-card selected" onclick="showPattern('singleton')">
+      <div class="pattern-name">Singleton</div>
+      <div class="pattern-role">RentalSystem — one global registry</div>
+      <span class="pattern-tag tag-creational">Creational</span>
+    </div>
+    <div class="pattern-card" onclick="showPattern('factory')">
+      <div class="pattern-name">Factory Method</div>
+      <div class="pattern-role">CarFactory — creates typed cars</div>
+      <span class="pattern-tag tag-creational">Creational</span>
+    </div>
+    <div class="pattern-card" onclick="showPattern('strategy')">
+      <div class="pattern-name">Strategy</div>
+      <div class="pattern-role">PricingStrategy — swappable pricing</div>
+      <span class="pattern-tag tag-behavioral">Behavioral</span>
+    </div>
+    <div class="pattern-card" onclick="showPattern('state')">
+      <div class="pattern-name">State</div>
+      <div class="pattern-role">CarState — valid transitions</div>
+      <span class="pattern-tag tag-behavioral">Behavioral</span>
+    </div>
+    <div class="pattern-card" onclick="showPattern('observer')">
+      <div class="pattern-name">Observer</div>
+      <div class="pattern-role">Notifications on reservation events</div>
+      <span class="pattern-tag tag-behavioral">Behavioral</span>
+    </div>
+    <div class="pattern-card" onclick="showPattern('decorator')">
+      <div class="pattern-name">Decorator</div>
+      <div class="pattern-role">Add-ons stack on rental cost</div>
+      <span class="pattern-tag tag-structural">Structural</span>
+    </div>
+  </div>
+
+  <!-- PATTERN DETAILS -->
+  <div id="pd-singleton" class="pattern-detail show">
+    <h3>Singleton — RentalSystem</h3>
+    <p style="font-size:13px;color:var(--ink2);margin-bottom:1rem">The <strong>Singleton</strong> ensures only one instance of <code>RentalSystem</code> exists throughout the entire application. Think of it like the "headquarters" — there's only one, and everyone talks to the same one.</p>
+    <div class="info-box">🤔 <strong>Why here?</strong> We need a single source of truth for all cars and reservations. If two instances existed, one wouldn't know about bookings made via the other — race conditions and double bookings would follow.</div>
+    <div class="code-wrap">
+      <div class="code-label"><span>singleton.py</span> Thread-safe Singleton</div>
+      <pre><span class="kw">import</span> threading
+<span class="kw">from</span> <span class="dt">typing</span> <span class="kw">import</span> <span class="cls">Dict</span>, <span class="cls">Optional</span>
+
+<span class="kw">class</span> <span class="cls">RentalSystem</span>:
+    <span class="st">"""Singleton: one global registry of cars and reservations."""</span>
+
+    _instance: <span class="cls">Optional</span>[<span class="st">'RentalSystem'</span>] = <span class="kw">None</span>
+    _lock = threading.Lock()
+
+    <span class="kw">def</span> <span class="fn">__new__</span>(cls) -> <span class="st">'RentalSystem'</span>:
+        <span class="cm"># Double-checked locking: fast path (no lock) + safe path (with lock)</span>
+        <span class="kw">if</span> cls._instance <span class="kw">is None</span>:
+            <span class="kw">with</span> cls._lock:            <span class="cm"># acquire lock only when needed</span>
+                <span class="kw">if</span> cls._instance <span class="kw">is None</span>:
+                    cls._instance = <span class="fn">super</span>().__new__(cls)
+                    cls._instance._cars: <span class="cls">Dict</span>[str, Car] = {}
+                    cls._instance._reservations: <span class="cls">Dict</span>[str, Reservation] = {}
+                    cls._instance._branches: <span class="cls">Dict</span>[str, Branch] = {}
+        <span class="kw">return</span> cls._instance
+
+    <span class="kw">def</span> <span class="fn">add_car</span>(self, car: <span class="cls">Car</span>) -> <span class="kw">None</span>:
+        self._cars[car.car_id] = car
+
+    <span class="kw">def</span> <span class="fn">get_car</span>(self, car_id: str) -> <span class="cls">Optional</span>[<span class="cls">Car</span>]:
+        <span class="kw">return</span> self._cars.get(car_id)
+
+    <span class="kw">def</span> <span class="fn">available_cars</span>(self, car_type: <span class="cls">CarType</span> = <span class="kw">None</span>) -> <span class="cls">list</span>[<span class="cls">Car</span>]:
+        cars = [c <span class="kw">for</span> c <span class="kw">in</span> self._cars.values()
+                <span class="kw">if</span> c.status == <span class="cls">CarStatus</span>.AVAILABLE]
+        <span class="kw">if</span> car_type:
+            cars = [c <span class="kw">for</span> c <span class="kw">in</span> cars <span class="kw">if</span> c.car_type == car_type]
+        <span class="kw">return</span> cars</pre>
+    </div>
+    <div class="warn-box">⚠️ <strong>Interview watch-out:</strong> A naive Singleton <em>without</em> the double-checked locking pattern can cause two threads to both see <code>_instance is None</code> simultaneously and create two objects. Always mention thread safety.</div>
+  </div>
+
+  <div id="pd-factory" class="pattern-detail">
+    <h3>Factory Method — CarFactory</h3>
+    <p style="font-size:13px;color:var(--ink2);margin-bottom:1rem">The <strong>Factory</strong> centralizes car creation. Instead of scattering <code>Car(...)</code> calls everywhere with different defaults, one factory method produces correctly configured cars.</p>
+    <div class="info-box">🤔 <strong>Why here?</strong> Each car type has different default rates and attributes. If we change Economy's default rate, we change it in one place — not 20 places scattered across the codebase.</div>
+    <div class="code-wrap">
+      <div class="code-label"><span>factory.py</span> Car Factory</div>
+      <pre><span class="kw">class</span> <span class="cls">CarFactory</span>:
+    <span class="st">"""Creates cars with type-appropriate defaults."""</span>
+
+    <span class="cm"># Default daily rates per type</span>
+    _RATES = {
+        <span class="cls">CarType</span>.ECONOMY : <span class="num">35.0</span>,
+        <span class="cls">CarType</span>.COMPACT : <span class="num">50.0</span>,
+        <span class="cls">CarType</span>.SUV     : <span class="num">80.0</span>,
+        <span class="cls">CarType</span>.LUXURY  : <span class="num">150.0</span>,
+        <span class="cls">CarType</span>.VAN     : <span class="num">90.0</span>,
+    }
+
+    <span class="dec">@staticmethod</span>
+    <span class="kw">def</span> <span class="fn">create_car</span>(
+        make: str,
+        model: str,
+        year: <span class="dt">int</span>,
+        car_type: <span class="cls">CarType</span>,
+        branch_id: str,
+        custom_rate: <span class="dt">float</span> = <span class="kw">None</span>
+    ) -> <span class="cls">Car</span>:
+        rate = custom_rate <span class="kw">or</span> <span class="cls">CarFactory</span>._RATES[car_type]
+        <span class="kw">return</span> <span class="cls">Car</span>(
+            make=make,
+            model=model,
+            year=year,
+            car_type=car_type,
+            status=<span class="cls">CarStatus</span>.AVAILABLE,
+            daily_rate=rate,
+            branch_id=branch_id,
+        )
+
+<span class="cm"># Usage</span>
+economy_car = <span class="cls">CarFactory</span>.create_car(
+    <span class="st">"Toyota"</span>, <span class="st">"Yaris"</span>, <span class="num">2022</span>, <span class="cls">CarType</span>.ECONOMY, branch_id=<span class="st">"branch-1"</span>
+)
+luxury_car = <span class="cls">CarFactory</span>.create_car(
+    <span class="st">"BMW"</span>, <span class="st">"7 Series"</span>, <span class="num">2023</span>, <span class="cls">CarType</span>.LUXURY, branch_id=<span class="st">"branch-2"</span>
+)</pre>
+    </div>
+  </div>
+
+  <div id="pd-strategy" class="pattern-detail">
+    <h3>Strategy — PricingStrategy</h3>
+    <p style="font-size:13px;color:var(--ink2);margin-bottom:1rem">The <strong>Strategy</strong> pattern lets us define a family of algorithms (pricing rules), put each in its own class, and swap them interchangeably. The <code>Reservation</code> just asks "what does this cost?" — it doesn't care how the answer is computed.</p>
+    <div class="info-box">🤔 <strong>Why here?</strong> Pricing rules change often — weekends get discounts, long-term gets bulk rates, premium members get special deals. Without Strategy, every change means modifying a giant if-elif tree inside Reservation.</div>
+    <div class="code-wrap">
+      <div class="code-label"><span>pricing.py</span> Strategy Pattern</div>
+      <pre><span class="kw">from</span> <span class="dt">abc</span> <span class="kw">import</span> <span class="cls">ABC</span>, abstractmethod
+<span class="kw">from</span> <span class="dt">datetime</span> <span class="kw">import</span> datetime
+
+<span class="kw">class</span> <span class="cls">PricingStrategy</span>(<span class="cls">ABC</span>):
+    <span class="st">"""Abstract base — all pricing strategies must implement this."""</span>
+    <span class="dec">@abstractmethod</span>
+    <span class="kw">def</span> <span class="fn">calculate</span>(self, pickup: datetime, return_dt: datetime, daily_rate: <span class="dt">float</span>) -> <span class="dt">float</span>:
+        ...
+
+<span class="kw">class</span> <span class="cls">DailyPricingStrategy</span>(<span class="cls">PricingStrategy</span>):
+    <span class="st">"""Standard per-day pricing."""</span>
+    <span class="kw">def</span> <span class="fn">calculate</span>(self, pickup, return_dt, daily_rate) -> <span class="dt">float</span>:
+        days = (return_dt - pickup).days <span class="kw">or</span> <span class="num">1</span>   <span class="cm"># minimum 1 day</span>
+        <span class="kw">return</span> days * daily_rate
+
+<span class="kw">class</span> <span class="cls">HourlyPricingStrategy</span>(<span class="cls">PricingStrategy</span>):
+    <span class="st">"""Per-hour pricing, capped at daily rate."""</span>
+    HOURLY_FRACTION = <span class="num">0.07</span>   <span class="cm"># 7% of daily rate per hour</span>
+    <span class="kw">def</span> <span class="fn">calculate</span>(self, pickup, return_dt, daily_rate) -> <span class="dt">float</span>:
+        hours = (return_dt - pickup).total_seconds() / <span class="num">3600</span>
+        hourly = daily_rate * self.HOURLY_FRACTION
+        <span class="kw">return</span> <span class="fn">min</span>(hours * hourly, daily_rate)  <span class="cm"># cap at daily rate</span>
+
+<span class="kw">class</span> <span class="cls">WeeklyDiscountStrategy</span>(<span class="cls">PricingStrategy</span>):
+    <span class="st">"""7+ days gets 15% off."""</span>
+    DISCOUNT = <span class="num">0.15</span>
+    <span class="kw">def</span> <span class="fn">calculate</span>(self, pickup, return_dt, daily_rate) -> <span class="dt">float</span>:
+        days = (return_dt - pickup).days <span class="kw">or</span> <span class="num">1</span>
+        base = days * daily_rate
+        <span class="kw">return</span> base * (<span class="num">1</span> - self.DISCOUNT) <span class="kw">if</span> days >= <span class="num">7</span> <span class="kw">else</span> base
+
+<span class="cm"># In Reservation:</span>
+<span class="kw">class</span> <span class="cls">Reservation</span>:
+    <span class="kw">def</span> <span class="fn">__init__</span>(self, ..., strategy: <span class="cls">PricingStrategy</span> = <span class="kw">None</span>):
+        self.strategy = strategy <span class="kw">or</span> <span class="cls">DailyPricingStrategy</span>()
+
+    <span class="kw">def</span> <span class="fn">calculate_cost</span>(self, car: <span class="cls">Car</span>) -> <span class="dt">float</span>:
+        <span class="kw">return</span> self.strategy.calculate(
+            self.pickup_date, self.return_date, car.daily_rate
+        )</pre>
+    </div>
+  </div>
+
+  <div id="pd-state" class="pattern-detail">
+    <h3>State — CarState</h3>
+    <p style="font-size:13px;color:var(--ink2);margin-bottom:1rem">The <strong>State</strong> pattern represents a car's lifecycle as explicit state objects. Each state knows which transitions are valid and raises an error if an illegal transition is attempted.</p>
+    <div class="info-box">🤔 <strong>Why here?</strong> A car under maintenance cannot be rented. A car that's already rented cannot be reserved. Without State, we'd have messy if-statements scattered everywhere. State centralizes transition logic.</div>
+    <div class="code-wrap">
+      <div class="code-label"><span>state.py</span> State Pattern for Car lifecycle</div>
+      <pre><span class="kw">from</span> <span class="dt">abc</span> <span class="kw">import</span> <span class="cls">ABC</span>, abstractmethod
+
+<span class="kw">class</span> <span class="cls">CarState</span>(<span class="cls">ABC</span>):
+    <span class="dec">@abstractmethod</span>
+    <span class="kw">def</span> <span class="fn">reserve</span>(self, car: <span class="st">'CarContext'</span>) -> <span class="kw">None</span>: ...
+    <span class="dec">@abstractmethod</span>
+    <span class="kw">def</span> <span class="fn">rent</span>(self, car: <span class="st">'CarContext'</span>) -> <span class="kw">None</span>: ...
+    <span class="dec">@abstractmethod</span>
+    <span class="kw">def</span> <span class="fn">return_car</span>(self, car: <span class="st">'CarContext'</span>) -> <span class="kw">None</span>: ...
+    <span class="dec">@abstractmethod</span>
+    <span class="kw">def</span> <span class="fn">send_to_maintenance</span>(self, car: <span class="st">'CarContext'</span>) -> <span class="kw">None</span>: ...
+
+<span class="kw">class</span> <span class="cls">AvailableState</span>(<span class="cls">CarState</span>):
+    <span class="kw">def</span> <span class="fn">reserve</span>(self, car): car.set_state(<span class="cls">ReservedState</span>())
+    <span class="kw">def</span> <span class="fn">rent</span>(self, car): car.set_state(<span class="cls">RentedState</span>())
+    <span class="kw">def</span> <span class="fn">return_car</span>(self, car): <span class="kw">raise</span> <span class="cls">ValueError</span>(<span class="st">"Car is already available"</span>)
+    <span class="kw">def</span> <span class="fn">send_to_maintenance</span>(self, car): car.set_state(<span class="cls">MaintenanceState</span>())
+
+<span class="kw">class</span> <span class="cls">ReservedState</span>(<span class="cls">CarState</span>):
+    <span class="kw">def</span> <span class="fn">reserve</span>(self, car): <span class="kw">raise</span> <span class="cls">ValueError</span>(<span class="st">"Car already reserved"</span>)
+    <span class="kw">def</span> <span class="fn">rent</span>(self, car): car.set_state(<span class="cls">RentedState</span>())    <span class="cm"># confirm pickup</span>
+    <span class="kw">def</span> <span class="fn">return_car</span>(self, car): car.set_state(<span class="cls">AvailableState</span>())  <span class="cm"># cancelled</span>
+    <span class="kw">def</span> <span class="fn">send_to_maintenance</span>(self, car): <span class="kw">raise</span> <span class="cls">ValueError</span>(<span class="st">"Cancel reservation first"</span>)
+
+<span class="kw">class</span> <span class="cls">RentedState</span>(<span class="cls">CarState</span>):
+    <span class="kw">def</span> <span class="fn">reserve</span>(self, car): <span class="kw">raise</span> <span class="cls">ValueError</span>(<span class="st">"Car is currently rented"</span>)
+    <span class="kw">def</span> <span class="fn">rent</span>(self, car): <span class="kw">raise</span> <span class="cls">ValueError</span>(<span class="st">"Car is already rented"</span>)
+    <span class="kw">def</span> <span class="fn">return_car</span>(self, car): car.set_state(<span class="cls">AvailableState</span>())
+    <span class="kw">def</span> <span class="fn">send_to_maintenance</span>(self, car): <span class="kw">raise</span> <span class="cls">ValueError</span>(<span class="st">"Return the car first"</span>)
+
+<span class="kw">class</span> <span class="cls">MaintenanceState</span>(<span class="cls">CarState</span>):
+    <span class="kw">def</span> <span class="fn">reserve</span>(self, car): <span class="kw">raise</span> <span class="cls">ValueError</span>(<span class="st">"Car is in maintenance"</span>)
+    <span class="kw">def</span> <span class="fn">rent</span>(self, car): <span class="kw">raise</span> <span class="cls">ValueError</span>(<span class="st">"Car is in maintenance"</span>)
+    <span class="kw">def</span> <span class="fn">return_car</span>(self, car): car.set_state(<span class="cls">AvailableState</span>())  <span class="cm"># service done</span>
+    <span class="kw">def</span> <span class="fn">send_to_maintenance</span>(self, car): <span class="kw">raise</span> <span class="cls">ValueError</span>(<span class="st">"Already in maintenance"</span>)
+
+<span class="kw">class</span> <span class="cls">CarContext</span>:
+    <span class="st">"""Wraps a Car and delegates state transitions."""</span>
+    <span class="kw">def</span> <span class="fn">__init__</span>(self, car: <span class="cls">Car</span>):
+        self._car = car
+        self._state: <span class="cls">CarState</span> = <span class="cls">AvailableState</span>()
+
+    <span class="kw">def</span> <span class="fn">set_state</span>(self, state: <span class="cls">CarState</span>): self._state = state
+    <span class="kw">def</span> <span class="fn">reserve</span>(self): self._state.reserve(self)
+    <span class="kw">def</span> <span class="fn">rent</span>(self): self._state.rent(self)
+    <span class="kw">def</span> <span class="fn">return_car</span>(self): self._state.return_car(self)</pre>
+    </div>
+  </div>
+
+  <div id="pd-observer" class="pattern-detail">
+    <h3>Observer — ReservationObserver</h3>
+    <p style="font-size:13px;color:var(--ink2);margin-bottom:1rem">The <strong>Observer</strong> pattern lets multiple notification handlers (email, SMS, push) react to reservation events without the Reservation class knowing anything about them.</p>
+    <div class="info-box">🤔 <strong>Why here?</strong> When a reservation is confirmed, cancelled, or overdue, we need to notify the customer. But the notification method (email vs SMS vs push) should be pluggable, not hardcoded into Reservation logic.</div>
+    <div class="code-wrap">
+      <div class="code-label"><span>observer.py</span> Observer Pattern</div>
+      <pre><span class="kw">from</span> <span class="dt">abc</span> <span class="kw">import</span> <span class="cls">ABC</span>, abstractmethod
+
+<span class="kw">class</span> <span class="cls">ReservationObserver</span>(<span class="cls">ABC</span>):
+    <span class="st">"""All notifiers must implement this contract."""</span>
+    <span class="dec">@abstractmethod</span>
+    <span class="kw">def</span> <span class="fn">on_status_change</span>(self, reservation: <span class="cls">Reservation</span>, new_status: <span class="cls">ReservationStatus</span>) -> <span class="kw">None</span>:
+        ...
+
+<span class="kw">class</span> <span class="cls">EmailNotifier</span>(<span class="cls">ReservationObserver</span>):
+    <span class="kw">def</span> <span class="fn">on_status_change</span>(self, reservation, new_status):
+        print(<span class="fn">f</span><span class="st">"[EMAIL] Reservation {reservation.reservation_id[:8]}... → {new_status.value}"</span>)
+        <span class="cm"># In production: call email service API here</span>
+
+<span class="kw">class</span> <span class="cls">SMSNotifier</span>(<span class="cls">ReservationObserver</span>):
+    <span class="kw">def</span> <span class="fn">on_status_change</span>(self, reservation, new_status):
+        print(<span class="fn">f</span><span class="st">"[SMS] Booking update: {new_status.value}"</span>)
+
+<span class="kw">class</span> <span class="cls">ReservationSubject</span>:
+    <span class="st">"""Manages observers and fires notifications."""</span>
+    <span class="kw">def</span> <span class="fn">__init__</span>(self):
+        self._observers: list[<span class="cls">ReservationObserver</span>] = []
+
+    <span class="kw">def</span> <span class="fn">attach</span>(self, observer: <span class="cls">ReservationObserver</span>): self._observers.append(observer)
+    <span class="kw">def</span> <span class="fn">detach</span>(self, observer: <span class="cls">ReservationObserver</span>): self._observers.remove(observer)
+
+    <span class="kw">def</span> <span class="fn">notify</span>(self, reservation: <span class="cls">Reservation</span>, status: <span class="cls">ReservationStatus</span>):
+        <span class="kw">for</span> obs <span class="kw">in</span> self._observers:
+            obs.on_status_change(reservation, status)
+
+<span class="cm"># Usage in RentalService:</span>
+subject = <span class="cls">ReservationSubject</span>()
+subject.attach(<span class="cls">EmailNotifier</span>())
+subject.attach(<span class="cls">SMSNotifier</span>())
+subject.notify(reservation, <span class="cls">ReservationStatus</span>.CONFIRMED)</pre>
+    </div>
+  </div>
+
+  <div id="pd-decorator" class="pattern-detail">
+    <h3>Decorator — Rental Add-Ons</h3>
+    <p style="font-size:13px;color:var(--ink2);margin-bottom:1rem">The <strong>Decorator</strong> pattern wraps a base cost function with additional cost layers. Adding GPS, insurance, and a child seat stacks cleanly — each decorator adds its own cost and forwards the rest to the inner object.</p>
+    <div class="info-box">🤔 <strong>Why here?</strong> Instead of <code>if has_gps: total += 10; if has_insurance: total += 25</code> (which gets messy with combinations), each add-on wraps the previous one. Easy to add new add-ons without touching existing code. Open/Closed Principle!</div>
+    <div class="code-wrap">
+      <div class="code-label"><span>decorator.py</span> Add-On Decorator Pattern</div>
+      <pre><span class="kw">from</span> <span class="dt">abc</span> <span class="kw">import</span> <span class="cls">ABC</span>, abstractmethod
+
+<span class="kw">class</span> <span class="cls">RentalCost</span>(<span class="cls">ABC</span>):
+    <span class="st">"""Base interface for any rental cost object."""</span>
+    <span class="dec">@abstractmethod</span>
+    <span class="kw">def</span> <span class="fn">calculate</span>(self) -> <span class="dt">float</span>: ...
+    <span class="dec">@abstractmethod</span>
+    <span class="kw">def</span> <span class="fn">description</span>(self) -> str: ...
+
+<span class="kw">class</span> <span class="cls">BaseRentalCost</span>(<span class="cls">RentalCost</span>):
+    <span class="st">"""The core rental cost — days × daily rate."""</span>
+    <span class="kw">def</span> <span class="fn">__init__</span>(self, days: <span class="dt">int</span>, daily_rate: <span class="dt">float</span>):
+        self._days = days
+        self._rate = daily_rate
+
+    <span class="kw">def</span> <span class="fn">calculate</span>(self) -> <span class="dt">float</span>: <span class="kw">return</span> self._days * self._rate
+    <span class="kw">def</span> <span class="fn">description</span>(self) -> str: <span class="kw">return</span> <span class="fn">f</span><span class="st">"{self._days} days @ ₹{self._rate}/day"</span>
+
+<span class="kw">class</span> <span class="cls">AddOnDecorator</span>(<span class="cls">RentalCost</span>, <span class="cls">ABC</span>):
+    <span class="st">"""Wraps a RentalCost and adds extra cost on top."""</span>
+    <span class="kw">def</span> <span class="fn">__init__</span>(self, wrapped: <span class="cls">RentalCost</span>):
+        self._wrapped = wrapped
+
+    <span class="dec">@abstractmethod</span>
+    <span class="kw">def</span> <span class="fn">add_on_cost</span>(self) -> <span class="dt">float</span>: ...
+    <span class="dec">@abstractmethod</span>
+    <span class="kw">def</span> <span class="fn">add_on_name</span>(self) -> str: ...
+
+    <span class="kw">def</span> <span class="fn">calculate</span>(self) -> <span class="dt">float</span>: <span class="kw">return</span> self._wrapped.calculate() + self.add_on_cost()
+    <span class="kw">def</span> <span class="fn">description</span>(self) -> str: <span class="kw">return</span> self._wrapped.description() + <span class="fn">f</span><span class="st">" + {self.add_on_name()}"</span>
+
+<span class="kw">class</span> <span class="cls">InsuranceAddon</span>(<span class="cls">AddOnDecorator</span>):
+    <span class="kw">def</span> <span class="fn">add_on_cost</span>(self) -> <span class="dt">float</span>: <span class="kw">return</span> <span class="num">20.0</span>
+    <span class="kw">def</span> <span class="fn">add_on_name</span>(self) -> str: <span class="kw">return</span> <span class="st">"Insurance (₹20)"</span>
+
+<span class="kw">class</span> <span class="cls">GPSAddon</span>(<span class="cls">AddOnDecorator</span>):
+    <span class="kw">def</span> <span class="fn">add_on_cost</span>(self) -> <span class="dt">float</span>: <span class="kw">return</span> <span class="num">10.0</span>
+    <span class="kw">def</span> <span class="fn">add_on_name</span>(self) -> str: <span class="kw">return</span> <span class="st">"GPS (₹10)"</span>
+
+<span class="kw">class</span> <span class="cls">ChildSeatAddon</span>(<span class="cls">AddOnDecorator</span>):
+    <span class="kw">def</span> <span class="fn">add_on_cost</span>(self) -> <span class="dt">float</span>: <span class="kw">return</span> <span class="num">8.0</span>
+    <span class="kw">def</span> <span class="fn">add_on_name</span>(self) -> str: <span class="kw">return</span> <span class="st">"Child Seat (₹8)"</span>
+
+<span class="cm"># Stacking add-ons: base → insurance → GPS → child seat</span>
+cost = <span class="cls">BaseRentalCost</span>(days=<span class="num">3</span>, daily_rate=<span class="num">50.0</span>)   <span class="cm"># ₹150</span>
+cost = <span class="cls">InsuranceAddon</span>(cost)                         <span class="cm"># ₹170</span>
+cost = <span class="cls">GPSAddon</span>(cost)                               <span class="cm"># ₹180</span>
+cost = <span class="cls">ChildSeatAddon</span>(cost)                         <span class="cm"># ₹188</span>
+print(cost.calculate())     <span class="cm"># 188.0</span>
+print(cost.description())   <span class="cm"># 3 days @ ₹50/day + Insurance + GPS + Child Seat</span></pre>
+    </div>
+  </div>
+</div>
+
+<!-- ============================================================ FLOW -->
+<div id="tab-flow" class="section">
+  <p class="section-title">Complete Rental Flow</p>
+  <p class="section-sub">End-to-end flow with thread safety and the RentalService orchestrator.</p>
+
+  <h3>The 6 steps of a rental</h3>
+  <div class="flow-steps">
+    <div class="flow-step"><div class="flow-num">1</div><div class="flow-content"><div class="flow-title">Customer searches for available cars</div><div class="flow-desc">Queries <code>RentalSystem</code> for cars matching <code>CarType</code>, branch, and date range. Returns list of <code>Car</code> objects with status AVAILABLE.</div></div></div>
+    <div class="flow-step"><div class="flow-num">2</div><div class="flow-content"><div class="flow-title">Customer selects a car and creates a Reservation</div><div class="flow-desc"><code>RentalService.reserve()</code> checks customer license validity, acquires a per-car lock, and creates a <code>Reservation</code> object. Car status moves to RESERVED.</div></div></div>
+    <div class="flow-step"><div class="flow-num">3</div><div class="flow-content"><div class="flow-title">Notification sent — Reservation CONFIRMED</div><div class="flow-desc">The <code>ReservationSubject</code> fires <code>notify()</code>, which calls all attached observers (EmailNotifier, SMSNotifier). Decoupled from core booking logic.</div></div></div>
+    <div class="flow-step"><div class="flow-num">4</div><div class="flow-content"><div class="flow-title">Customer picks up car — status becomes RENTED</div><div class="flow-desc"><code>RentalService.pickup()</code> transitions the car via the State pattern. Reservation status moves to ACTIVE.</div></div></div>
+    <div class="flow-step"><div class="flow-num">5</div><div class="flow-content"><div class="flow-title">Customer returns car — cost calculated</div><div class="flow-desc">Actual return time is recorded. Late fee is added if past due date. PricingStrategy calculates base cost. Decorator stacks add-on costs. Invoice is generated.</div></div></div>
+    <div class="flow-step"><div class="flow-num">6</div><div class="flow-content"><div class="flow-title">Car becomes AVAILABLE again</div><div class="flow-desc">Car state transitions back to AvailableState. Reservation is marked COMPLETED. Observer fires final notification.</div></div></div>
+  </div>
+
+  <div class="code-wrap">
+    <div class="code-label"><span>rental_service.py</span> Orchestrator with thread safety</div>
+    <pre><span class="kw">import</span> threading
+<span class="kw">from</span> <span class="dt">datetime</span> <span class="kw">import</span> datetime
+<span class="kw">from</span> <span class="dt">typing</span> <span class="kw">import</span> <span class="cls">Dict</span>, <span class="cls">List</span>
+
+<span class="kw">class</span> <span class="cls">RentalService</span>:
+    <span class="st">"""Orchestrates the full rental lifecycle.
+    Uses per-car locks to prevent double booking.
+    """</span>
+    <span class="kw">def</span> <span class="fn">__init__</span>(self):
+        self._system = <span class="cls">RentalSystem</span>()
+        self._car_locks: <span class="cls">Dict</span>[str, threading.Lock] = {}
+        self._locks_mutex = threading.Lock()
+        self._subject = <span class="cls">ReservationSubject</span>()
+
+    <span class="kw">def</span> <span class="fn">_get_car_lock</span>(self, car_id: str) -> threading.Lock:
+        <span class="cm"># Create a lock for a car the first time we see it</span>
+        <span class="kw">with</span> self._locks_mutex:
+            <span class="kw">if</span> car_id <span class="kw">not in</span> self._car_locks:
+                self._car_locks[car_id] = threading.Lock()
+        <span class="kw">return</span> self._car_locks[car_id]
+
+    <span class="kw">def</span> <span class="fn">reserve</span>(
+        self,
+        customer: <span class="cls">Customer</span>,
+        car_id: str,
+        pickup_date: datetime,
+        return_date: datetime,
+        add_ons: <span class="cls">List</span>[<span class="cls">AddOnType</span>] = <span class="kw">None</span>,
+        strategy: <span class="cls">PricingStrategy</span> = <span class="kw">None</span>,
+    ) -> <span class="cls">Reservation</span>:
+
+        <span class="cm"># 1. Validate customer license</span>
+        <span class="kw">if not</span> customer.license <span class="kw">or not</span> customer.license.is_valid():
+            <span class="kw">raise</span> <span class="cls">ValueError</span>(<span class="st">"Invalid or expired driving license"</span>)
+
+        <span class="cm"># 2. Per-car lock — prevents double booking</span>
+        car_lock = self._get_car_lock(car_id)
+        <span class="kw">with</span> car_lock:
+            car = self._system.get_car(car_id)
+            <span class="kw">if not</span> car:
+                <span class="kw">raise</span> <span class="cls">ValueError</span>(<span class="fn">f</span><span class="st">"Car {car_id} not found"</span>)
+            <span class="kw">if</span> car.status != <span class="cls">CarStatus</span>.AVAILABLE:
+                <span class="kw">raise</span> <span class="cls">ValueError</span>(<span class="fn">f</span><span class="st">"Car is not available (status: {car.status.value})"</span>)
+
+            <span class="cm"># 3. Create reservation</span>
+            reservation = <span class="cls">Reservation</span>(
+                customer_id=customer.customer_id,
+                car_id=car_id,
+                pickup_date=pickup_date,
+                return_date=return_date,
+                add_ons=add_ons <span class="kw">or</span> [],
+                status=<span class="cls">ReservationStatus</span>.CONFIRMED,
+            )
+
+            <span class="cm"># 4. Change car status atomically (inside lock)</span>
+            car.status = <span class="cls">CarStatus</span>.RESERVED
+            customer.reservations.append(reservation.reservation_id)
+
+        <span class="cm"># 5. Notify observers (outside lock — no need to hold it)</span>
+        self._subject.notify(reservation, <span class="cls">ReservationStatus</span>.CONFIRMED)
+        <span class="kw">return</span> reservation
+
+    <span class="kw">def</span> <span class="fn">pickup</span>(self, reservation: <span class="cls">Reservation</span>) -> <span class="kw">None</span>:
+        car = self._system.get_car(reservation.car_id)
+        car.status = <span class="cls">CarStatus</span>.RENTED
+        reservation.status = <span class="cls">ReservationStatus</span>.ACTIVE
+        self._subject.notify(reservation, <span class="cls">ReservationStatus</span>.ACTIVE)
+
+    <span class="kw">def</span> <span class="fn">return_car</span>(self, reservation: <span class="cls">Reservation</span>, actual_return: datetime) -> <span class="cls">Invoice</span>:
+        car = self._system.get_car(reservation.car_id)
+        reservation.actual_return = actual_return
+
+        <span class="cm"># Calculate base cost via Strategy</span>
+        strategy = <span class="cls">DailyPricingStrategy</span>()
+        base_cost = strategy.calculate(reservation.pickup_date, actual_return, car.daily_rate)
+
+        <span class="cm"># Stack add-on costs via Decorator</span>
+        cost_obj = <span class="cls">BaseRentalCost</span>(
+            days=(actual_return - reservation.pickup_date).days <span class="kw">or</span> <span class="num">1</span>,
+            daily_rate=car.daily_rate
+        )
+        addon_cost = <span class="num">0.0</span>
+        <span class="kw">for</span> addon <span class="kw">in</span> reservation.add_ons:
+            <span class="kw">if</span> addon == <span class="cls">AddOnType</span>.INSURANCE:
+                cost_obj = <span class="cls">InsuranceAddon</span>(cost_obj)
+                addon_cost += <span class="num">20.0</span>
+            <span class="kw">elif</span> addon == <span class="cls">AddOnType</span>.GPS:
+                cost_obj = <span class="cls">GPSAddon</span>(cost_obj)
+                addon_cost += <span class="num">10.0</span>
+            <span class="kw">elif</span> addon == <span class="cls">AddOnType</span>.CHILD_SEAT:
+                cost_obj = <span class="cls">ChildSeatAddon</span>(cost_obj)
+                addon_cost += <span class="num">8.0</span>
+
+        <span class="cm"># Late fee: 1.5x daily rate per extra day</span>
+        late_fee = <span class="num">0.0</span>
+        <span class="kw">if</span> actual_return > reservation.return_date:
+            extra_days = (actual_return - reservation.return_date).days
+            late_fee = extra_days * car.daily_rate * <span class="num">1.5</span>
+
+        total = cost_obj.calculate() + late_fee
+
+        <span class="cm"># Update statuses atomically</span>
+        car.status = <span class="cls">CarStatus</span>.AVAILABLE
+        reservation.status = <span class="cls">ReservationStatus</span>.COMPLETED
+        reservation.total_cost = total
+        self._subject.notify(reservation, <span class="cls">ReservationStatus</span>.COMPLETED)
+
+        <span class="kw">return</span> <span class="cls">Invoice</span>(
+            reservation_id=reservation.reservation_id,
+            base_cost=base_cost,
+            add_on_cost=addon_cost,
+            late_fee=late_fee,
+            total=total,
+        )</pre>
+  </div>
+</div>
+
+<!-- ============================================================ TESTS -->
+<div id="tab-tests" class="section">
+  <p class="section-title">Test Suite</p>
+  <p class="section-sub">pytest-based tests covering happy paths, edge cases, and thread safety.</p>
+
+  <div class="info-box">🧪 <strong>Interview tip:</strong> When asked "how would you test this?", mention: unit tests per class, integration tests for full flows, and concurrency tests for thread safety. That's all three levels interviewers want to hear.</div>
+
+  <div class="code-wrap">
+    <div class="code-label"><span>test_car_rental.py</span> Complete pytest suite</div>
+    <pre><span class="kw">import</span> pytest
+<span class="kw">import</span> threading
+<span class="kw">from</span> <span class="dt">datetime</span> <span class="kw">import</span> datetime, timedelta
+
+<span class="cm"># ── Fixtures ──────────────────────────────────────────</span>
+
+<span class="dec">@pytest.fixture</span>
+<span class="kw">def</span> <span class="fn">system</span>():
+    <span class="st">"""Fresh singleton state for each test via monkeypatching."""</span>
+    s = <span class="cls">RentalSystem</span>()
+    s._cars.clear()
+    s._reservations.clear()
+    <span class="kw">return</span> s
+
+<span class="dec">@pytest.fixture</span>
+<span class="kw">def</span> <span class="fn">sample_car</span>(system):
+    car = <span class="cls">CarFactory</span>.create_car(<span class="st">"Toyota"</span>, <span class="st">"Camry"</span>, <span class="num">2022</span>, <span class="cls">CarType</span>.COMPACT, <span class="st">"branch-1"</span>)
+    system.add_car(car)
+    <span class="kw">return</span> car
+
+<span class="dec">@pytest.fixture</span>
+<span class="kw">def</span> <span class="fn">valid_customer</span>():
+    <span class="kw">return</span> <span class="cls">Customer</span>(
+        name=<span class="st">"Alice"</span>,
+        email=<span class="st">"alice@example.com"</span>,
+        license=<span class="cls">DrivingLicense</span>(
+            license_id=<span class="st">"DL001"</span>,
+            customer_id=<span class="st">"C001"</span>,
+            expiry_date=datetime.now() + timedelta(days=<span class="num">365</span>),
+            country=<span class="st">"IN"</span>
+        )
+    )
+
+<span class="dec">@pytest.fixture</span>
+<span class="kw">def</span> <span class="fn">service</span>():
+    <span class="kw">return</span> <span class="cls">RentalService</span>()
+
+<span class="cm"># ── Unit Tests: Pricing Strategies ───────────────────</span>
+
+<span class="kw">class</span> <span class="cls">TestPricingStrategies</span>:
+    <span class="kw">def</span> <span class="fn">test_daily_pricing_3_days</span>(self):
+        strategy = <span class="cls">DailyPricingStrategy</span>()
+        pickup = datetime(<span class="num">2024</span>, <span class="num">1</span>, <span class="num">1</span>)
+        ret = datetime(<span class="num">2024</span>, <span class="num">1</span>, <span class="num">4</span>)
+        <span class="kw">assert</span> strategy.calculate(pickup, ret, <span class="num">50.0</span>) == <span class="num">150.0</span>
+
+    <span class="kw">def</span> <span class="fn">test_daily_minimum_1_day</span>(self):
+        <span class="st">"""Same-day return should still charge 1 day."""</span>
+        strategy = <span class="cls">DailyPricingStrategy</span>()
+        pickup = ret = datetime(<span class="num">2024</span>, <span class="num">1</span>, <span class="num">1</span>)
+        <span class="kw">assert</span> strategy.calculate(pickup, ret, <span class="num">50.0</span>) == <span class="num">50.0</span>
+
+    <span class="kw">def</span> <span class="fn">test_weekly_discount_applies_at_7_days</span>(self):
+        strategy = <span class="cls">WeeklyDiscountStrategy</span>()
+        pickup = datetime(<span class="num">2024</span>, <span class="num">1</span>, <span class="num">1</span>)
+        ret = datetime(<span class="num">2024</span>, <span class="num">1</span>, <span class="num">8</span>)
+        expected = <span class="num">7</span> * <span class="num">50.0</span> * <span class="num">0.85</span>  <span class="cm"># 15% off</span>
+        <span class="kw">assert</span> strategy.calculate(pickup, ret, <span class="num">50.0</span>) == pytest.approx(expected)
+
+    <span class="kw">def</span> <span class="fn">test_weekly_discount_not_applied_under_7_days</span>(self):
+        strategy = <span class="cls">WeeklyDiscountStrategy</span>()
+        pickup = datetime(<span class="num">2024</span>, <span class="num">1</span>, <span class="num">1</span>)
+        ret = datetime(<span class="num">2024</span>, <span class="num">1</span>, <span class="num">6</span>)
+        <span class="kw">assert</span> strategy.calculate(pickup, ret, <span class="num">50.0</span>) == <span class="num">250.0</span>
+
+<span class="cm"># ── Unit Tests: Decorator Add-Ons ─────────────────────</span>
+
+<span class="kw">class</span> <span class="cls">TestAddOnDecorators</span>:
+    <span class="kw">def</span> <span class="fn">test_base_cost_only</span>(self):
+        cost = <span class="cls">BaseRentalCost</span>(days=<span class="num">3</span>, daily_rate=<span class="num">50.0</span>)
+        <span class="kw">assert</span> cost.calculate() == <span class="num">150.0</span>
+
+    <span class="kw">def</span> <span class="fn">test_insurance_adds_20</span>(self):
+        cost = <span class="cls">InsuranceAddon</span>(<span class="cls">BaseRentalCost</span>(days=<span class="num">3</span>, daily_rate=<span class="num">50.0</span>))
+        <span class="kw">assert</span> cost.calculate() == <span class="num">170.0</span>
+
+    <span class="kw">def</span> <span class="fn">test_stacked_addons</span>(self):
+        cost = <span class="cls">BaseRentalCost</span>(days=<span class="num">3</span>, daily_rate=<span class="num">50.0</span>)
+        cost = <span class="cls">InsuranceAddon</span>(cost)   <span class="cm"># +20 → 170</span>
+        cost = <span class="cls">GPSAddon</span>(cost)          <span class="cm"># +10 → 180</span>
+        cost = <span class="cls">ChildSeatAddon</span>(cost)    <span class="cm"># +8  → 188</span>
+        <span class="kw">assert</span> cost.calculate() == <span class="num">188.0</span>
+
+    <span class="kw">def</span> <span class="fn">test_description_chain</span>(self):
+        cost = <span class="cls">GPSAddon</span>(<span class="cls">BaseRentalCost</span>(days=<span class="num">2</span>, daily_rate=<span class="num">50.0</span>))
+        <span class="kw">assert</span> <span class="st">"GPS"</span> <span class="kw">in</span> cost.description()
+
+<span class="cm"># ── Integration Tests: Full Rental Flow ───────────────</span>
+
+<span class="kw">class</span> <span class="cls">TestRentalFlow</span>:
+    <span class="kw">def</span> <span class="fn">test_successful_reservation</span>(self, service, sample_car, valid_customer):
+        pickup = datetime.now() + timedelta(days=<span class="num">1</span>)
+        ret = pickup + timedelta(days=<span class="num">3</span>)
+        res = service.reserve(valid_customer, sample_car.car_id, pickup, ret)
+        <span class="kw">assert</span> res.status == <span class="cls">ReservationStatus</span>.CONFIRMED
+        <span class="kw">assert</span> sample_car.status == <span class="cls">CarStatus</span>.RESERVED
+
+    <span class="kw">def</span> <span class="fn">test_expired_license_raises</span>(self, service, sample_car):
+        customer = <span class="cls">Customer</span>(
+            name=<span class="st">"Bob"</span>,
+            license=<span class="cls">DrivingLicense</span>(<span class="st">"DL002"</span>, <span class="st">"C002"</span>,
+                datetime.now() - timedelta(days=<span class="num">1</span>), <span class="st">"IN"</span>)
+        )
+        <span class="kw">with</span> pytest.raises(<span class="cls">ValueError</span>, match=<span class="st">"Invalid or expired"</span>):
+            service.reserve(customer, sample_car.car_id,
+                datetime.now(), datetime.now() + timedelta(days=<span class="num">1</span>))
+
+    <span class="kw">def</span> <span class="fn">test_double_booking_raises</span>(self, service, sample_car, valid_customer):
+        pickup = datetime.now() + timedelta(days=<span class="num">1</span>)
+        ret = pickup + timedelta(days=<span class="num">3</span>)
+        service.reserve(valid_customer, sample_car.car_id, pickup, ret)
+        <span class="kw">with</span> pytest.raises(<span class="cls">ValueError</span>, match=<span class="st">"not available"</span>):
+            service.reserve(valid_customer, sample_car.car_id, pickup, ret)
+
+    <span class="kw">def</span> <span class="fn">test_return_generates_invoice</span>(self, service, sample_car, valid_customer):
+        pickup = datetime.now()
+        ret = pickup + timedelta(days=<span class="num">3</span>)
+        res = service.reserve(valid_customer, sample_car.car_id, pickup, ret)
+        service.pickup(res)
+        invoice = service.return_car(res, ret)
+        <span class="kw">assert</span> invoice.total > <span class="num">0</span>
+        <span class="kw">assert</span> sample_car.status == <span class="cls">CarStatus</span>.AVAILABLE
+
+    <span class="kw">def</span> <span class="fn">test_late_return_adds_late_fee</span>(self, service, sample_car, valid_customer):
+        pickup = datetime.now()
+        due = pickup + timedelta(days=<span class="num">3</span>)
+        actual = due + timedelta(days=<span class="num">2</span>)  <span class="cm"># 2 days late</span>
+        res = service.reserve(valid_customer, sample_car.car_id, pickup, due)
+        service.pickup(res)
+        invoice = service.return_car(res, actual)
+        <span class="kw">assert</span> invoice.late_fee > <span class="num">0</span>
+
+<span class="cm"># ── Concurrency Test ──────────────────────────────────</span>
+
+<span class="kw">class</span> <span class="cls">TestThreadSafety</span>:
+    <span class="kw">def</span> <span class="fn">test_concurrent_reservation_only_one_succeeds</span>(
+        self, service, sample_car, valid_customer
+    ):
+        <span class="st">"""Two threads try to book same car simultaneously.
+        Exactly one should succeed; the other should get ValueError."""</span>
+        results = []
+        errors = []
+        pickup = datetime.now() + timedelta(days=<span class="num">1</span>)
+        ret = pickup + timedelta(days=<span class="num">2</span>)
+
+        <span class="kw">def</span> <span class="fn">attempt_booking</span>():
+            <span class="kw">try</span>:
+                r = service.reserve(valid_customer, sample_car.car_id, pickup, ret)
+                results.append(r)
+            <span class="kw">except</span> <span class="cls">ValueError</span> <span class="kw">as</span> e:
+                errors.append(str(e))
+
+        t1 = threading.Thread(target=attempt_booking)
+        t2 = threading.Thread(target=attempt_booking)
+        t1.start(); t2.start()
+        t1.join(); t2.join()
+
+        <span class="kw">assert</span> len(results) == <span class="num">1</span>, <span class="st">"Exactly one booking should succeed"</span>
+        <span class="kw">assert</span> len(errors) == <span class="num">1</span>, <span class="st">"Exactly one booking should fail"</span></pre>
+  </div>
+</div>
+
+<!-- ============================================================ QA -->
+<div id="tab-qa" class="section">
+  <p class="section-title">Interview Q&amp;A</p>
+  <p class="section-sub">Click any question to reveal a strong answer. These are the questions you're most likely to get.</p>
+
+  <div class="qa-item">
+    <div class="qa-question" onclick="toggleQA(this)">
+      What design patterns did you use and why?
+      <span class="qa-arrow">▾</span>
+    </div>
+    <div class="qa-answer">
+      I used six patterns, each motivated by a specific problem. <strong>Singleton</strong> for <code>RentalSystem</code> — there must be one source of truth for car inventory. <strong>Factory</strong> for car creation — different types have different defaults and we don't want that scattered everywhere. <strong>Strategy</strong> for pricing — pricing rules change often (weekends, bulk, premium members) and should be swappable without touching reservation logic. <strong>State</strong> for car lifecycle — prevents illegal transitions (you can't rent a car that's already rented) by encoding valid transitions in state objects. <strong>Observer</strong> for notifications — decouples reservation events from how they're communicated. <strong>Decorator</strong> for add-ons — GPS + Insurance + Child Seat stack cleanly instead of a mess of boolean flags.
+    </div>
+  </div>
+
+  <div class="qa-item">
+    <div class="qa-question" onclick="toggleQA(this)">
+      How do you prevent double booking?
+      <span class="qa-arrow">▾</span>
+    </div>
+    <div class="qa-answer">
+      I use <strong>per-car locks</strong> in <code>RentalService</code>. Each car gets its own <code>threading.Lock</code>. When a reservation is attempted, we acquire that car's lock, check its status, and update it atomically — all inside the lock. This means two threads trying to book the same car will be serialized: one waits while the other checks+updates. The first finds the car AVAILABLE and reserves it; the second finds it RESERVED and raises <code>ValueError</code>. I use a mutex to protect the lock-creation dictionary itself, avoiding a race condition in that step too. This is better than locking the entire system because it allows concurrent bookings of <em>different</em> cars.
+    </div>
+  </div>
+
+  <div class="qa-item">
+    <div class="qa-question" onclick="toggleQA(this)">
+      How would you extend this to support dynamic pricing?
+      <span class="qa-arrow">▾</span>
+    </div>
+    <div class="qa-answer">
+      The <strong>Strategy pattern</strong> makes this easy. I'd create a new class like <code>DemandBasedPricingStrategy</code> implementing <code>PricingStrategy</code>. Its <code>calculate()</code> method would check occupancy rate — if 90%+ of cars are rented, multiply the base rate by 1.3x. Since <code>Reservation</code> only depends on the <code>PricingStrategy</code> interface, we just pass in the new strategy at construction time. Zero changes to existing classes — this is the Open/Closed Principle: open for extension, closed for modification.
+    </div>
+  </div>
+
+  <div class="qa-item">
+    <div class="qa-question" onclick="toggleQA(this)">
+      What's the difference between State and Strategy pattern in this design?
+      <span class="qa-arrow">▾</span>
+    </div>
+    <div class="qa-answer">
+      Both use polymorphism to change behavior, but their intent differs. <strong>Strategy</strong> represents interchangeable algorithms that can be selected externally — the client picks which pricing algorithm to use. The algorithm doesn't change itself. <strong>State</strong> represents an object that changes its own behavior based on internal transitions — a car in <code>RentedState</code> transitions itself to <code>AvailableState</code> when returned. State transitions are driven from within the object. In code: <code>RentalService</code> passes a <code>PricingStrategy</code> to a Reservation (external control), while <code>CarContext</code> holds a <code>CarState</code> that swaps itself on valid transitions (internal control).
+    </div>
+  </div>
+
+  <div class="qa-item">
+    <div class="qa-question" onclick="toggleQA(this)">
+      Why use Decorator for add-ons instead of just a list of add-on costs?
+      <span class="qa-arrow">▾</span>
+    </div>
+    <div class="qa-answer">
+      A simple list works but couples the cost calculation logic to <code>Reservation</code>. Every new add-on type means modifying the <code>return_car()</code> method. With Decorator, adding a new add-on like <code>SnowChainAddon</code> means creating one new class and zero modifications elsewhere. The wrapping pattern also naturally gives us a description chain for the invoice — each decorator appends its own label. The trade-off: Decorator adds indirection and can be harder to debug. For a simple system with 3 fixed add-ons, a list might be fine. I chose Decorator to demonstrate the principle and make the system extensible.
+    </div>
+  </div>
+
+  <div class="qa-item">
+    <div class="qa-question" onclick="toggleQA(this)">
+      How would you add support for multiple branches and inter-branch returns?
+      <span class="qa-arrow">▾</span>
+    </div>
+    <div class="qa-answer">
+      Each <code>Car</code> has a <code>branch_id</code> and each <code>Branch</code> manages its own fleet. For search, I'd filter cars by branch. For inter-branch returns, I'd add an <code>inter_branch_fee</code> to <code>Invoice</code>, calculated based on distance between branches (or a flat fee). The <code>return_car()</code> method would check if <code>actual_return_branch != reservation.pickup_branch</code>, apply the fee, and update <code>car.branch_id</code> to the new branch. The Observer would then notify the original branch's manager. No changes to the core Reservation or Pricing logic needed.
+    </div>
+  </div>
+
+  <div class="qa-item">
+    <div class="qa-question" onclick="toggleQA(this)">
+      How would you scale this for a production system?
+      <span class="qa-arrow">▾</span>
+    </div>
+    <div class="qa-answer">
+      The in-memory Singleton works for a single-process system. For production: <strong>(1) Replace the Singleton</strong> with a database-backed repository. <strong>(2) Use distributed locks</strong> (Redis <code>SETNX</code> or a database row lock) instead of <code>threading.Lock</code>, since multiple server instances can't share in-process locks. <strong>(3) Add a database transaction</strong> wrapping the availability check + status update to ensure atomicity. <strong>(4) Move notifications</strong> to a message queue (Kafka/RabbitMQ) so Observer's <code>notify()</code> publishes an event, and email/SMS services consume it independently. <strong>(5) The core domain model</strong> — Car, Reservation, Pricing, Decorators — stays unchanged. This is the power of a clean LLD foundation.
+    </div>
+  </div>
+
+  <div class="qa-item">
+    <div class="qa-question" onclick="toggleQA(this)">
+      What SOLID principles does this design follow?
+      <span class="qa-arrow">▾</span>
+    </div>
+    <div class="qa-answer">
+      All five. <strong>S (Single Responsibility)</strong>: <code>Car</code> holds car data, <code>RentalService</code> orchestrates flow, <code>PricingStrategy</code> handles billing — no class does two unrelated things. <strong>O (Open/Closed)</strong>: Add a new pricing strategy or add-on without modifying existing classes. <strong>L (Liskov Substitution)</strong>: Any <code>PricingStrategy</code> subclass can replace another without breaking <code>RentalService</code>. <strong>I (Interface Segregation)</strong>: <code>PricingStrategy</code> has a single method <code>calculate()</code>; <code>ReservationObserver</code> has one method. No fat interfaces. <strong>D (Dependency Inversion)</strong>: <code>RentalService</code> depends on <code>PricingStrategy</code> (abstraction), not <code>DailyPricingStrategy</code> (concrete class).
+    </div>
+  </div>
+</div>
+
+<script>
+function switchTab(name) {
+  document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
+  document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+  document.getElementById('tab-' + name).classList.add('active');
+  event.target.classList.add('active');
+}
+
+function showPattern(name) {
+  document.querySelectorAll('.pattern-detail').forEach(d => d.classList.remove('show'));
+  document.querySelectorAll('.pattern-card').forEach(c => c.classList.remove('selected'));
+  document.getElementById('pd-' + name).classList.add('show');
+  event.currentTarget.classList.add('selected');
+}
+
+function toggleQA(el) {
+  const item = el.parentElement;
+  item.classList.toggle('open');
+}
+</script>
+</body>
+</html>

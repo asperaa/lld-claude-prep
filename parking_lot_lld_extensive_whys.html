@@ -1,0 +1,1318 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Parking Lot LLD — Extensive Why Edition</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Serif:ital,wght@0,400;0,600;1,400&family=JetBrains+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+:root {
+  --blue: #1a4480; --blue2: #2563eb; --blue-bg: #eff6ff; --blue-border: #bfdbfe;
+  --bg: #f8fafc; --surface: #ffffff; --surface2: #f1f5f9; --surface3: #e2e8f0;
+  --border: #e2e8f0; --text: #0f172a; --text2: #475569; --text3: #94a3b8;
+  --green: #166534; --green-bg: #f0fdf4; --green-border: #bbf7d0;
+  --red: #9b1c1c; --red-bg: #fef2f2; --red-border: #fecaca;
+  --amber: #92400e; --amber-bg: #fffbeb; --amber-border: #fde68a;
+  --purple: #5b21b6; --purple-bg: #f5f3ff; --purple-border: #ddd6fe;
+  --slate: #334155; --slate-bg: #f8fafc; --slate-border: #cbd5e1;
+  --mono: 'JetBrains Mono', monospace;
+  --sans: 'IBM Plex Sans', sans-serif;
+  --serif: 'IBM Plex Serif', serif;
+  --sidebar-w: 258px;
+  --r: 8px;
+}
+body { font-family: var(--sans); background: var(--bg); color: var(--text); display: flex; min-height: 100vh; }
+
+/* ---- SIDEBAR ---- */
+.sidebar {
+  width: var(--sidebar-w); position: fixed; top: 0; left: 0; bottom: 0;
+  background: var(--surface); border-right: 2px solid var(--border);
+  overflow-y: auto; z-index: 100; display: flex; flex-direction: column;
+}
+.logo-wrap { padding: 22px 18px 18px; border-bottom: 1px solid var(--border); }
+.logo { display: flex; align-items: center; gap: 10px; }
+.logo-icon { width: 36px; height: 36px; border-radius: 8px; background: var(--blue2); display: flex; align-items: center; justify-content: center; font-size: 18px; }
+.logo-name { font-size: 16px; font-weight: 600; font-family: var(--serif); }
+.logo-tag { font-size: 11px; color: var(--text3); margin-top: 3px; letter-spacing: 0.03em; }
+.nav-group { padding: 14px 18px 4px; font-size: 9px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.1em; color: var(--text3); }
+.nav-item { display: flex; align-items: center; gap: 9px; padding: 9px 18px; font-size: 13px; color: var(--text2); cursor: pointer; border-left: 3px solid transparent; transition: all 0.12s; }
+.nav-item:hover { background: var(--surface2); color: var(--text); }
+.nav-item.active { border-left-color: var(--blue2); background: var(--blue-bg); color: var(--blue); font-weight: 500; }
+.nav-item i { width: 15px; text-align: center; font-size: 12px; }
+.nav-item .step-num { font-size: 9px; font-weight: 700; background: var(--surface3); border-radius: 3px; padding: 1px 5px; margin-left: auto; color: var(--text3); }
+.nav-item.active .step-num { background: var(--blue-border); color: var(--blue); }
+
+/* ---- MAIN ---- */
+.main { margin-left: var(--sidebar-w); padding: 52px 60px; max-width: 920px; width: 100%; }
+.section { display: none; }
+.section.active { display: block; }
+
+/* ---- SECTION HEADER ---- */
+.sec-eyebrow { font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.1em; color: var(--blue2); margin-bottom: 10px; }
+.sec-title { font-family: var(--serif); font-size: 30px; font-weight: 600; line-height: 1.2; margin-bottom: 10px; }
+.sec-intro { font-size: 15px; color: var(--text2); line-height: 1.8; margin-bottom: 36px; border-left: 3px solid var(--border); padding-left: 16px; }
+
+/* ---- DIVIDERS / HEADINGS ---- */
+h3 { font-family: var(--serif); font-size: 19px; font-weight: 600; margin: 40px 0 14px; padding-top: 16px; border-top: 1px solid var(--border); color: var(--text); }
+h4 { font-size: 13px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.06em; margin: 18px 0 8px; color: var(--text3); }
+p { font-size: 14px; color: var(--text2); line-height: 1.8; margin: 10px 0; }
+
+/* ---- CALLOUT ---- */
+.prompt-box { background: var(--surface2); border: 1px solid var(--border); border-radius: var(--r); padding: 16px 20px; margin: 20px 0; }
+.prompt-box .plabel { font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.08em; color: var(--text3); margin-bottom: 7px; }
+.prompt-box .ptext { font-family: var(--serif); font-size: 16px; font-style: italic; color: var(--text); line-height: 1.6; }
+
+/* ---- DIALOGUE ---- */
+.dialogue { border: 1px solid var(--border); border-radius: var(--r); overflow: hidden; margin: 20px 0; }
+.d-row { padding: 14px 18px; border-bottom: 1px solid var(--border); font-size: 14px; line-height: 1.7; }
+.d-row:last-child { border-bottom: none; }
+.d-row.you { background: var(--surface); }
+.d-row.iv { background: var(--surface2); }
+.d-speaker { font-size: 9px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.09em; margin-bottom: 5px; }
+.d-row.you .d-speaker { color: var(--blue2); }
+.d-row.iv .d-speaker { color: var(--text3); }
+.why-inline {
+  margin-top: 12px; padding: 12px 14px;
+  background: var(--amber-bg); border-left: 3px solid #f59e0b;
+  border-radius: 0 6px 6px 0; font-size: 13px; color: var(--amber); line-height: 1.7;
+}
+.why-inline b { font-weight: 600; }
+.why-inline code { font-family: var(--mono); font-size: 11px; background: rgba(0,0,0,0.06); padding: 1px 5px; border-radius: 3px; }
+
+/* ---- ANNOTATED CODE ---- */
+.ann-wrap { margin: 22px 0; border: 1px solid var(--border); border-radius: var(--r); overflow: hidden; }
+.ann-header { background: #181825; padding: 10px 18px; display: flex; align-items: center; gap: 10px; border-bottom: 1px solid #2a2a3e; }
+.ann-header span { font-family: var(--mono); font-size: 12px; color: #6c7086; }
+.ann-row { display: grid; grid-template-columns: 46% 54%; border-bottom: 1px solid #2a2a3e; }
+.ann-row:last-child { border-bottom: none; }
+.ann-code { background: #1e1e2e; padding: 14px 18px; font-family: var(--mono); font-size: 12.5px; line-height: 1.75; color: #cdd6f4; overflow-x: auto; white-space: pre; }
+.ann-why { background: var(--surface2); padding: 14px 16px; border-left: 1px solid var(--border); font-size: 13px; line-height: 1.7; color: var(--text2); display: flex; flex-direction: column; gap: 6px; }
+.ann-why .wlabel { font-size: 9px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.09em; color: var(--blue2); }
+.ann-why .wmain { color: var(--text2); }
+.ann-why .wfail { background: var(--red-bg); border: 1px solid var(--red-border); border-radius: 5px; padding: 8px 10px; font-size: 12px; color: var(--red); }
+.ann-why .wfail b { font-weight: 600; }
+.ann-why .wfix { background: var(--green-bg); border: 1px solid var(--green-border); border-radius: 5px; padding: 8px 10px; font-size: 12px; color: var(--green); }
+.ann-why .wfix b { font-weight: 600; }
+
+/* ---- SYNTAX HIGHLIGHT ---- */
+.kw { color: #cba6f7; } .cls { color: #a6e3a1; font-weight: 500; }
+.cm { color: #585b70; font-style: italic; } .st { color: #f38ba8; }
+.nm { color: #89b4fa; } .dn { color: #fab387; }
+
+/* ---- PLAIN CODE ---- */
+.code-block { background: #1e1e2e; border-radius: var(--r); padding: 18px 20px; font-family: var(--mono); font-size: 13px; line-height: 1.8; overflow-x: auto; margin: 14px 0; color: #cdd6f4; white-space: pre; }
+
+/* ---- WHY BOX ---- */
+.why-box { background: var(--surface); border: 1px solid var(--border); border-radius: var(--r); padding: 18px 20px; margin: 18px 0; }
+.why-box .wl { display: flex; align-items: center; gap: 8px; font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.09em; color: var(--blue2); margin-bottom: 10px; }
+.why-box p { margin: 6px 0; }
+
+/* ---- ENTITY TABLE ---- */
+.etable { width: 100%; border-collapse: collapse; margin: 18px 0; font-size: 13.5px; }
+.etable th { text-align: left; padding: 10px 14px; background: var(--surface2); font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.07em; color: var(--text3); border-bottom: 2px solid var(--border); }
+.etable td { padding: 14px 14px; border-bottom: 1px solid var(--border); vertical-align: top; line-height: 1.7; color: var(--text2); }
+.etable td:first-child { font-weight: 500; color: var(--text); white-space: nowrap; }
+.etable tr:last-child td { border-bottom: none; }
+.etable tr:hover td { background: var(--surface2); }
+.badge { display: inline-block; font-size: 9px; font-weight: 700; padding: 2px 7px; border-radius: 20px; margin-right: 6px; text-transform: uppercase; letter-spacing: 0.05em; }
+.bk { background: var(--green-bg); color: var(--green); }
+.bs { background: var(--red-bg); color: var(--red); }
+
+/* ---- REQ LISTS ---- */
+.req-box { background: var(--surface2); border: 1px solid var(--border); border-radius: var(--r); padding: 18px 20px; margin: 14px 0; }
+.req-list { list-style: none; }
+.req-list li { font-size: 14px; color: var(--text2); padding: 6px 0; display: flex; gap: 10px; align-items: flex-start; line-height: 1.7; }
+.req-list li::before { font-weight: 700; flex-shrink: 0; margin-top: 1px; }
+.req-list li::before { content: "✓"; color: var(--green); }
+.req-list.out li::before { content: "✗"; color: var(--red); }
+
+/* ---- STATE PILLS ---- */
+.state-row { display: flex; align-items: center; flex-wrap: wrap; gap: 6px; margin: 18px 0; }
+.sp { padding: 6px 14px; border-radius: 20px; font-size: 11px; font-weight: 600; border: 1px solid; }
+.sarrow { color: var(--text3); font-size: 12px; }
+.sg { background:#f3f2ef; border-color:#d0cdc7; color:#4a4845; }
+.sb { background:#eff6ff; border-color:#bfdbfe; color:#1a4480; }
+.spu{ background:#f5f3ff; border-color:#ddd6fe; color:#5b21b6; }
+.sam{ background:#fffbeb; border-color:#fde68a; color:#92400e; }
+.sco{ background:#fef2f2; border-color:#fecaca; color:#991b1b; }
+.ste{ background:#ecfdf5; border-color:#a7f3d0; color:#065f46; }
+.srd{ background:#fef2f2; border-color:#fca5a5; color:#7f1d1d; }
+
+/* ---- COMPARE ---- */
+.compare-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin: 14px 0; }
+.cb { background: var(--red-bg); border: 1px solid var(--red-border); border-radius: var(--r); padding: 14px 16px; }
+.cg { background: var(--green-bg); border: 1px solid var(--green-border); border-radius: var(--r); padding: 14px 16px; }
+.clabel { font-size: 9px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 9px; }
+.cb .clabel { color: var(--red); } .cg .clabel { color: var(--green); }
+.cb pre, .cg pre { font-family: var(--mono); font-size: 12px; line-height: 1.7; white-space: pre-wrap; }
+.cb pre { color: #7f1d1d; } .cg pre { color: #1a4731; }
+.cexplain { font-size: 13px; color: var(--text2); margin-top: 10px; line-height: 1.65; }
+
+/* ---- PATTERN CARD ---- */
+.pcard { border: 1px solid var(--border); border-radius: var(--r); padding: 20px 22px; margin: 16px 0; background: var(--surface); }
+.ptitle { font-family: var(--serif); font-size: 17px; font-weight: 600; margin-bottom: 4px; display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+.ptag { font-size: 10px; background: var(--surface2); border-radius: 20px; padding: 2px 9px; font-weight: 500; color: var(--text3); font-family: var(--sans); }
+.pcard p { margin: 8px 0; }
+.pcard b { font-weight: 600; color: var(--text); }
+
+/* ---- SOLID ---- */
+.solid-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin: 14px 0; }
+.solid-card { border: 1px solid var(--border); border-radius: var(--r); padding: 18px 20px; background: var(--surface); }
+.solid-letter { font-family: var(--serif); font-size: 32px; font-weight: 600; color: var(--blue2); line-height: 1; margin-bottom: 4px; }
+.solid-name { font-size: 13px; font-weight: 600; margin-bottom: 10px; }
+.solid-def { font-size: 13px; color: var(--text3); margin-bottom: 10px; font-style: italic; line-height: 1.6; }
+.solid-full { grid-column: 1 / -1; }
+.vbox { background: var(--red-bg); border: 1px solid var(--red-border); border-radius: 6px; padding: 11px 13px; margin: 8px 0; font-size: 12.5px; color: var(--red); line-height: 1.65; }
+.fbox { background: var(--green-bg); border: 1px solid var(--green-border); border-radius: 6px; padding: 11px 13px; margin: 8px 0; font-size: 12.5px; color: var(--green); line-height: 1.65; }
+.vbox b, .fbox b { font-weight: 600; }
+
+/* ---- TRADEOFF ---- */
+.tsec { margin: 24px 0; border: 1px solid var(--border); border-radius: var(--r); overflow: hidden; }
+.thead { padding: 13px 18px; background: var(--surface2); border-bottom: 1px solid var(--border); font-size: 15px; font-weight: 600; font-family: var(--serif); }
+.tbody { padding: 16px 18px; }
+.scenario { background: var(--amber-bg); border-left: 3px solid #f59e0b; border-radius: 0 6px 6px 0; padding: 12px 15px; margin: 10px 0; font-size: 13px; color: var(--amber); line-height: 1.7; }
+.scenario b { font-weight: 600; }
+.td-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin: 12px 0; }
+.tpro { background: var(--green-bg); border: 1px solid var(--green-border); border-radius: 6px; padding: 13px 15px; font-size: 13px; color: var(--green); line-height: 1.65; }
+.tcon { background: var(--amber-bg); border: 1px solid var(--amber-border); border-radius: 6px; padding: 13px 15px; font-size: 13px; color: var(--amber); line-height: 1.65; }
+.tlabel { font-size: 9px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 7px; display: block; }
+
+/* ---- Q&A ---- */
+.qa { border: 1px solid var(--border); border-radius: var(--r); overflow: hidden; margin: 12px 0; }
+.qa-q { padding: 15px 18px; cursor: pointer; font-size: 14px; font-weight: 500; display: flex; justify-content: space-between; align-items: center; background: var(--surface); user-select: none; gap: 12px; }
+.qa-q:hover { background: var(--surface2); }
+.qa-q i { color: var(--text3); transition: transform 0.2s; font-size: 11px; flex-shrink: 0; }
+.qa-q.open i { transform: rotate(180deg); }
+.qa-a { display: none; padding: 18px 20px; font-size: 14px; line-height: 1.85; color: var(--text2); background: var(--surface2); border-top: 1px solid var(--border); }
+.qa-a.show { display: block; }
+.qa-a h4 { margin-top: 16px; }
+.qa-a code { font-family: var(--mono); font-size: 12px; background: var(--surface3); padding: 1px 6px; border-radius: 4px; color: var(--text); }
+.qa-a .code-block { margin: 12px 0; font-size: 12px; }
+
+code { font-family: var(--mono); font-size: 12px; background: var(--surface2); padding: 1px 5px; border-radius: 4px; color: var(--blue2); border: 1px solid var(--border); }
+
+::-webkit-scrollbar { width: 5px; height: 5px; }
+::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+</style>
+</head>
+<body>
+
+<nav class="sidebar">
+  <div class="logo-wrap">
+    <div class="logo"><div class="logo-icon">🅿️</div><div><div class="logo-name">Parking Lot LLD</div><div class="logo-tag">Extensive Whys Edition</div></div></div>
+  </div>
+  <div class="nav-group">Foundations</div>
+  <div class="nav-item active" onclick="show('req',this)"><i class="fa-solid fa-list-check"></i> Requirements <span class="step-num">01</span></div>
+  <div class="nav-item" onclick="show('ent',this)"><i class="fa-solid fa-diagram-project"></i> Core Entities <span class="step-num">02</span></div>
+  <div class="nav-group">Implementation</div>
+  <div class="nav-item" onclick="show('cls',this)"><i class="fa-solid fa-code"></i> Class Design <span class="step-num">03</span></div>
+  <div class="nav-item" onclick="show('flow',this)"><i class="fa-solid fa-arrow-right-arrow-left"></i> Key Flows <span class="step-num">04</span></div>
+  <div class="nav-group">Deep Dives</div>
+  <div class="nav-item" onclick="show('pat',this)"><i class="fa-solid fa-puzzle-piece"></i> Design Patterns <span class="step-num">05</span></div>
+  <div class="nav-item" onclick="show('sol',this)"><i class="fa-solid fa-layer-group"></i> SOLID Principles <span class="step-num">06</span></div>
+  <div class="nav-item" onclick="show('trd',this)"><i class="fa-solid fa-scale-balanced"></i> Trade-offs <span class="step-num">07</span></div>
+  <div class="nav-item" onclick="show('qa',this)"><i class="fa-solid fa-circle-question"></i> Interview Q&amp;A <span class="step-num">08</span></div>
+</nav>
+
+<main class="main">
+
+<!-- ======== SECTION 1: REQUIREMENTS ======== -->
+<div class="section active" id="s-req">
+  <div class="sec-eyebrow">Step 1 · ~5 minutes</div>
+  <div class="sec-title">Requirements &amp; Clarifications</div>
+  <div class="sec-intro">Parking Lot is one of the most common LLD questions — but deceptively simple. The wrong move is to start drawing classes immediately. The right move is to interrogate the prompt. Each question you ask is a design decision you're making <em>before</em> writing any code. That's what senior engineers do.</div>
+
+  <div class="prompt-box">
+    <div class="plabel">The prompt you'll receive</div>
+    <div class="ptext">"Design a parking lot system. Vehicles should be able to park and leave, and the system should track which spots are occupied."</div>
+  </div>
+
+  <p>This sentence leaves almost everything ambiguous. Does the lot have multiple floors? What vehicle types are supported? Is there a fee? Is there one entrance or many? Each answer changes a class you must write — or eliminates one you shouldn't.</p>
+
+  <h3>Clarifying Questions — with deep reasoning</h3>
+  <div class="dialogue">
+
+    <div class="d-row you">
+      <div class="d-speaker">You</div>
+      "What vehicle types should the system support — just cars, or also motorcycles, trucks, buses?"
+      <div class="why-inline">
+        <b>Why this is your very first question:</b> The answer determines whether <code>ParkingSpot</code> is a single class or a class hierarchy. If only cars exist, a spot is just a spot. But if motorcycles exist, a motorcycle can fit into a car spot (wasted capacity) or you might want dedicated small spots. If trucks exist, they might span multiple spots. This single question defines your entire entity model. Ask it before drawing anything.
+      </div>
+    </div>
+    <div class="d-row iv"><div class="d-speaker">Interviewer</div>"Support motorcycles, cars, and trucks. Each needs a different spot size: small, medium, large."</div>
+
+    <div class="d-row you">
+      <div class="d-speaker">You</div>
+      "Is this a multi-floor parking lot, or single level?"
+      <div class="why-inline">
+        <b>Why this changes your structure:</b> A single level means <code>ParkingLot</code> contains a flat list of spots. A multi-floor lot means you need a <code>ParkingFloor</code> entity between <code>ParkingLot</code> and <code>ParkingSpot</code>. Features like "park on floor closest to entrance" or "display floor-wise availability" only make sense with floors. If you skip this question and design for single-floor, you'll rebuild half the structure when the interviewer says "now add floor support."
+      </div>
+    </div>
+    <div class="d-row iv"><div class="d-speaker">Interviewer</div>"Multi-floor. Each floor has rows of spots of different sizes."</div>
+
+    <div class="d-row you">
+      <div class="d-speaker">You</div>
+      "Does the system charge a parking fee? If so, how — by time, flat rate, or vehicle type?"
+      <div class="why-inline">
+        <b>Why this determines 2 whole classes:</b> If no fee, your <code>exit_vehicle()</code> method is trivial — just mark the spot free. If fee exists, you need a <code>Ticket</code> (records entry time) and a <code>FeeStrategy</code> (calculates the fee at exit). These are not cosmetic additions — <code>Ticket</code> captures the <em>moment of entry</em> and without it, you cannot calculate duration. Without <code>FeeStrategy</code>, your fee calculation logic is hardcoded and changing the pricing model requires editing the core class. Ask this early.
+      </div>
+    </div>
+    <div class="d-row iv"><div class="d-speaker">Interviewer</div>"Yes, hourly fee. Different rates for different vehicle types."</div>
+
+    <div class="d-row you">
+      <div class="d-speaker">You</div>
+      "Are there multiple entrances and exits, or just one?"
+      <div class="why-inline">
+        <b>Why this affects concurrency design:</b> Multiple gates mean multiple threads could be calling <code>park_vehicle()</code> simultaneously. Two cars might be assigned the same spot if the assignment logic isn't thread-safe. With a single entrance, concurrency is simpler. This question tells you whether to add <code>threading.Lock</code> around spot assignment — a detail that will come up in follow-up questions.
+      </div>
+    </div>
+    <div class="d-row iv"><div class="d-speaker">Interviewer</div>"Multiple entrances and exits. Assume concurrent access."</div>
+
+    <div class="d-row you">
+      <div class="d-speaker">You</div>
+      "Should the system support reserved or handicapped spots — spots pre-assigned to specific vehicles or categories?"
+      <div class="why-inline">
+        <b>Why this shapes your Strategy pattern:</b> Reserved spots mean your "find a spot" logic cannot simply pick the first available medium spot — it must also check if the spot is reserved and if the vehicle is authorized. If you bake this logic into a single method now, it becomes an unmaintainable tangle of if/else. Knowing this early motivates you to use a <code>ParkingStrategy</code> interface with swappable implementations from the start.
+      </div>
+    </div>
+    <div class="d-row iv"><div class="d-speaker">Interviewer</div>"Yes — include handicapped spots and electric vehicle spots. Keep it extensible."</div>
+
+    <div class="d-row you">
+      <div class="d-speaker">You</div>
+      "What does a vehicle need to provide to enter — just its license plate, or a separate registration?"
+      <div class="why-inline">
+        <b>Why the answer changes your Vehicle class:</b> If a license plate is enough, <code>Vehicle</code> is minimal: just <code>license_plate</code> and <code>vehicle_type</code>. If the system pre-registers vehicles (like a monthly pass), you need an <code>owner</code> reference, subscription status, and pre-paid balance. This determines whether <code>Vehicle</code> is a value object (pure data) or a full domain entity with identity and behavior.
+      </div>
+    </div>
+    <div class="d-row iv"><div class="d-speaker">Interviewer</div>"Just license plate at entry. No pre-registration for now."</div>
+
+  </div>
+
+  <h3>Scope Decision</h3>
+  <div class="req-box">
+    <h4>In scope</h4>
+    <ul class="req-list">
+      <li>Multi-floor parking lot with small / medium / large spots</li>
+      <li>Three vehicle types: motorcycle, car, truck</li>
+      <li>Park vehicle — find the best available spot and issue a ticket</li>
+      <li>Exit vehicle — compute fee based on duration and vehicle type</li>
+      <li>Spot availability display per floor</li>
+      <li>Special spots: handicapped, EV charging</li>
+      <li>Thread-safe assignment with multiple concurrent entrances</li>
+      <li>Strategy-based spot assignment (nearest, first available)</li>
+    </ul>
+    <h4 style="margin-top:14px;">Out of scope</h4>
+    <ul class="req-list out">
+      <li>User accounts or vehicle pre-registration</li>
+      <li>Physical barrier/gate hardware integration</li>
+      <li>Payment processing (just calculate fee, not charge it)</li>
+      <li>Parking reservation / booking in advance</li>
+    </ul>
+  </div>
+</div>
+
+<!-- ======== SECTION 2: ENTITIES ======== -->
+<div class="section" id="s-ent">
+  <div class="sec-eyebrow">Step 2 · ~5 minutes</div>
+  <div class="sec-title">Core Entities &amp; Responsibilities</div>
+  <div class="sec-intro">Before writing any code, list every entity and what it <em>owns</em>. The key discipline: every piece of data belongs to exactly one entity. If data straddles two entities, you'll have duplication and sync bugs. If data belongs to none, it will end up as a random variable in a method body — unfindable later.</div>
+
+  <table class="etable">
+    <thead>
+      <tr><th>Entity</th><th>What it owns</th><th>Why it's a class, not just a field</th></tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td>ParkingLot</td>
+        <td>List of floors, lot name/address, global available spot counts</td>
+        <td>The orchestrator. All external operations — park, exit, get availability — go through here. It is the Facade that hides multi-floor complexity from the caller.</td>
+      </tr>
+      <tr>
+        <td>ParkingFloor</td>
+        <td>Floor number, list of spots, per-floor availability counts</td>
+        <td>Floors are independent units. You can query "floor 2 availability" or "first floor with a free large spot" without knowing about every spot in the building. Without <code>ParkingFloor</code>, <code>ParkingLot</code> holds a flat list of all spots — losing floor-level grouping forever.</td>
+      </tr>
+      <tr>
+        <td>ParkingSpot</td>
+        <td>Spot ID, size, type (standard/handicapped/EV), status (free/occupied), current vehicle</td>
+        <td>A spot enforces its own rules: it knows what size it accepts, whether it's available, and which vehicle is parked. These rules belong on the spot, not scattered in the lot's logic.</td>
+      </tr>
+      <tr>
+        <td>Vehicle</td>
+        <td>License plate, vehicle type (motorcycle/car/truck)</td>
+        <td>A value object with identity. Two vehicles are the same if their license plates match. The vehicle type drives spot assignment — a truck needs a large spot. This linkage belongs here, not in the spot or lot.</td>
+      </tr>
+      <tr>
+        <td>Ticket</td>
+        <td>Ticket ID, vehicle, spot assigned, entry time, exit time, fee paid</td>
+        <td><span class="badge bk">Critical</span>This is the temporal record. Without <code>Ticket</code>, you cannot compute parking duration. At exit, you need entry time — and that time must be frozen at the moment of parking. A <code>Ticket</code> is the immutable receipt of "this vehicle entered at this time and was assigned this spot."</td>
+      </tr>
+      <tr>
+        <td>ParkingStrategy<br><small>(interface)</small></td>
+        <td>Algorithm to find the best available spot</td>
+        <td>Different lots have different policies: nearest to entrance, first available, keep premium spots for premium members. An interface lets you swap strategies without touching <code>ParkingLot</code>. Without this, all selection logic is hardcoded — changing the algorithm requires modifying the core class.</td>
+      </tr>
+      <tr>
+        <td>FeeCalculator<br><small>(interface)</small></td>
+        <td>Algorithm to compute fee from duration and vehicle type</td>
+        <td>Pricing changes constantly: weekends, peak hours, vehicle type multipliers. If fee logic is inside <code>ParkingLot</code>, every pricing change requires a regression test of the entire system. Extracted as a strategy, you test and swap it independently.</td>
+      </tr>
+      <tr>
+        <td>EnumTypes<br><small>(VehicleType, SpotSize, SpotType, SpotStatus)</small></td>
+        <td>Valid values for categorical attributes</td>
+        <td><span class="badge bs">Often skipped</span>These are not "nice to have." They make invalid states unrepresentable. You cannot accidentally write <code>spot.size = "larg"</code> (typo) if <code>SpotSize</code> is an Enum. The bug becomes a Python error at write time, not a runtime mismatch at midnight.</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <div class="why-box">
+    <div class="wl"><i class="fa-solid fa-lightbulb"></i> Why Ticket is not just a field on ParkingSpot</div>
+    <p>Beginners often think: "I'll just store <code>entry_time</code> directly on <code>ParkingSpot</code>. When the vehicle exits, I read it." This seems simpler — but it fails the moment you need history. Once the vehicle leaves and <code>entry_time</code> is cleared, the transaction is gone. Revenue reporting, dispute resolution ("I was only here 20 minutes, not 2 hours"), and audit logs are all impossible. A <code>Ticket</code> is a persistent, immutable record of a parking transaction. It survives the vehicle leaving. This is the same reason banks create transaction records, not just update an account balance.</p>
+  </div>
+
+  <div class="why-box">
+    <div class="wl"><i class="fa-solid fa-lightbulb"></i> Why SpotSize and VehicleType are separate Enums</div>
+    <p>Beginners often say "a motorcycle needs a small spot, so why not just use <code>vehicle_type</code> for the spot size?" Because the relationship between vehicle size and spot size is a <em>policy</em>, not a fundamental truth. A policy that "motorcycles can also park in medium spots if no small spot is available" is completely valid — and it would live in the <code>ParkingStrategy</code>. If you conflate vehicle type with spot size, this policy becomes impossible to express cleanly. Keep the two Enums separate: <code>VehicleType</code> describes what the vehicle <em>is</em>; <code>SpotSize</code> describes what the spot <em>accepts</em>.</p>
+  </div>
+</div>
+
+<!-- ======== SECTION 3: CLASS DESIGN ======== -->
+<div class="section" id="s-cls">
+  <div class="sec-eyebrow">Step 3 · ~15 minutes</div>
+  <div class="sec-title">Class Design — Every Line Justified</div>
+  <div class="sec-intro">Design top-down: orchestrator first, then the most complex entities, then supporting types. For every field, ask: "what breaks if this doesn't exist?" For every method: "who else would own this if it weren't here?" If the answer is "nobody," it belongs here.</div>
+
+  <h3>Enums — the Foundation</h3>
+  <p>Write these before any class. Every categorical attribute in your domain should be an Enum. Enums are cheap to define and eliminate entire categories of bugs.</p>
+
+  <div class="ann-wrap">
+    <div class="ann-header"><span>enums.py — VehicleType, SpotSize, SpotType, SpotStatus</span></div>
+
+    <div class="ann-row">
+      <div class="ann-code"><span class="kw">from</span> enum <span class="kw">import</span> Enum, auto
+
+<span class="kw">class</span> <span class="cls">VehicleType</span>(Enum):
+    MOTORCYCLE = auto()
+    CAR        = auto()
+    TRUCK      = auto()</div>
+      <div class="ann-why">
+        <span class="wlabel">Why Enum instead of string or int constants?</span>
+        <span class="wmain">String constants like <code>"motorcycle"</code> are fragile: a typo (<code>"motorcycl"</code>) passes silently — no error until runtime when a comparison fails. Integer constants (0, 1, 2) are even worse — they're meaningless without documentation. <code>VehicleType.MOTORCYCLE</code> is self-documenting and a typo is caught the moment you write it — Python raises <code>AttributeError: MOTORCYCL</code> immediately.</span>
+        <div class="wfail"><b>Without Enum:</b> <code>vehicle.type = "motorcyle"</code> silently passes. Later, <code>if vehicle.type == "motorcycle"</code> never matches. The vehicle gets assigned to a car spot. No error, just wrong behavior.</div>
+      </div>
+    </div>
+
+    <div class="ann-row">
+      <div class="ann-code"><span class="kw">class</span> <span class="cls">SpotSize</span>(Enum):
+    SMALL  = auto()  <span class="cm"># motorcycles</span>
+    MEDIUM = auto()  <span class="cm"># cars</span>
+    LARGE  = auto()  <span class="cm"># trucks</span></div>
+      <div class="ann-why">
+        <span class="wlabel">Why a separate SpotSize, not just use VehicleType?</span>
+        <span class="wmain">A spot's size is a physical fact about the spot. A vehicle's type is a fact about the vehicle. The <em>relationship</em> (which vehicles fit in which spots) is a policy. Conflating them means you can never express "a car can park in a large spot if no medium spots are free." Keep physical facts and policies separate.</span>
+      </div>
+    </div>
+
+    <div class="ann-row">
+      <div class="ann-code"><span class="kw">class</span> <span class="cls">SpotType</span>(Enum):
+    STANDARD    = auto()
+    HANDICAPPED = auto()
+    EV_CHARGING = auto()</div>
+      <div class="ann-why">
+        <span class="wlabel">Why SpotType is separate from SpotSize?</span>
+        <span class="wmain">A spot has two orthogonal attributes: how big it is (size) and what special features it has (type). A handicapped spot can be small (motorcycle) or medium (car). An EV charger can be on a large spot. These are independent dimensions. Collapsing them into one Enum forces ugly combinations like <code>HANDICAPPED_MEDIUM</code> — and adding EV charging to all sizes would require N new enum values. Two orthogonal axes need two Enums.</span>
+      </div>
+    </div>
+
+    <div class="ann-row">
+      <div class="ann-code"><span class="kw">class</span> <span class="cls">SpotStatus</span>(Enum):
+    FREE     = auto()
+    OCCUPIED = auto()
+    RESERVED = auto()
+    BLOCKED  = auto()  <span class="cm"># maintenance</span></div>
+      <div class="ann-why">
+        <span class="wlabel">Why RESERVED and BLOCKED beyond FREE/OCCUPIED?</span>
+        <span class="wmain">A real parking lot has more than two states. RESERVED means "this spot is assigned to a monthly pass holder" — it should never be given to a drive-in customer. BLOCKED means "under maintenance" — not a bug, not occupied, just temporarily unavailable. Without these, your assignment logic must invent workarounds. Capturing all real-world states in the Enum prevents hacks like <code>spot.vehicle = dummy_vehicle</code> to fake an "occupied" maintenance spot.</span>
+      </div>
+    </div>
+  </div>
+
+  <h3>ParkingSpot — the Core Domain Object</h3>
+
+  <div class="ann-wrap">
+    <div class="ann-header"><span>parking_spot.py</span></div>
+
+    <div class="ann-row">
+      <div class="ann-code"><span class="kw">class</span> <span class="cls">ParkingSpot</span>:
+    spot_id: str
+    size: SpotSize
+    spot_type: SpotType
+    status: SpotStatus
+    current_vehicle: Vehicle | <span class="nm">None</span>
+    floor_number: int</div>
+      <div class="ann-why">
+        <span class="wlabel">Why does ParkingSpot know its floor_number?</span>
+        <span class="wmain">When you print a ticket or display "your car is at spot B-12 on floor 3," the spot must know its own location. Alternatively, you could look up the floor from the lot registry every time — but that couples display logic to a registry lookup, creating unnecessary dependencies. Storing <code>floor_number</code> directly on the spot makes it self-describing: the spot can identify itself fully without external lookups.</span>
+      </div>
+    </div>
+
+    <div class="ann-row">
+      <div class="ann-code">  def is_available(self) -> bool:
+    return (self.status
+            == SpotStatus.FREE)</div>
+      <div class="ann-why">
+        <span class="wlabel">Why a method instead of checking status directly?</span>
+        <span class="wmain">Today, "available" means <code>status == FREE</code>. Tomorrow, it might mean <code>status == FREE and not self.is_under_scheduled_maintenance()</code>. If every caller checks <code>spot.status == SpotStatus.FREE</code> directly, you must update every one of them when the rule changes. With <code>is_available()</code>, you update one place. This is encapsulation — hide the implementation of "available" behind a method boundary.</span>
+      </div>
+    </div>
+
+    <div class="ann-row">
+      <div class="ann-code">  def assign_vehicle(self,
+      vehicle: Vehicle) -> None:
+    if not self.is_available():
+        raise SpotUnavailableError(
+            self.spot_id)
+    self.current_vehicle = vehicle
+    self.status = SpotStatus.OCCUPIED</div>
+      <div class="ann-why">
+        <span class="wlabel">Why does ParkingSpot own the assignment, not ParkingLot?</span>
+        <span class="wmain">The spot knows whether it's available. The rule "you can only assign a vehicle to an available spot" is a rule about the spot's own state — so it belongs on the spot. If <code>ParkingLot</code> sets <code>spot.status = OCCUPIED</code> directly from the outside, nothing stops it from skipping the availability check. Forcing assignment through <code>spot.assign_vehicle()</code> means the check is always enforced. This is the "Tell, Don't Ask" principle.</span>
+        <div class="wfail"><b>If ParkingLot set status directly:</b> A race condition between two concurrent entries could assign the same spot twice. <code>assign_vehicle()</code> can be made atomic with a lock; direct status assignment cannot be so easily protected.</div>
+      </div>
+    </div>
+
+    <div class="ann-row">
+      <div class="ann-code">  def release_vehicle(self
+      ) -> Vehicle:
+    vehicle = self.current_vehicle
+    self.current_vehicle = None
+    self.status = SpotStatus.FREE
+    return vehicle</div>
+      <div class="ann-why">
+        <span class="wlabel">Why return the vehicle from release_vehicle()?</span>
+        <span class="wmain">The caller (exit flow in ParkingLot) needs to know <em>which vehicle</em> just left to look up its ticket, compute the fee, and record the transaction. If <code>release_vehicle()</code> returned nothing, the caller would need to read <code>spot.current_vehicle</code> <em>before</em> calling release — a fragile two-step that is easy to mess up or reverse in order. Returning the vehicle atomically in one method call is safer and cleaner.</span>
+      </div>
+    </div>
+
+    <div class="ann-row">
+      <div class="ann-code">  def can_fit(self,
+    vehicle: Vehicle) -> bool:
+    required = SIZE_MAP[
+        vehicle.vehicle_type]
+    return self.size == required</div>
+      <div class="ann-why">
+        <span class="wlabel">Why is can_fit() on ParkingSpot rather than Vehicle?</span>
+        <span class="wmain">The question "does this vehicle fit this spot?" involves both the spot's size and the vehicle's type. But the <em>answer</em> is from the spot's perspective — the spot is the one accepting or rejecting. Putting <code>can_fit(vehicle)</code> on the spot is natural: "can you (spot) fit this vehicle?" The alternative — <code>vehicle.can_fit_in(spot)</code> — creates a dependency from Vehicle to ParkingSpot, coupling two classes that otherwise have no connection. Avoid coupling in the direction of less control.</span>
+      </div>
+    </div>
+  </div>
+
+  <h3>Ticket — the Transaction Record</h3>
+
+  <div class="ann-wrap">
+    <div class="ann-header"><span>ticket.py</span></div>
+
+    <div class="ann-row">
+      <div class="ann-code"><span class="kw">class</span> <span class="cls">Ticket</span>:
+    ticket_id: str    <span class="cm"># UUID</span>
+    vehicle: Vehicle
+    spot: ParkingSpot
+    entry_time: datetime
+    exit_time: datetime | <span class="nm">None</span>
+    fee: float | <span class="nm">None</span></div>
+      <div class="ann-why">
+        <span class="wlabel">Why store both the Vehicle and the Spot on Ticket?</span>
+        <span class="wmain">At exit, you need three things: (1) <em>who</em> was parked (vehicle, for the receipt), (2) <em>where</em> they were parked (spot, to release it), and (3) <em>when</em> they entered (entry_time, for fee calculation). The Ticket is the single place that knows all three. Without it, you'd need to reverse-engineer this from the spot's current vehicle — but once the vehicle is released, that information is gone.</span>
+        <div class="wfail"><b>Without Ticket:</b> A truck exits. You release spot B-7. Now you need to compute the fee — but you don't know when it entered, because the only place that stored entry time was a variable in the <code>park_vehicle()</code> method that's now out of scope.</div>
+      </div>
+    </div>
+
+    <div class="ann-row">
+      <div class="ann-code">  entry_time: datetime
+  <span class="cm"># Set at creation, never changed</span>
+  exit_time: datetime | <span class="nm">None</span>
+  <span class="cm"># None until vehicle exits</span></div>
+      <div class="ann-why">
+        <span class="wlabel">Why entry_time is immutable after creation?</span>
+        <span class="wmain"><code>entry_time</code> is a fact about when a transaction began. It should never change. If it's mutable, a bug (or a malicious actor) could backdate entries to reduce fees. Making it set-only at construction and never modified afterward is both safer and semantically correct. <code>exit_time</code> starts as <code>None</code> — not zero, not a placeholder — because <code>None</code> has explicit meaning: "this vehicle hasn't exited yet." A fee of <code>None</code> means "not yet calculated," distinct from a fee of <code>0.0</code>.</span>
+      </div>
+    </div>
+
+    <div class="ann-row">
+      <div class="ann-code">  def duration_hours(self
+      ) -> float:
+    end = self.exit_time or \
+          datetime.now()
+    delta = end - self.entry_time
+    return delta.total_seconds() \
+           / 3600</div>
+      <div class="ann-why">
+        <span class="wlabel">Why does duration_hours() live on Ticket?</span>
+        <span class="wmain">Duration is a derived property of the ticket's own data: <code>exit_time - entry_time</code>. No external class needs to know how to compute it. If <code>FeeCalculator</code> computed the duration itself, it would need access to both times — coupling the calculator to Ticket's internals. Instead, Ticket exposes a clean <code>duration_hours()</code> method. FeeCalculator just calls it. Encapsulation at the boundary.</span>
+      </div>
+    </div>
+  </div>
+
+  <h3>ParkingLot — the Orchestrator</h3>
+  <p>This is the Facade. External code talks only to <code>ParkingLot</code>. It owns registries, delegates to the right entities, and coordinates multi-step operations. It does not implement business rules — it delegates to spots, tickets, and strategies.</p>
+
+  <div class="ann-wrap">
+    <div class="ann-header"><span>parking_lot.py — ParkingLot orchestrator</span></div>
+
+    <div class="ann-row">
+      <div class="ann-code"><span class="kw">class</span> <span class="cls">ParkingLot</span>:
+    name: str
+    floors: list[ParkingFloor]
+    active_tickets: dict[
+        str, Ticket]  <span class="cm"># plate → ticket</span>
+    strategy: ParkingStrategy
+    fee_calculator: FeeCalculator
+    _lock: threading.Lock</div>
+      <div class="ann-why">
+        <span class="wlabel">Why dict[str, Ticket] keyed by license_plate?</span>
+        <span class="wmain">At exit, the vehicle scans its ticket or plate. The most natural lookup is "find the active ticket for this plate." A dict with plate as key gives O(1) lookup. An alternative — ticket ID — requires giving the driver a physical ticket to scan, which is also valid. License plate is simpler for LLD scope and avoids handling lost-ticket scenarios. Choose the key that matches your most common query pattern.</span>
+        <div class="wfail"><b>If you stored tickets in a list:</b> Every exit scans all active tickets to find the matching plate. With 500 active vehicles, every exit is a 500-item scan. For a parking lot that processes thousands of exits per day, this is a performance problem with a trivially easy fix — use a dict.</div>
+      </div>
+    </div>
+
+    <div class="ann-row">
+      <div class="ann-code">  strategy: ParkingStrategy
+  fee_calculator: FeeCalculator</div>
+      <div class="ann-why">
+        <span class="wlabel">Why inject strategy and calculator instead of hardcoding?</span>
+        <span class="wmain">Different parking lots have different rules. A hospital lot might prioritize handicapped spots first, then nearest. An airport might charge flat rate regardless of vehicle type. A mall might charge by the hour, differently for cars vs trucks. These are interchangeable behaviors — the Strategy pattern. Injecting them means you can configure a <code>ParkingLot</code> differently for each use case without subclassing it. This is also Dependency Inversion: <code>ParkingLot</code> depends on the <em>interface</em>, not the implementation.</span>
+      </div>
+    </div>
+
+    <div class="ann-row">
+      <div class="ann-code">  _lock: threading.Lock
+  <span class="cm"># protects spot assignment</span></div>
+      <div class="ann-why">
+        <span class="wlabel">Why a lock — and why only one?</span>
+        <span class="wmain">Two cars arriving simultaneously at different entrances both call <code>park_vehicle()</code>. Both find spot C-5 available (it's free at the moment both check). Both get assigned C-5. Now two cars are fighting over one spot — a race condition. The lock ensures only one thread runs the find-spot-and-assign block at a time. One lock is usually sufficient because spot assignment is fast (microseconds). If the lot is enormous, you could have per-floor locks — but that's a trade-off discussion, not the starting design.</span>
+      </div>
+    </div>
+
+    <div class="ann-row">
+      <div class="ann-code">  def park_vehicle(self,
+      vehicle: Vehicle
+      ) -> Ticket:
+    <span class="kw">with</span> self._lock:
+        spot = self.strategy
+               .find_spot(
+                   self.floors,
+                   vehicle)
+        if spot is None:
+            raise LotFullError()
+        spot.assign_vehicle(vehicle)
+    ticket = Ticket(
+        vehicle=vehicle,
+        spot=spot,
+        entry_time=datetime.now())
+    self.active_tickets[
+        vehicle.license_plate
+    ] = ticket
+    return ticket</div>
+      <div class="ann-why">
+        <span class="wlabel">Why is Ticket creation outside the lock?</span>
+        <span class="wmain">The lock must protect the <em>find-and-assign</em> operation — that's the race condition window. Creating a <code>Ticket</code> object is pure in-memory work with no shared state — it's safe to do outside the lock. Keeping the lock scope as small as possible minimizes contention: other threads can proceed to look up floors, create objects, etc. while one thread holds the lock for just the critical 3 lines.</span>
+        <div class="wfix"><b>Principle:</b> Lock for the minimum time needed to protect shared state. Locking more than necessary turns your concurrent system into an effectively single-threaded one.</div>
+      </div>
+    </div>
+
+    <div class="ann-row">
+      <div class="ann-code">  def exit_vehicle(self,
+      license_plate: str
+      ) -> float:
+    ticket = self.active_tickets
+             .pop(license_plate, None)
+    if ticket is None:
+        raise TicketNotFoundError()
+    ticket.exit_time = datetime.now()
+    ticket.fee = self.fee_calculator
+                 .calculate(ticket)
+    with self._lock:
+        ticket.spot.release_vehicle()
+    return ticket.fee</div>
+      <div class="ann-why">
+        <span class="wlabel">Why pop() instead of del — and why pop before the lock?</span>
+        <span class="wmain"><code>.pop(plate, None)</code> atomically removes and returns the ticket, or returns <code>None</code> if not found. This prevents a double-exit scenario: if two exit gates scan the same plate simultaneously, the first <code>.pop()</code> succeeds and the second gets <code>None</code>. <code>del</code> would require a separate <code>.get()</code> followed by <code>del</code> — two steps that are not atomic. Popping before the lock keeps the lock scope minimal: fee calculation and time-stamping happen outside the lock.</span>
+      </div>
+    </div>
+  </div>
+
+  <h3>ParkingStrategy — the Swappable Algorithm</h3>
+
+  <div class="ann-wrap">
+    <div class="ann-header"><span>strategies.py — ParkingStrategy ABC and implementations</span></div>
+
+    <div class="ann-row">
+      <div class="ann-code"><span class="kw">from</span> abc <span class="kw">import</span> ABC, abstractmethod
+
+<span class="kw">class</span> <span class="cls">ParkingStrategy</span>(ABC):
+
+    @abstractmethod
+    <span class="kw">def</span> <span class="nm">find_spot</span>(self,
+        floors: list[ParkingFloor],
+        vehicle: Vehicle
+    ) -> ParkingSpot | <span class="nm">None</span>:
+        ...</div>
+      <div class="ann-why">
+        <span class="wlabel">Why ABC (Abstract Base Class) and not a plain class?</span>
+        <span class="wmain"><code>ABC</code> with <code>@abstractmethod</code> makes it impossible to instantiate <code>ParkingStrategy</code> directly — you must implement <code>find_spot()</code> in a subclass. This catches implementation mistakes at class definition time, not at runtime when <code>find_spot()</code> is first called. Without <code>@abstractmethod</code>, you could accidentally pass a plain <code>ParkingStrategy()</code> to <code>ParkingLot</code>. It would appear to work until the first call to <code>find_spot()</code> — which would return <code>None</code> from a no-op implementation, silently failing to find any spot.</span>
+      </div>
+    </div>
+
+    <div class="ann-row">
+      <div class="ann-code"><span class="kw">class</span> <span class="cls">NearestSpotStrategy</span>(
+    ParkingStrategy):
+
+    <span class="kw">def</span> <span class="nm">find_spot</span>(self, floors,
+        vehicle):
+        required = SIZE_MAP[
+            vehicle.vehicle_type]
+        <span class="kw">for</span> floor <span class="kw">in</span> floors:
+            <span class="kw">for</span> spot <span class="kw">in</span> floor.spots:
+                <span class="kw">if</span> (spot.is_available()
+                 and spot.can_fit(
+                     vehicle)):
+                    return spot
+        return None</div>
+      <div class="ann-why">
+        <span class="wlabel">Why return None instead of raising an exception?</span>
+        <span class="wmain">"No available spot" is a normal, expected business situation — not a programming error. Exceptions are for unexpected failures. <code>None</code> is a valid return signal meaning "I searched and found nothing." The caller (<code>ParkingLot.park_vehicle()</code>) then raises a user-visible <code>LotFullError</code> — which is the appropriate response to a full lot. Strategies don't know what to do when full; that's the orchestrator's responsibility.</span>
+      </div>
+    </div>
+
+    <div class="ann-row">
+      <div class="ann-code"><span class="kw">class</span> <span class="cls">HandicappedFirstStrategy</span>(
+    ParkingStrategy):
+
+    <span class="kw">def</span> <span class="nm">find_spot</span>(self, floors,
+        vehicle):
+        <span class="cm"># First: look for handicapped spot</span>
+        <span class="kw">for</span> floor <span class="kw">in</span> floors:
+            <span class="kw">for</span> spot <span class="kw">in</span> floor.spots:
+                <span class="kw">if</span> (spot.is_available()
+                 and spot.can_fit(vehicle)
+                 and spot.spot_type ==
+                     SpotType.HANDICAPPED):
+                    return spot
+        <span class="cm"># Fallback: regular spot</span>
+        <span class="kw">return</span> NearestSpotStrategy(
+            ).find_spot(floors, vehicle)</div>
+      <div class="ann-why">
+        <span class="wlabel">Why compose with NearestSpotStrategy instead of duplicating code?</span>
+        <span class="wmain">The fallback logic — "if no handicapped spot, find the nearest regular one" — is identical to <code>NearestSpotStrategy</code>. Duplicating that logic here violates DRY (Don't Repeat Yourself). If you later change how "nearest" is defined, you'd need to update both places. Composing by instantiating and calling <code>NearestSpotStrategy</code> keeps the duplication in exactly zero places. This is also an example of the Strategy pattern composing with itself — powerful and clean.</span>
+      </div>
+    </div>
+  </div>
+
+  <h3>FeeCalculator — Pricing as a Strategy</h3>
+
+  <div class="ann-wrap">
+    <div class="ann-header"><span>fee_calculator.py</span></div>
+
+    <div class="ann-row">
+      <div class="ann-code"><span class="kw">class</span> <span class="cls">FeeCalculator</span>(ABC):
+    @abstractmethod
+    <span class="kw">def</span> <span class="nm">calculate</span>(self,
+        ticket: Ticket) -> float:
+        ...
+
+<span class="kw">class</span> <span class="cls">HourlyFeeCalculator</span>(
+    FeeCalculator):
+
+    RATES = {
+        VehicleType.MOTORCYCLE: 20,
+        VehicleType.CAR:        50,
+        VehicleType.TRUCK:     100,
+    }
+    <span class="kw">def</span> <span class="nm">calculate</span>(self,
+        ticket: Ticket) -> float:
+        hours = math.ceil(
+            ticket.duration_hours())
+        rate = self.RATES[
+            ticket.vehicle.vehicle_type]
+        return hours * rate</div>
+      <div class="ann-why">
+        <span class="wlabel">Why math.ceil() and not round()?</span>
+        <span class="wmain">Parking lots charge for <em>any part</em> of an hour started. If you park for 1 hour 5 minutes, you pay for 2 hours. <code>math.ceil(1.083)</code> = 2. <code>round(1.083)</code> = 1. The difference is ₹50 per car — at 500 cars/day, that's ₹25,000/day of lost revenue if you use the wrong rounding. Rounding mode is a business rule, not a math preference. Know why you chose it.</span>
+        <div class="wfail"><b>With round():</b> A 1-hour 59-minute stay rounds to 2 hours (correct). A 2-hour 1-minute stay also rounds to 2 hours — the lot eats that extra minute free. Over millions of transactions, this accumulates into significant revenue loss.</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ======== SECTION 4: KEY FLOWS ======== -->
+<div class="section" id="s-flow">
+  <div class="sec-eyebrow">Step 4 · ~10 minutes</div>
+  <div class="sec-title">Key Flows — Step by Step</div>
+  <div class="sec-intro">Walk through the two most important operations in the system: parking a vehicle and exiting. For each step, understand not just <em>what</em> happens but <em>which entity is responsible</em> and <em>why it's not a different entity</em>.</div>
+
+  <h3>Flow 1 — park_vehicle(vehicle)</h3>
+
+  <div class="ann-wrap">
+    <div class="ann-header"><span>Complete park_vehicle() sequence</span></div>
+
+    <div class="ann-row">
+      <div class="ann-code">Step 1: Acquire the lock
+<span class="kw">with</span> self._lock:</div>
+      <div class="ann-why">
+        <span class="wlabel">Why is the lock the very first thing?</span>
+        <span class="wmain">The entire find-and-assign operation must be atomic. If Thread A finds spot C-5 is free, then Thread B also finds C-5 is free before A has assigned it — both threads try to park in the same spot. The lock ensures that between "find" and "assign," no other thread can touch the shared spot state. First instruction, no exceptions.</span>
+      </div>
+    </div>
+
+    <div class="ann-row">
+      <div class="ann-code">Step 2: Validate no double-park
+<span class="kw">if</span> plate <span class="kw">in</span> self.active_tickets:
+    raise AlreadyParkedError()</div>
+      <div class="ann-why">
+        <span class="wlabel">Why check before finding a spot?</span>
+        <span class="wmain">A vehicle that's already parked shouldn't get a second spot. This check prevents a vehicle from parking twice, which would mean one vehicle holds two spots and generates two tickets — both revenue loss and physical impossibility. Check this early so you fail fast with a clear error, before running the (potentially expensive) spot-finding algorithm.</span>
+      </div>
+    </div>
+
+    <div class="ann-row">
+      <div class="ann-code">Step 3: Delegate to strategy
+spot = self.strategy.find_spot(
+    self.floors, vehicle)
+<span class="kw">if</span> spot <span class="kw">is</span> <span class="nm">None</span>:
+    raise LotFullError()</div>
+      <div class="ann-why">
+        <span class="wlabel">Why does ParkingLot not search for spots itself?</span>
+        <span class="wmain"><code>ParkingLot</code> is the orchestrator, not the algorithm. "How to find the best available spot" is a separate responsibility. Today you want nearest-first. Tomorrow a premium customer wants their reserved spot on floor 1. The strategy varies; the orchestration does not. <code>ParkingLot</code> delegates the <em>how</em> to a strategy and just acts on the result.</span>
+      </div>
+    </div>
+
+    <div class="ann-row">
+      <div class="ann-code">Step 4: Spot assigns itself
+spot.assign_vehicle(vehicle)
+<span class="cm"># releases lock after this line</span></div>
+      <div class="ann-why">
+        <span class="wlabel">Why does the spot assign itself instead of ParkingLot setting its status?</span>
+        <span class="wmain">The spot enforces its own invariants. <code>assign_vehicle()</code> checks availability, sets the vehicle, and updates the status atomically. If <code>ParkingLot</code> set <code>spot.status = OCCUPIED</code> directly, it could bypass the availability check. The spot's method is the only way in — and it's the only place this rule needs to live. Tell, Don't Ask.</span>
+      </div>
+    </div>
+
+    <div class="ann-row">
+      <div class="ann-code">Step 5: Create Ticket (outside lock)
+ticket = Ticket(
+    vehicle=vehicle,
+    spot=spot,
+    entry_time=datetime.now())
+self.active_tickets[
+    vehicle.license_plate] = ticket
+return ticket</div>
+      <div class="ann-why">
+        <span class="wlabel">Why is Ticket creation after the lock is released?</span>
+        <span class="wmain">The lock protects spot state — shared mutable data. <code>Ticket</code> creation is pure object construction with no shared state. Holding the lock while creating objects, registering the ticket, and logging would block other threads unnecessarily. Minimise the lock scope: lock for the critical section, release, then do everything else.</span>
+      </div>
+    </div>
+  </div>
+
+  <h3>Flow 2 — exit_vehicle(license_plate)</h3>
+
+  <div class="ann-wrap">
+    <div class="ann-header"><span>Complete exit_vehicle() sequence</span></div>
+
+    <div class="ann-row">
+      <div class="ann-code">Step 1: Remove ticket atomically
+ticket = self.active_tickets.pop(
+    license_plate, None)
+<span class="kw">if</span> ticket <span class="kw">is</span> <span class="nm">None</span>:
+    raise TicketNotFoundError()</div>
+      <div class="ann-why">
+        <span class="wlabel">Why pop() first, before acquiring the lock?</span>
+        <span class="wmain"><code>dict.pop()</code> in Python is thread-safe for a single operation (GIL-protected). Popping the ticket first eliminates the race condition where two exit threads process the same vehicle simultaneously — the second <code>pop()</code> gets <code>None</code> and raises an error immediately. This is a cheap guard that prevents double-processing before we even need the more expensive lock.</span>
+      </div>
+    </div>
+
+    <div class="ann-row">
+      <div class="ann-code">Step 2: Record exit time first
+ticket.exit_time = datetime.now()</div>
+      <div class="ann-why">
+        <span class="wlabel">Why record exit time before calculating fee?</span>
+        <span class="wmain">Fee calculation uses <code>ticket.duration_hours()</code>, which computes <code>exit_time - entry_time</code>. If you calculate the fee before setting <code>exit_time</code>, <code>duration_hours()</code> falls back to <code>datetime.now()</code> — but by the time the fee is calculated, a few more milliseconds have passed. The fee is slightly wrong. Set the exit timestamp first, then calculate from it. Sequence matters.</span>
+      </div>
+    </div>
+
+    <div class="ann-row">
+      <div class="ann-code">Step 3: Calculate fee
+ticket.fee = self.fee_calculator
+             .calculate(ticket)</div>
+      <div class="ann-why">
+        <span class="wlabel">Why delegate to fee_calculator rather than computing inline?</span>
+        <span class="wmain">Fee calculation is a business rule that changes — often, and independently of parking mechanics. Delegating to <code>fee_calculator</code> means you can test pricing logic in complete isolation, swap it without touching <code>ParkingLot</code>, and configure different lots with different pricing. If you computed the fee inline in <code>exit_vehicle()</code>, the pricing logic would be forever coupled to this method.</span>
+      </div>
+    </div>
+
+    <div class="ann-row">
+      <div class="ann-code">Step 4: Release spot (under lock)
+<span class="kw">with</span> self._lock:
+    ticket.spot.release_vehicle()
+return ticket.fee</div>
+      <div class="ann-why">
+        <span class="wlabel">Why lock just the release, not the whole exit flow?</span>
+        <span class="wmain">Only the moment of marking a spot free needs synchronization — another thread's <code>park_vehicle()</code> must not see a spot as "free" before it actually is. Fee calculation and ticket updates don't modify shared spot state, so they don't need the lock. The lock scope is as small as possible: just <code>release_vehicle()</code> — one method call on one object. Anything more is unnecessary contention.</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="why-box">
+    <div class="wl"><i class="fa-solid fa-lightbulb"></i> The full state of a Ticket across its lifecycle</div>
+    <div class="state-row">
+      <span class="sp sb">Created</span><span class="sarrow">→</span>
+      <span class="sp sam">exit_time set</span><span class="sarrow">→</span>
+      <span class="sp spu">fee calculated</span><span class="sarrow">→</span>
+      <span class="sp ste">spot released</span><span class="sarrow">→</span>
+      <span class="sp sg">Closed</span>
+    </div>
+    <p>Each step happens in this exact order. Reversing step 3 and 4 (calculating fee after releasing the spot) is harmless here — but good practice to release resources as late as possible after you've finished reading them. The spot reference in the ticket is still valid even after release, since Python doesn't garbage-collect the object while a reference exists.</p>
+  </div>
+</div>
+
+<!-- ======== SECTION 5: DESIGN PATTERNS ======== -->
+<div class="section" id="s-pat">
+  <div class="sec-eyebrow">Step 5 · Deep Dive</div>
+  <div class="sec-title">Design Patterns — with Concrete Whys</div>
+  <div class="sec-intro">Every pattern in this design was chosen to solve a specific problem. Don't memorize patterns — understand the problem each one solves. In an interview, naming the pattern impresses; explaining why it was needed <em>here</em> gets you the offer.</div>
+
+  <div class="pcard">
+    <div class="ptitle">1. Singleton <span class="ptag">Creational</span></div>
+    <p><b>Where it's used:</b> <code>ParkingLot</code> itself — there is exactly one physical parking lot instance in the system.</p>
+    <p><b>The problem it solves:</b> If someone creates two <code>ParkingLot</code> instances, they have two separate registries of active tickets and two separate spot states. A vehicle parked through instance 1 is invisible to instance 2. The lot appears to be full from one instance and empty from the other. This is a split-brain problem.</p>
+    <p><b>The implementation:</b></p>
+    <div class="code-block"><span class="kw">class</span> <span class="cls">ParkingLot</span>:
+    _instance = <span class="nm">None</span>
+    _lock = threading.Lock()
+
+    @classmethod
+    <span class="kw">def</span> <span class="nm">get_instance</span>(cls) -> <span class="st">'ParkingLot'</span>:
+        <span class="kw">if</span> cls._instance <span class="kw">is</span> <span class="nm">None</span>:
+            <span class="kw">with</span> cls._lock:            <span class="cm"># double-checked locking</span>
+                <span class="kw">if</span> cls._instance <span class="kw">is</span> <span class="nm">None</span>:
+                    cls._instance = ParkingLot()
+        return cls._instance</div>
+    <p><b>Why double-checked locking:</b> The outer <code>if</code> avoids acquiring the lock on every call (which would be expensive). The inner <code>if</code> (inside the lock) handles the rare race condition where two threads both pass the outer check simultaneously. Both checks together give you the safety of locking without the constant cost of it.</p>
+    <p><b>When to skip it:</b> In modern Python, if you're using dependency injection frameworks or testing, Singleton can make unit testing painful (tests share state). A common alternative is to just use a module-level instance — Python modules are singletons by nature.</p>
+  </div>
+
+  <div class="pcard">
+    <div class="ptitle">2. Strategy <span class="ptag">Behavioural</span></div>
+    <p><b>Where it's used:</b> <code>ParkingStrategy</code> (spot selection) and <code>FeeCalculator</code> (pricing).</p>
+    <p><b>The problem it solves:</b> A parking lot in a hospital needs handicapped spots first. A mall lot needs nearest-to-entrance. An airport lot charges flat rate. A city lot charges hourly with peak pricing. These are different algorithms for the same operation. Without Strategy, you write one giant method with <code>if lot_type == "hospital": ... elif lot_type == "mall": ...</code> — a mess that grows every time a new lot type is added.</p>
+    <div class="compare-grid">
+      <div class="cb">
+        <div class="clabel">❌ Without Strategy</div>
+        <pre>def find_spot(self, vehicle):
+    if self.type == "hospital":
+        # check handicapped first
+        ...
+    elif self.type == "mall":
+        # nearest entrance
+        ...
+    elif self.type == "vip":
+        # reserved spots first
+        ...</pre>
+        <div class="cexplain">Every new lot type requires editing this method. Adding "airport strategy" risks breaking hospital logic. Testing hospital logic requires constructing the entire ParkingLot with type="hospital".</div>
+      </div>
+      <div class="cg">
+        <div class="clabel">✓ With Strategy</div>
+        <pre>lot = ParkingLot(
+  strategy=HandicappedFirst(),
+  fee_calc=HourlyCalculator())
+
+# Or for airport:
+lot = ParkingLot(
+  strategy=NearestSpot(),
+  fee_calc=FlatRateCalculator())</pre>
+        <div class="cexplain">Each strategy is tested in isolation. Adding a new strategy is a new class — zero changes to ParkingLot. Open/Closed Principle satisfied completely.</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="pcard">
+    <div class="ptitle">3. Factory Method <span class="ptag">Creational</span></div>
+    <p><b>Where it's used:</b> <code>VehicleFactory.create(plate, type_str)</code> — creating the right Vehicle subclass from external input.</p>
+    <p><b>The problem it solves:</b> At the entrance gate, a human types "CAR" into a terminal. Your code receives a string. You need a <code>Car</code> object. If you write <code>if type == "CAR": return Car(plate)</code> everywhere, that if/else is duplicated every place a vehicle is created. The Factory centralizes this mapping.</p>
+    <div class="code-block"><span class="kw">class</span> <span class="cls">VehicleFactory</span>:
+    @staticmethod
+    <span class="kw">def</span> <span class="nm">create</span>(plate: str,
+              type_str: str) -> Vehicle:
+        mapping = {
+            <span class="st">"MOTORCYCLE"</span>: Motorcycle,
+            <span class="st">"CAR"</span>:        Car,
+            <span class="st">"TRUCK"</span>:      Truck,
+        }
+        cls = mapping.get(
+                  type_str.upper())
+        <span class="kw">if</span> cls <span class="kw">is</span> <span class="nm">None</span>:
+            raise ValueError(
+                f<span class="st">"Unknown: {type_str}"</span>)
+        return cls(plate)</div>
+    <p><b>Why the dict-based mapping instead of if/else:</b> Adding a new vehicle type (e.g., <code>"BUS"</code>) is one line: add <code>"BUS": Bus</code> to the dict. With if/else, you must find the right elif and insert correctly. The dict is data; if/else is code. Data is easier to extend and test.</p>
+  </div>
+
+  <div class="pcard">
+    <div class="ptitle">4. Observer <span class="ptag">Behavioural</span></div>
+    <p><b>Where it's used:</b> Notifying display boards and availability counters when a spot's status changes.</p>
+    <p><b>The problem it solves:</b> When a car parks, the entrance display board should update ("Floor 2: 14 spots available"). When it leaves, it should update again. If <code>ParkingSpot.assign_vehicle()</code> directly calls the display board, the spot is coupled to a display system — they become impossible to test or change independently. Observer decouples them: the spot fires an event; whoever is listening handles it.</p>
+    <div class="code-block"><span class="kw">class</span> <span class="cls">SpotStatusObserver</span>(ABC):
+    @abstractmethod
+    <span class="kw">def</span> <span class="nm">on_spot_changed</span>(self,
+        spot: ParkingSpot,
+        new_status: SpotStatus): ...
+
+<span class="kw">class</span> <span class="cls">DisplayBoardObserver</span>(
+    SpotStatusObserver):
+    <span class="kw">def</span> <span class="nm">on_spot_changed</span>(self,
+        spot, new_status):
+        <span class="cm"># Update LED display for floor</span>
+        self.display.refresh(
+            spot.floor_number)
+
+<span class="kw">class</span> <span class="cls">AvailabilityCounterObserver</span>(
+    SpotStatusObserver):
+    <span class="kw">def</span> <span class="nm">on_spot_changed</span>(self,
+        spot, new_status):
+        <span class="kw">if</span> new_status == SpotStatus.FREE:
+            self.counts[
+                spot.floor_number] += 1
+        else:
+            self.counts[
+                spot.floor_number] -= 1</div>
+    <p><b>The key benefit:</b> Adding a new reaction to spot changes — say, sending an SMS alert when a floor hits 5% capacity — is a new <code>SpotStatusObserver</code> subclass. Nothing in <code>ParkingSpot</code>, <code>ParkingFloor</code>, or <code>ParkingLot</code> changes. This is the extension-without-modification guarantee of the Open/Closed Principle, delivered by Observer.</p>
+  </div>
+
+  <div class="pcard">
+    <div class="ptitle">5. State <span class="ptag">Behavioural</span></div>
+    <p><b>Where it's used:</b> <code>ParkingSpot</code>'s status transitions (FREE → OCCUPIED → FREE, and variants).</p>
+    <p><b>The problem it solves:</b> A spot's behavior changes depending on its state. In state FREE: <code>assign_vehicle()</code> works. In state OCCUPIED: it should raise. In state BLOCKED: even <code>release_vehicle()</code> should be blocked. Without the State pattern, you write <code>if self.status == FREE: ... elif self.status == BLOCKED: ...</code> inside every method. Every new status means editing every method.</p>
+    <p><b>The lightweight version (used here):</b> A <code>VALID_TRANSITIONS</code> dict, similar to Swiggy's Order state machine. Simpler than full State objects but captures the same invariants:</p>
+    <div class="code-block">VALID_TRANSITIONS = {
+    SpotStatus.FREE:     [SpotStatus.OCCUPIED, SpotStatus.RESERVED, SpotStatus.BLOCKED],
+    SpotStatus.OCCUPIED: [SpotStatus.FREE],
+    SpotStatus.RESERVED: [SpotStatus.OCCUPIED, SpotStatus.FREE],
+    SpotStatus.BLOCKED:  [SpotStatus.FREE],  <span class="cm"># only ops team can unblock</span>
+}
+
+<span class="kw">def</span> <span class="nm">_transition</span>(self, new_status: SpotStatus):
+    allowed = VALID_TRANSITIONS.get(
+        self.status, [])
+    <span class="kw">if</span> new_status <span class="kw">not in</span> allowed:
+        raise InvalidSpotTransitionError(
+            self.status, new_status)
+    self.status = new_status</div>
+    <p><b>Why a dict, not if/else:</b> BLOCKED → OCCUPIED is missing from the dict intentionally. A maintenance spot cannot be directly occupied — it must be unblocked first. This constraint is data, not code. You read the dict to understand the rules; you don't need to trace through branching logic.</p>
+  </div>
+
+  <div class="pcard">
+    <div class="ptitle">6. Template Method <span class="ptag">Behavioural</span></div>
+    <p><b>Where it's used:</b> A base <code>FeeCalculator</code> that handles duration extraction, while subclasses implement the per-vehicle rate lookup.</p>
+    <p><b>The problem it solves:</b> Every fee calculator needs to: (1) get duration from ticket, (2) apply ceiling rounding, (3) look up the rate for the vehicle type, (4) multiply. Steps 1, 2, 4 are the same for all calculators. Step 3 is the variable part. Template Method puts the fixed skeleton in the base class and delegates the variable part (rate lookup) to subclasses.</p>
+    <div class="code-block"><span class="kw">class</span> <span class="cls">FeeCalculator</span>(ABC):
+    <span class="kw">def</span> <span class="nm">calculate</span>(self,
+        ticket: Ticket) -> float:
+        <span class="cm"># Fixed skeleton — same for all</span>
+        hours = math.ceil(
+            ticket.duration_hours())
+        rate = self.get_rate(  <span class="cm"># ← variable part</span>
+            ticket.vehicle.vehicle_type)
+        return hours * rate
+
+    @abstractmethod
+    <span class="kw">def</span> <span class="nm">get_rate</span>(self,
+        vtype: VehicleType) -> float:
+        ...  <span class="cm"># subclasses define this</span>
+
+<span class="kw">class</span> <span class="cls">WeekdayCalculator</span>(FeeCalculator):
+    <span class="kw">def</span> <span class="nm">get_rate</span>(self, vtype):
+        return {MOTORCYCLE: 20,
+                CAR: 50, TRUCK: 100
+                }[vtype]
+
+<span class="kw">class</span> <span class="cls">WeekendCalculator</span>(FeeCalculator):
+    <span class="kw">def</span> <span class="nm">get_rate</span>(self, vtype):
+        return {MOTORCYCLE: 30,
+                CAR: 80, TRUCK: 150
+                }[vtype]  <span class="cm"># weekend premium</span></div>
+    <p><b>Why this matters:</b> If you later need a peak-hours calculator, you write <code>PeakHoursCalculator(FeeCalculator)</code> and implement <code>get_rate()</code>. The rounding logic, duration extraction — all inherited automatically. You write only the part that changes. This is what "code reuse through inheritance" actually means in practice.</p>
+  </div>
+</div>
+
+<!-- ======== SECTION 6: SOLID ======== -->
+<div class="section" id="s-sol">
+  <div class="sec-eyebrow">Step 6 · Deep Dive</div>
+  <div class="sec-title">SOLID Principles — Applied to Parking Lot</div>
+  <div class="sec-intro">SOLID principles are not abstract rules — they are consequences of designing for change. Every principle points at a specific category of change that your design must accommodate gracefully. Here's where each principle appears in this system, and why violating it would hurt.</div>
+
+  <div class="solid-grid">
+
+    <div class="solid-card">
+      <div class="solid-letter">S</div>
+      <div class="solid-name">Single Responsibility Principle</div>
+      <div class="solid-def">"A class should have one reason to change."</div>
+      <p><b>Applied:</b> <code>ParkingSpot</code> manages spot state. <code>FeeCalculator</code> manages pricing. <code>Ticket</code> records transactions. <code>ParkingStrategy</code> selects spots. None of these does another's job.</p>
+      <div class="vbox"><b>Violation:</b> If <code>ParkingSpot</code> also computed fees, it would change whenever the business changes pricing rules — even though the spot itself hasn't changed at all. Two unrelated reasons to change = SRP violation.</div>
+      <div class="fbox"><b>Result of following SRP:</b> Pricing logic changes? Only <code>FeeCalculator</code> changes. Spot state management changes? Only <code>ParkingSpot</code>. Each class has exactly one owner, one team, one reason to be touched.</div>
+    </div>
+
+    <div class="solid-card">
+      <div class="solid-letter">O</div>
+      <div class="solid-name">Open/Closed Principle</div>
+      <div class="solid-def">"Open for extension, closed for modification."</div>
+      <p><b>Applied:</b> Adding a new vehicle type, spot selection strategy, or fee model does <em>not</em> require modifying <code>ParkingLot</code>. You add a new subclass of <code>ParkingStrategy</code> or <code>FeeCalculator</code>.</p>
+      <div class="vbox"><b>Violation:</b> If <code>park_vehicle()</code> had <code>if vehicle.type == "MOTORCYCLE": find_small_spot() elif vehicle.type == "TRUCK": find_large_spot()</code> — adding a BUS type requires editing <code>park_vehicle()</code> and potentially introducing regressions for existing types.</div>
+      <div class="fbox"><b>Result:</b> A new <code>EVPriorityStrategy</code> (park EVs near charging spots first) is one new class. Zero lines in <code>ParkingLot</code> change. The system is extended, never broken.</div>
+    </div>
+
+    <div class="solid-card">
+      <div class="solid-letter">L</div>
+      <div class="solid-name">Liskov Substitution Principle</div>
+      <div class="solid-def">"Subclasses must be substitutable for their base class."</div>
+      <p><b>Applied:</b> <code>HandicappedFirstStrategy</code> and <code>NearestSpotStrategy</code> both implement <code>find_spot(floors, vehicle) → ParkingSpot | None</code>. Either can be passed to <code>ParkingLot</code> with identical behavior from the caller's perspective.</p>
+      <div class="vbox"><b>Violation:</b> If <code>HandicappedFirstStrategy.find_spot()</code> raised an exception for trucks (instead of returning None), the caller couldn't safely use it interchangeably. Substitution would break the system silently.</div>
+      <div class="fbox"><b>Test for LSP:</b> Every concrete strategy must return a <code>ParkingSpot</code> or <code>None</code>. Never raise instead of returning None. Never add extra required parameters. The contract is fixed by the base class.</div>
+    </div>
+
+    <div class="solid-card">
+      <div class="solid-letter">I</div>
+      <div class="solid-name">Interface Segregation Principle</div>
+      <div class="solid-def">"Clients shouldn't depend on methods they don't use."</div>
+      <p><b>Applied:</b> <code>ParkingStrategy</code> has one method: <code>find_spot()</code>. <code>FeeCalculator</code> has one method: <code>calculate()</code>. <code>SpotStatusObserver</code> has one method: <code>on_spot_changed()</code>. No interface forces a class to implement methods it doesn't need.</p>
+      <div class="vbox"><b>Violation:</b> If you combined <code>ParkingStrategy</code> and <code>FeeCalculator</code> into one interface <code>ParkingPolicy</code>, every strategy must implement a <code>calculate()</code> method even if it has nothing to do with fees — or implement a do-nothing stub. Both are bad.</div>
+      <div class="fbox"><b>Rule of thumb:</b> If a class implementing your interface has to write <code>raise NotImplementedError</code> for some methods, your interface is too fat. Split it.</div>
+    </div>
+
+    <div class="solid-card solid-full">
+      <div class="solid-letter">D</div>
+      <div class="solid-name">Dependency Inversion Principle</div>
+      <div class="solid-def">"Depend on abstractions, not concretions."</div>
+      <p><b>Applied:</b> <code>ParkingLot</code> depends on <code>ParkingStrategy</code> (abstract) and <code>FeeCalculator</code> (abstract), not on <code>NearestSpotStrategy</code> or <code>HourlyFeeCalculator</code> (concrete). The concrete implementations are injected at construction time.</p>
+      <div class="compare-grid">
+        <div class="cb">
+          <div class="clabel">❌ Violation — depends on concrete</div>
+          <pre>class ParkingLot:
+    def __init__(self):
+        # hardwired to a specific strategy
+        self.strategy = NearestSpotStrategy()
+        self.fee_calc = HourlyFeeCalculator()</pre>
+        <div class="cexplain">Testing ParkingLot requires NearestSpotStrategy to work. Changing to HandicappedFirstStrategy requires editing ParkingLot's __init__. Two classes are welded together.</div>
+      </div>
+      <div class="cg">
+        <div class="clabel">✓ DIP — depends on abstractions</div>
+        <pre>class ParkingLot:
+    def __init__(self,
+        strategy: ParkingStrategy,
+        fee_calc: FeeCalculator):
+        self.strategy = strategy
+        self.fee_calc = fee_calc</pre>
+        <div class="cexplain">Test with a MockStrategy that always returns spot #1. Swap to HandicappedFirstStrategy with zero code changes to ParkingLot. The lot doesn't even know which implementation it's using.</div>
+      </div>
+      </div>
+      <p><b>The testability proof:</b> With DIP, a unit test for <code>park_vehicle()</code> injects a <code>MockStrategy</code> that immediately returns a predetermined spot. No floors, no real spots needed. The test is 10 lines and runs in milliseconds. Without DIP, you must construct the entire lot with real floors and real spots just to test one method.</p>
+    </div>
+
+  </div>
+</div>
+
+<!-- ======== SECTION 7: TRADEOFFS ======== -->
+<div class="section" id="s-trd">
+  <div class="sec-eyebrow">Step 7 · Senior-Level Discussion</div>
+  <div class="sec-title">Trade-offs — Show You Think Like an Engineer</div>
+  <div class="sec-intro">Every design decision has a cost. An interviewer asking "why did you do X instead of Y?" is probing whether you know what you gave up. Here are the key trade-offs in this design, each explained with both sides.</div>
+
+  <div class="tsec">
+    <div class="thead">One global lock vs. per-floor locks</div>
+    <div class="tbody">
+      <div class="scenario"><b>The situation:</b> Multiple cars entering simultaneously at different entrances. We need to prevent two cars from being assigned the same spot.</div>
+      <div class="td-grid">
+        <div class="tpro"><span class="tlabel">✓ One global lock (current design)</span>Simpler code. No deadlock risk (only one lock in the system). For most parking lots, spot assignment is so fast (microseconds) that contention on one lock is negligible. Correct by default.</div>
+        <div class="tcon"><span class="tlabel">⚠ Per-floor locks (alternative)</span>Higher throughput: two cars entering on different floors can be assigned simultaneously. But now you have multiple locks — risk of deadlock if any code accidentally acquires floor locks in different orders. More complex to implement and test. Justified only if profiling shows lock contention is actually a bottleneck.</div>
+      </div>
+      <p style="font-size:13px; color:var(--text2); margin-top:12px;"><b>Decision rule:</b> Start with the simplest correct design. Profile before optimizing. A parking lot processes tens of cars per hour — per-floor locks are premature optimization unless you're designing for an enormous automated garage with sub-second throughput requirements.</p>
+    </div>
+  </div>
+
+  <div class="tsec">
+    <div class="thead">Motorcycle fits in a medium spot — policy or not?</div>
+    <div class="tbody">
+      <div class="scenario"><b>The situation:</b> The lot is full of small spots, but medium spots are available. Should a motorcycle be allowed to use a medium spot?</div>
+      <div class="td-grid">
+        <div class="tpro"><span class="tlabel">✓ Strict sizing (current design)</span>Simple <code>can_fit()</code>: motorcycle → small, car → medium, truck → large. No ambiguity. Easy to understand, test, and explain. Revenue is predictable.</div>
+        <div class="tcon"><span class="tlabel">⚠ Flexible sizing (alternative)</span>A motorcycle in a medium spot is revenue — better than an empty spot. But now <code>can_fit()</code> needs a priority order: "prefer small, allow medium." This logic lives in the strategy, not the spot — which is actually cleaner. The strategy can implement "best fit" or "first fit" with size flexibility.</div>
+      </div>
+      <p style="font-size:13px; color:var(--text2); margin-top:12px;"><b>How to answer in interview:</b> "I've kept <code>can_fit()</code> strict for clarity. Flexible sizing would be a configurable policy in the strategy — the strategy could include a <code>SIZE_COMPATIBILITY</code> map: <code>MOTORCYCLE: [SMALL, MEDIUM]</code>. The spot class doesn't change — only the strategy's logic does." This shows you've thought it through without over-engineering the initial design.</p>
+    </div>
+  </div>
+
+  <div class="tsec">
+    <div class="thead">Keying active_tickets by license_plate vs. ticket_id</div>
+    <div class="tbody">
+      <div class="scenario"><b>The situation:</b> At exit, you look up the active ticket. Should you look up by the vehicle's license plate or by a physical ticket ID the driver carries?</div>
+      <div class="td-grid">
+        <div class="tpro"><span class="tlabel">✓ License plate (current)</span>No physical ticket to lose. Works for automated ANPR (number plate recognition) gates. Simpler UX — drive in, drive out, plate is scanned automatically both ways.</div>
+        <div class="tcon"><span class="tlabel">⚠ Ticket ID (alternative)</span>More common in real lots. Supports valet parking (different person parks and exits). Supports one vehicle making multiple trips in a day. Requires handling lost-ticket scenario. Requires a separate <code>active_tickets: dict[ticket_id, Ticket]</code> lookup.</div>
+      </div>
+      <p style="font-size:13px; color:var(--text2); margin-top:12px;"><b>Best answer:</b> "I've chosen license plate for simplicity. A production system would likely support both — ANPR for automated gates and ticket ID as fallback. Both lookups are O(1) with dicts; we'd just maintain two dicts or one with two index structures."</p>
+    </div>
+  </div>
+
+  <div class="tsec">
+    <div class="thead">In-memory state vs. database persistence</div>
+    <div class="tbody">
+      <div class="scenario"><b>The situation:</b> This design keeps all state in-memory (Python dicts). What happens if the server crashes mid-parking-session?</div>
+      <div class="td-grid">
+        <div class="tpro"><span class="tlabel">✓ In-memory (LLD scope)</span>Simple, fast, sufficient for interview scope. Demonstrates design concepts without infrastructure complexity. O(1) lookups, no DB calls, no connection pooling. Appropriate for the question asked.</div>
+        <div class="tcon"><span class="tlabel">⚠ Production reality</span>A server crash loses all active ticket data. A vehicle is parked but no exit record exists — the spot stays "occupied" forever. Production systems need persistent storage (DB), with Ticket as a DB record and spot status replicated from tickets. But this is HLD territory — flag it and move on in an LLD interview.</div>
+      </div>
+      <p style="font-size:13px; color:var(--text2); margin-top:12px;"><b>How to handle this question:</b> "This is an in-memory design appropriate for LLD. In production, I'd persist Tickets to a database (the Ticket entity maps cleanly to a DB row). Spot availability could be derived from active tickets, or cached in Redis with the DB as source of truth for recovery."</p>
+    </div>
+  </div>
+</div>
+
+<!-- ======== SECTION 8: Q&A ======== -->
+<div class="section" id="s-qa">
+  <div class="sec-eyebrow">Step 8 · Interview Simulation</div>
+  <div class="sec-title">Interview Q&amp;A — Likely Follow-ups</div>
+  <div class="sec-intro">These are the questions most likely to follow after you present your design. Each answer is grounded in the design decisions made earlier — notice how every answer traces back to a deliberate choice.</div>
+
+  <div class="qa">
+    <div class="qa-q" onclick="t(this)">Why did you use an abstract class for ParkingStrategy instead of a plain function? <i class="fa-solid fa-chevron-down"></i></div>
+    <div class="qa-a">
+      <p>A plain function would work for a single strategy — but a strategy often needs state. Consider a <code>PreferredFloorStrategy</code> that always tries floor 1 first — it needs to know which floor is "preferred," configurable per lot. A class can hold that configuration: <code>PreferredFloorStrategy(preferred_floor=1)</code>. A plain function has no home for configuration — it either hardcodes it or takes extra parameters on every call (leaking configuration concerns into the caller).</p>
+      <p>Additionally, an ABC enforces the contract at the class level. If someone writes a new strategy and forgets to implement <code>find_spot()</code>, Python raises <code>TypeError: Can't instantiate abstract class</code> the moment they try to use it — not at runtime during a vehicle lookup. The ABC is a compile-time (or import-time) contract, not a documentation hope.</p>
+    </div>
+  </div>
+
+  <div class="qa">
+    <div class="qa-q" onclick="t(this)">How would you handle a truck that needs two consecutive spots? <i class="fa-solid fa-chevron-down"></i></div>
+    <div class="qa-a">
+      <p>This is an extension to the <code>ParkingStrategy</code> — specifically a <code>MultiSpotStrategy</code>. The key changes are:</p>
+      <p><b>On ParkingSpot:</b> Add an optional <code>adjacent_spot_id: str | None</code> field. When a floor is laid out, adjacent spots are linked. A strategy can traverse this link to find two consecutive free spots.</p>
+      <p><b>On Ticket:</b> Change <code>spot: ParkingSpot</code> to <code>spots: list[ParkingSpot]</code>. A truck occupying two spots has a ticket with two spot references. Exit releases both.</p>
+      <p><b>On FeeCalculator:</b> The rate for TRUCK already accounts for the size. But if you want to charge per spot used, <code>calculate(ticket)</code> can multiply by <code>len(ticket.spots)</code>.</p>
+      <p><b>Critical observation:</b> <code>ParkingLot.park_vehicle()</code> and <code>ParkingSpot.assign_vehicle()</code> don't change their signatures — the multi-spot logic is entirely inside the new strategy. This is the payoff of the Strategy pattern: complex behaviors are additive, not disruptive.</p>
+      <div class="code-block"><span class="kw">class</span> <span class="cls">MultiSpotStrategy</span>(ParkingStrategy):
+    <span class="kw">def</span> <span class="nm">find_spot</span>(self, floors, vehicle):
+        <span class="kw">if</span> vehicle.vehicle_type != VehicleType.TRUCK:
+            return NearestSpotStrategy().find_spot(floors, vehicle)
+        <span class="kw">for</span> floor <span class="kw">in</span> floors:
+            <span class="kw">for</span> i, spot <span class="kw">in</span> enumerate(floor.spots[:-1]):
+                next_spot = floor.spots[i + 1]
+                <span class="kw">if</span> (spot.is_available() and next_spot.is_available()
+                 and spot.size == SpotSize.LARGE
+                 and next_spot.size == SpotSize.LARGE):
+                    return (spot, next_spot)  <span class="cm"># return tuple</span>
+        return None</div>
+    </div>
+  </div>
+
+  <div class="qa">
+    <div class="qa-q" onclick="t(this)">How would you add a monthly pass — vehicles that pay flat monthly fee and get priority parking? <i class="fa-solid fa-chevron-down"></i></div>
+    <div class="qa-a">
+      <p>This touches three parts of the design — each change is surgical and doesn't break existing behavior:</p>
+      <p><b>On Vehicle:</b> Add <code>is_monthly_pass: bool</code> and <code>pass_expiry: datetime | None</code>. A helper method <code>has_valid_pass() -> bool</code> checks both the flag and expiry date.</p>
+      <p><b>New Strategy:</b> <code>MonthlyPassPriorityStrategy</code> — checks <code>vehicle.has_valid_pass()</code>. If true, it looks for RESERVED spots first (pre-designated for pass holders), then falls back to regular nearest spots. If false, it delegates directly to <code>NearestSpotStrategy</code>.</p>
+      <p><b>On FeeCalculator:</b> <code>PassAwareFeeCalculator</code> — checks <code>ticket.vehicle.has_valid_pass()</code>. If true, returns <code>0.0</code> (pass covers this visit) or a discounted rate. If false, delegates to <code>HourlyFeeCalculator</code>.</p>
+      <p><b>Key insight for the interviewer:</b> <code>ParkingLot</code> itself does not change. You configure it with the new strategy and calculator at construction. The lot is oblivious to the existence of monthly passes — the business logic lives entirely in the strategy and calculator. This is dependency inversion and the open/closed principle working together.</p>
+    </div>
+  </div>
+
+  <div class="qa">
+    <div class="qa-q" onclick="t(this)">Why is can_fit() on ParkingSpot and not on ParkingLot? <i class="fa-solid fa-chevron-down"></i></div>
+    <div class="qa-a">
+      <p>This is the <strong>Tell, Don't Ask</strong> principle — the same reason <code>can_cancel()</code> lives on <code>Order</code> in Swiggy's design, not on <code>SwiggySystem</code>.</p>
+      <p><b>The alternative:</b> <code>ParkingLot</code> (or <code>ParkingStrategy</code>) checks <code>if spot.size == SIZE_MAP[vehicle.type]</code> directly everywhere it needs to verify fit. This works. But now the rule "this size spot can fit this vehicle type" is scattered across every caller instead of owned by the spot.</p>
+      <p><b>The concrete risk:</b> You add a new rule: "motorcycles can also park in medium spots if the lot is 90% full." Now you must find and update every location that checks spot-vehicle compatibility. With <code>can_fit()</code> on the spot, you update one method. Every caller — NearestSpotStrategy, HandicappedFirstStrategy, any future strategy — automatically gets the new rule for free.</p>
+      <p><b>The general principle:</b> Rules about an entity's own attributes belong on that entity. A spot's size is its own attribute. The rule "does this vehicle fit given my size" is a rule about the spot's size. It belongs on ParkingSpot.</p>
+    </div>
+  </div>
+
+  <div class="qa">
+    <div class="qa-q" onclick="t(this)">Walk me through the complete sequence when a car exits and there's a dispute about the fee. <i class="fa-solid fa-chevron-down"></i></div>
+    <div class="qa-a">
+      <p>This tests whether your design produces an auditable record. Here's the sequence:</p>
+      <p><b>1. Exit triggered:</b> <code>ParkingLot.exit_vehicle("KA05-HJ-7890")</code> is called. The ticket is popped from <code>active_tickets</code>.</p>
+      <p><b>2. Timestamp recorded:</b> <code>ticket.exit_time = datetime.now()</code>. This is the official exit time — immutable from this point.</p>
+      <p><b>3. Fee computed:</b> <code>fee_calculator.calculate(ticket)</code> uses <code>ticket.entry_time</code> and <code>ticket.exit_time</code> to compute duration, applies ceiling rounding, looks up the vehicle type rate, multiplies. Returns ₹150.</p>
+      <p><b>4. Dispute scenario:</b> The driver claims they parked for 1 hour but are being charged for 2. The <code>Ticket</code> object (and its DB record in production) has both <code>entry_time</code> and <code>exit_time</code> preserved. The gate operator can show: "entry 14:03, exit 15:05 — 62 minutes, rounded up to 2 hours = ₹100." The Ticket is the receipt, the evidence, and the audit trail.</p>
+      <p><b>5. Spot released:</b> After fee is recorded on the ticket, <code>ticket.spot.release_vehicle()</code> marks the spot FREE. The spot is now available for the next vehicle. If the release fails for any reason, the fee record still exists on the Ticket — the transaction is preserved even if cleanup fails.</p>
+      <p><b>Key takeaway:</b> The Ticket is never modified after creation except to add exit_time and fee at the end. It is an append-only record. This is what makes dispute resolution possible — the data was frozen at the right moments.</p>
+    </div>
+  </div>
+
+  <div class="qa">
+    <div class="qa-q" onclick="t(this)">How would you make this design fully unit-testable? <i class="fa-solid fa-chevron-down"></i></div>
+    <div class="qa-a">
+      <p>Testability is a direct consequence of Dependency Inversion. Here's what a test for <code>park_vehicle()</code> looks like when DIP is applied:</p>
+      <div class="code-block"><span class="kw">def</span> <span class="nm">test_park_vehicle_assigns_spot_and_issues_ticket</span>():
+    <span class="cm"># Arrange: build a minimal lot with a known spot</span>
+    spot = ParkingSpot(
+        spot_id=<span class="st">"A-1"</span>,
+        size=SpotSize.MEDIUM,
+        spot_type=SpotType.STANDARD,
+        floor_number=<span class="dn">1</span>)
+    floor = ParkingFloor(
+        floor_number=<span class="dn">1</span>,
+        spots=[spot])
+
+    <span class="cm"># Inject a mock strategy that always returns spot A-1</span>
+    mock_strategy = MockStrategy(
+        always_returns=spot)
+
+    lot = ParkingLot(
+        floors=[floor],
+        strategy=mock_strategy,
+        fee_calc=HourlyFeeCalculator())
+
+    car = Car(license_plate=<span class="st">"KA01-AB-1234"</span>)
+
+    <span class="cm"># Act</span>
+    ticket = lot.park_vehicle(car)
+
+    <span class="cm"># Assert</span>
+    assert ticket.vehicle == car
+    assert ticket.spot == spot
+    assert ticket.exit_time is None  <span class="cm"># still parked</span>
+    assert spot.status == SpotStatus.OCCUPIED
+    assert <span class="st">"KA01-AB-1234"</span> in lot.active_tickets</div>
+      <p>This test: runs in milliseconds, requires zero physical spots or floors beyond what we explicitly set up, uses a <code>MockStrategy</code> to control what <code>find_spot()</code> returns, and tests exactly one behavior — that <code>park_vehicle()</code> assigns the spot and records the ticket correctly. This precision is only possible because every dependency is injected. Without DIP, you cannot instantiate <code>ParkingLot</code> without instantiating every strategy and calculator — and you lose control over what they return.</p>
+    </div>
+  </div>
+
+  <div class="qa">
+    <div class="qa-q" onclick="t(this)">How would you display real-time availability on entrance boards? <i class="fa-solid fa-chevron-down"></i></div>
+    <div class="qa-a">
+      <p>This is the Observer pattern in action, and the answer traces directly back to a design decision already made.</p>
+      <p><b>The mechanism:</b> <code>ParkingSpot</code> maintains a list of <code>SpotStatusObserver</code> instances. Every time <code>assign_vehicle()</code> or <code>release_vehicle()</code> is called, the spot notifies all observers via <code>obs.on_spot_changed(self, new_status)</code>.</p>
+      <p><b>The <code>DisplayBoardObserver</code>:</b> Maintains a <code>dict[floor_number, int]</code> of free spot counts. On <code>FREE → OCCUPIED</code>, decrements the count. On <code>OCCUPIED → FREE</code>, increments. Exposes <code>get_availability(floor_n) → int</code> for the display board to read.</p>
+      <p><b>The <code>AvailabilityAlertObserver</code>:</b> When the count drops below 5%, sends an SMS alert to the lot manager. Adding this requires zero changes to <code>ParkingSpot</code>, <code>ParkingFloor</code>, or <code>ParkingLot</code>. You register it at startup: <code>spot.add_observer(AvailabilityAlertObserver(threshold=0.05))</code>.</p>
+      <p><b>Thread safety note:</b> Observer callbacks fire inside <code>assign_vehicle()</code> and <code>release_vehicle()</code>, which are called under the lock. This means observer code also runs under the lock — keep observer implementations fast and non-blocking. If an observer needs to do heavy work (like sending an HTTP request to update an external board), it should enqueue the work for a background thread rather than doing it inline.</p>
+    </div>
+  </div>
+
+</div>
+
+</main>
+
+<script>
+function show(id, el) {
+  document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
+  document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+  document.getElementById('s-' + id).classList.add('active');
+  el.classList.add('active');
+  window.scrollTo(0, 0);
+}
+function t(el) {
+  el.classList.toggle('open');
+  el.nextElementSibling.classList.toggle('show');
+}
+</script>
+</body>
+</html>

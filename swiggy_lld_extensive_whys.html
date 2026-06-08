@@ -1,0 +1,1725 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Swiggy LLD — Extensive Why Edition</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Serif:ital,wght@0,400;0,600;1,400&family=JetBrains+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+:root {
+  --orange: #d4500f; --orange2: #f26522; --orange-bg: #fff7f0; --orange-border: #fbd0b3;
+  --bg: #faf9f7; --surface: #ffffff; --surface2: #f4f3ef; --surface3: #eceae4;
+  --border: #e3e0d8; --text: #1c1a17; --text2: #54514a; --text3: #9c9891;
+  --green: #2d6a4f; --green-bg: #edf7f2; --green-border: #b7dfc8;
+  --red: #9b1c1c; --red-bg: #fef2f2; --red-border: #fcc;
+  --blue: #1a4480; --blue-bg: #eff6ff; --blue-border: #bfdbfe;
+  --amber: #92400e; --amber-bg: #fffbeb; --amber-border: #fde68a;
+  --purple: #5b21b6; --purple-bg: #f5f3ff; --purple-border: #ddd6fe;
+  --mono: 'JetBrains Mono', monospace;
+  --sans: 'IBM Plex Sans', sans-serif;
+  --serif: 'IBM Plex Serif', serif;
+  --sidebar-w: 250px;
+  --r: 8px;
+}
+body { font-family: var(--sans); background: var(--bg); color: var(--text); display: flex; min-height: 100vh; }
+
+/* ---- SIDEBAR ---- */
+.sidebar {
+  width: var(--sidebar-w); position: fixed; top: 0; left: 0; bottom: 0;
+  background: var(--surface); border-right: 2px solid var(--border);
+  overflow-y: auto; z-index: 100; display: flex; flex-direction: column;
+}
+.logo-wrap { padding: 22px 18px 18px; border-bottom: 1px solid var(--border); }
+.logo { display: flex; align-items: center; gap: 10px; }
+.logo-icon { width: 36px; height: 36px; border-radius: 8px; background: var(--orange2); display: flex; align-items: center; justify-content: center; font-size: 18px; }
+.logo-name { font-size: 16px; font-weight: 600; font-family: var(--serif); }
+.logo-tag { font-size: 11px; color: var(--text3); margin-top: 3px; letter-spacing: 0.03em; }
+.nav-group { padding: 14px 18px 4px; font-size: 9px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.1em; color: var(--text3); }
+.nav-item { display: flex; align-items: center; gap: 9px; padding: 9px 18px; font-size: 13px; color: var(--text2); cursor: pointer; border-left: 3px solid transparent; transition: all 0.12s; }
+.nav-item:hover { background: var(--surface2); color: var(--text); }
+.nav-item.active { border-left-color: var(--orange2); background: var(--orange-bg); color: var(--orange); font-weight: 500; }
+.nav-item i { width: 15px; text-align: center; font-size: 12px; }
+.nav-item .step-num { font-size: 9px; font-weight: 700; background: var(--surface3); border-radius: 3px; padding: 1px 5px; margin-left: auto; color: var(--text3); }
+.nav-item.active .step-num { background: var(--orange-border); color: var(--orange); }
+
+/* ---- MAIN ---- */
+.main { margin-left: var(--sidebar-w); padding: 52px 60px; max-width: 920px; width: 100%; }
+.section { display: none; }
+.section.active { display: block; }
+
+/* ---- SECTION HEADER ---- */
+.sec-eyebrow { font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.1em; color: var(--orange2); margin-bottom: 10px; }
+.sec-title { font-family: var(--serif); font-size: 30px; font-weight: 600; line-height: 1.2; margin-bottom: 10px; }
+.sec-intro { font-size: 15px; color: var(--text2); line-height: 1.8; margin-bottom: 36px; border-left: 3px solid var(--border); padding-left: 16px; }
+
+/* ---- DIVIDERS / HEADINGS ---- */
+h3 { font-family: var(--serif); font-size: 19px; font-weight: 600; margin: 40px 0 14px; padding-top: 16px; border-top: 1px solid var(--border); color: var(--text); }
+h4 { font-size: 13px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.06em; margin: 18px 0 8px; color: var(--text3); }
+p { font-size: 14px; color: var(--text2); line-height: 1.8; margin: 10px 0; }
+
+/* ---- CALLOUT ---- */
+.prompt-box { background: var(--surface2); border: 1px solid var(--border); border-radius: var(--r); padding: 16px 20px; margin: 20px 0; }
+.prompt-box .plabel { font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.08em; color: var(--text3); margin-bottom: 7px; }
+.prompt-box .ptext { font-family: var(--serif); font-size: 16px; font-style: italic; color: var(--text); line-height: 1.6; }
+
+/* ---- DIALOGUE ---- */
+.dialogue { border: 1px solid var(--border); border-radius: var(--r); overflow: hidden; margin: 20px 0; }
+.d-row { padding: 14px 18px; border-bottom: 1px solid var(--border); font-size: 14px; line-height: 1.7; }
+.d-row:last-child { border-bottom: none; }
+.d-row.you { background: var(--surface); }
+.d-row.iv { background: var(--surface2); }
+.d-speaker { font-size: 9px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.09em; margin-bottom: 5px; }
+.d-row.you .d-speaker { color: var(--orange2); }
+.d-row.iv .d-speaker { color: var(--text3); }
+.why-inline {
+  margin-top: 12px; padding: 12px 14px;
+  background: var(--amber-bg); border-left: 3px solid #f59e0b;
+  border-radius: 0 6px 6px 0; font-size: 13px; color: var(--amber); line-height: 1.7;
+}
+.why-inline b { font-weight: 600; }
+.why-inline code { font-family: var(--mono); font-size: 11px; background: rgba(0,0,0,0.06); padding: 1px 5px; border-radius: 3px; }
+
+/* ---- ANNOTATED CODE ---- */
+.ann-wrap { margin: 22px 0; border: 1px solid var(--border); border-radius: var(--r); overflow: hidden; }
+.ann-header { background: #181825; padding: 10px 18px; display: flex; align-items: center; gap: 10px; border-bottom: 1px solid #2a2a3e; }
+.ann-header span { font-family: var(--mono); font-size: 12px; color: #6c7086; }
+.ann-row { display: grid; grid-template-columns: 46% 54%; border-bottom: 1px solid #2a2a3e; }
+.ann-row:last-child { border-bottom: none; }
+.ann-code { background: #1e1e2e; padding: 14px 18px; font-family: var(--mono); font-size: 12.5px; line-height: 1.75; color: #cdd6f4; overflow-x: auto; white-space: pre; }
+.ann-why { background: var(--surface2); padding: 14px 16px; border-left: 1px solid var(--border); font-size: 13px; line-height: 1.7; color: var(--text2); display: flex; flex-direction: column; gap: 6px; }
+.ann-why .wlabel { font-size: 9px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.09em; color: var(--orange2); }
+.ann-why .wmain { color: var(--text2); }
+.ann-why .wfail { background: var(--red-bg); border: 1px solid var(--red-border); border-radius: 5px; padding: 8px 10px; font-size: 12px; color: var(--red); }
+.ann-why .wfail b { font-weight: 600; }
+.ann-why .wfix { background: var(--green-bg); border: 1px solid var(--green-border); border-radius: 5px; padding: 8px 10px; font-size: 12px; color: var(--green); }
+.ann-why .wfix b { font-weight: 600; }
+
+/* ---- SYNTAX HIGHLIGHT ---- */
+.kw { color: #cba6f7; } .cls { color: #a6e3a1; font-weight: 500; }
+.cm { color: #585b70; font-style: italic; } .st { color: #f38ba8; }
+.nm { color: #89b4fa; } .dn { color: #fab387; }
+
+/* ---- PLAIN CODE ---- */
+.code-block { background: #1e1e2e; border-radius: var(--r); padding: 18px 20px; font-family: var(--mono); font-size: 13px; line-height: 1.8; overflow-x: auto; margin: 14px 0; color: #cdd6f4; white-space: pre; }
+
+/* ---- WHY BOX ---- */
+.why-box { background: var(--surface); border: 1px solid var(--border); border-radius: var(--r); padding: 18px 20px; margin: 18px 0; }
+.why-box .wl { display: flex; align-items: center; gap: 8px; font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.09em; color: var(--orange2); margin-bottom: 10px; }
+.why-box p { margin: 6px 0; }
+
+/* ---- ENTITY TABLE ---- */
+.etable { width: 100%; border-collapse: collapse; margin: 18px 0; font-size: 13.5px; }
+.etable th { text-align: left; padding: 10px 14px; background: var(--surface2); font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.07em; color: var(--text3); border-bottom: 2px solid var(--border); }
+.etable td { padding: 14px 14px; border-bottom: 1px solid var(--border); vertical-align: top; line-height: 1.7; color: var(--text2); }
+.etable td:first-child { font-weight: 500; color: var(--text); white-space: nowrap; }
+.etable tr:last-child td { border-bottom: none; }
+.etable tr:hover td { background: var(--surface2); }
+.badge { display: inline-block; font-size: 9px; font-weight: 700; padding: 2px 7px; border-radius: 20px; margin-right: 6px; text-transform: uppercase; letter-spacing: 0.05em; }
+.bk { background: var(--green-bg); color: var(--green); }
+.bs { background: var(--red-bg); color: var(--red); }
+
+/* ---- REQ LISTS ---- */
+.req-box { background: var(--surface2); border: 1px solid var(--border); border-radius: var(--r); padding: 18px 20px; margin: 14px 0; }
+.req-list { list-style: none; }
+.req-list li { font-size: 14px; color: var(--text2); padding: 6px 0; display: flex; gap: 10px; align-items: flex-start; line-height: 1.7; }
+.req-list li::before { font-weight: 700; flex-shrink: 0; margin-top: 1px; }
+.req-list li::before { content: "✓"; color: var(--green); }
+.req-list.out li::before { content: "✗"; color: var(--red); }
+
+/* ---- STATE PILLS ---- */
+.state-row { display: flex; align-items: center; flex-wrap: wrap; gap: 6px; margin: 18px 0; }
+.sp { padding: 6px 14px; border-radius: 20px; font-size: 11px; font-weight: 600; border: 1px solid; }
+.sarrow { color: var(--text3); font-size: 12px; }
+.sg { background:#f3f2ef; border-color:#d0cdc7; color:#4a4845; }
+.sb { background:#eff6ff; border-color:#bfdbfe; color:#1a4480; }
+.spu{ background:#f5f3ff; border-color:#ddd6fe; color:#5b21b6; }
+.sam{ background:#fffbeb; border-color:#fde68a; color:#92400e; }
+.sco{ background:#fef2f2; border-color:#fecaca; color:#991b1b; }
+.ste{ background:#ecfdf5; border-color:#a7f3d0; color:#065f46; }
+.srd{ background:#fef2f2; border-color:#fca5a5; color:#7f1d1d; }
+
+/* ---- COMPARE ---- */
+.compare-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin: 14px 0; }
+.cb { background: var(--red-bg); border: 1px solid var(--red-border); border-radius: var(--r); padding: 14px 16px; }
+.cg { background: var(--green-bg); border: 1px solid var(--green-border); border-radius: var(--r); padding: 14px 16px; }
+.clabel { font-size: 9px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 9px; }
+.cb .clabel { color: var(--red); } .cg .clabel { color: var(--green); }
+.cb pre, .cg pre { font-family: var(--mono); font-size: 12px; line-height: 1.7; white-space: pre-wrap; }
+.cb pre { color: #7f1d1d; } .cg pre { color: #1a4731; }
+.cexplain { font-size: 13px; color: var(--text2); margin-top: 10px; line-height: 1.65; }
+
+/* ---- PATTERN CARD ---- */
+.pcard { border: 1px solid var(--border); border-radius: var(--r); padding: 20px 22px; margin: 16px 0; background: var(--surface); }
+.ptitle { font-family: var(--serif); font-size: 17px; font-weight: 600; margin-bottom: 4px; display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+.ptag { font-size: 10px; background: var(--surface2); border-radius: 20px; padding: 2px 9px; font-weight: 500; color: var(--text3); font-family: var(--sans); }
+.pcard p { margin: 8px 0; }
+.pcard b { font-weight: 600; color: var(--text); }
+
+/* ---- SOLID ---- */
+.solid-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin: 14px 0; }
+.solid-card { border: 1px solid var(--border); border-radius: var(--r); padding: 18px 20px; background: var(--surface); }
+.solid-letter { font-family: var(--serif); font-size: 32px; font-weight: 600; color: var(--orange2); line-height: 1; margin-bottom: 4px; }
+.solid-name { font-size: 13px; font-weight: 600; margin-bottom: 10px; }
+.solid-def { font-size: 13px; color: var(--text3); margin-bottom: 10px; font-style: italic; line-height: 1.6; }
+.solid-full { grid-column: 1 / -1; }
+.vbox { background: var(--red-bg); border: 1px solid var(--red-border); border-radius: 6px; padding: 11px 13px; margin: 8px 0; font-size: 12.5px; color: var(--red); line-height: 1.65; }
+.fbox { background: var(--green-bg); border: 1px solid var(--green-border); border-radius: 6px; padding: 11px 13px; margin: 8px 0; font-size: 12.5px; color: var(--green); line-height: 1.65; }
+.vbox b, .fbox b { font-weight: 600; }
+
+/* ---- TRADEOFF ---- */
+.tsec { margin: 24px 0; border: 1px solid var(--border); border-radius: var(--r); overflow: hidden; }
+.thead { padding: 13px 18px; background: var(--surface2); border-bottom: 1px solid var(--border); font-size: 15px; font-weight: 600; font-family: var(--serif); }
+.tbody { padding: 16px 18px; }
+.scenario { background: var(--amber-bg); border-left: 3px solid #f59e0b; border-radius: 0 6px 6px 0; padding: 12px 15px; margin: 10px 0; font-size: 13px; color: var(--amber); line-height: 1.7; }
+.scenario b { font-weight: 600; }
+.td-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin: 12px 0; }
+.tpro { background: var(--green-bg); border: 1px solid var(--green-border); border-radius: 6px; padding: 13px 15px; font-size: 13px; color: var(--green); line-height: 1.65; }
+.tcon { background: var(--amber-bg); border: 1px solid var(--amber-border); border-radius: 6px; padding: 13px 15px; font-size: 13px; color: var(--amber); line-height: 1.65; }
+.tlabel { font-size: 9px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 7px; display: block; }
+
+/* ---- Q&A ---- */
+.qa { border: 1px solid var(--border); border-radius: var(--r); overflow: hidden; margin: 12px 0; }
+.qa-q { padding: 15px 18px; cursor: pointer; font-size: 14px; font-weight: 500; display: flex; justify-content: space-between; align-items: center; background: var(--surface); user-select: none; gap: 12px; }
+.qa-q:hover { background: var(--surface2); }
+.qa-q i { color: var(--text3); transition: transform 0.2s; font-size: 11px; flex-shrink: 0; }
+.qa-q.open i { transform: rotate(180deg); }
+.qa-a { display: none; padding: 18px 20px; font-size: 14px; line-height: 1.85; color: var(--text2); background: var(--surface2); border-top: 1px solid var(--border); }
+.qa-a.show { display: block; }
+.qa-a h4 { margin-top: 16px; }
+.qa-a code { font-family: var(--mono); font-size: 12px; background: var(--surface3); padding: 1px 6px; border-radius: 4px; color: var(--text); }
+.qa-a .code-block { margin: 12px 0; font-size: 12px; }
+
+code { font-family: var(--mono); font-size: 12px; background: var(--surface2); padding: 1px 5px; border-radius: 4px; color: var(--orange); border: 1px solid var(--border); }
+
+::-webkit-scrollbar { width: 5px; height: 5px; }
+::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+</style>
+</head>
+<body>
+
+<nav class="sidebar">
+  <div class="logo-wrap">
+    <div class="logo"><div class="logo-icon">🍔</div><div><div class="logo-name">Swiggy LLD</div><div class="logo-tag">Extensive Whys Edition</div></div></div>
+  </div>
+  <div class="nav-group">Foundations</div>
+  <div class="nav-item active" onclick="show('req',this)"><i class="fa-solid fa-list-check"></i> Requirements <span class="step-num">01</span></div>
+  <div class="nav-item" onclick="show('ent',this)"><i class="fa-solid fa-diagram-project"></i> Core Entities <span class="step-num">02</span></div>
+  <div class="nav-group">Implementation</div>
+  <div class="nav-item" onclick="show('cls',this)"><i class="fa-solid fa-code"></i> Class Design <span class="step-num">03</span></div>
+  <div class="nav-item" onclick="show('flow',this)"><i class="fa-solid fa-arrow-right-arrow-left"></i> Key Flows <span class="step-num">04</span></div>
+  <div class="nav-group">Deep Dives</div>
+  <div class="nav-item" onclick="show('place',this)"><i class="fa-solid fa-code-branch"></i> place_order() Deep Dive <span class="step-num">04b</span></div>
+  <div class="nav-item" onclick="show('pat',this)"><i class="fa-solid fa-puzzle-piece"></i> Design Patterns <span class="step-num">05</span></div>
+  <div class="nav-item" onclick="show('sol',this)"><i class="fa-solid fa-layer-group"></i> SOLID Principles <span class="step-num">06</span></div>
+  <div class="nav-item" onclick="show('trd',this)"><i class="fa-solid fa-scale-balanced"></i> Trade-offs <span class="step-num">07</span></div>
+  <div class="nav-item" onclick="show('qa',this)"><i class="fa-solid fa-circle-question"></i> Interview Q&amp;A <span class="step-num">08</span></div>
+</nav>
+
+<main class="main">
+
+<!-- ======== SECTION 1: REQUIREMENTS ======== -->
+<div class="section active" id="s-req">
+  <div class="sec-eyebrow">Step 1 · ~5 minutes</div>
+  <div class="sec-title">Requirements &amp; Clarifications</div>
+  <div class="sec-intro">The interviewer gives you a vague sentence. Your first job is <em>not</em> to design — it is to interrogate. Every question you ask is a bug you're preventing before you write a single class. Run through the prompt below and notice how little it actually specifies.</div>
+
+  <div class="prompt-box">
+    <div class="plabel">The prompt you'll receive</div>
+    <div class="ptext">"Design a food ordering app like Swiggy. Users should be able to browse restaurants, place orders, and track delivery."</div>
+  </div>
+
+  <p>This sentence leaves almost everything ambiguous. Who manages menus — engineers or restaurants in real time? What does "track delivery" mean exactly? Can an order be cancelled? By whom? When? Can one order span multiple restaurants? These aren't nitpicks — each answer changes a class you must write or eliminates one you shouldn't.</p>
+
+  <h3>Clarifying Questions — with deep reasoning</h3>
+  <div class="dialogue">
+
+    <div class="d-row you">
+      <div class="d-speaker">You</div>
+      "What are the core actors in this system? Is it just users ordering, or do restaurant employees and delivery agents also interact with the system?"
+      <div class="why-inline">
+        <b>Why ask this first:</b> The prompt only mentions "users." But a food ordering app has at least three actors: (1) a customer who places orders, (2) a restaurant employee who accepts/rejects and updates status, and (3) a delivery agent who picks up and delivers. Each actor implies a set of methods you must design. If you skip this question and assume only users exist, you will design a system with no way for a restaurant to say "order accepted" — which makes the state machine meaningless. This question takes 3 seconds to ask and defines the scope of your entire role model.
+      </div>
+    </div>
+    <div class="d-row iv"><div class="d-speaker">Interviewer</div>"Yes — users browse restaurants and menus, place orders, and get status updates. Restaurants accept/reject orders and update status up to READY. Delivery agents pick up and deliver."</div>
+
+    <div class="d-row you">
+      <div class="d-speaker">You</div>
+      "Does a single order span multiple restaurants, or is it always one restaurant per order?"
+      <div class="why-inline">
+        <b>Why ask this — it changes the entire data model:</b> Multi-restaurant orders are a fundamentally different design. A single <code>Order</code> would need multiple <em>sub-orders</em>, each with its own restaurant, prep time, restaurant acceptance, and potentially separate delivery agent. Your <code>Order</code> class would have an <code>order_id</code> → list of <code>SubOrder</code> hierarchy, each <code>SubOrder</code> with its own state machine. The cancellation rules become much more complex: can you cancel one sub-order while the other proceeds? If you start designing for single-restaurant and the interviewer meant multi-restaurant, you'll rebuild half your class diagram. This question saves 20 minutes.
+      </div>
+    </div>
+    <div class="d-row iv"><div class="d-speaker">Interviewer</div>"One restaurant per order. Keep it simple."</div>
+
+    <div class="d-row you">
+      <div class="d-speaker">You</div>
+      "What states does an order go through, from placement to delivery?"
+      <div class="why-inline">
+        <b>Why this question defines your entire Order class:</b> States are not cosmetic labels. Each state is a node in a directed graph. Each allowed transition is an edge. Each forbidden transition (like PLACED → DELIVERED directly) is a missing edge. If you don't know all seven states before writing <code>Order</code>, you will write a state machine with holes — transitions that are accidentally allowed or forbidden. For example: if you don't know the READY state exists, you won't realize agent assignment should happen at READY, not at ACCEPTED. The state machine is the backbone of the most complex class in the system. Get it right before writing any code.
+      </div>
+    </div>
+    <div class="d-row iv"><div class="d-speaker">Interviewer</div>"PLACED → ACCEPTED → PREPARING → READY → PICKED_UP → DELIVERED. And CANCELLED for rejections or early user cancellations."</div>
+
+    <div class="d-row you">
+      <div class="d-speaker">You</div>
+      "Who can cancel an order? And until what point in the lifecycle?"
+      <div class="why-inline">
+        <b>Why the "who" and "until when" are two separate critical questions:</b> The "who" tells you whether <code>cancel_order()</code> needs a <code>cancelled_by</code> parameter (user vs restaurant). If only the user can cancel, the parameter isn't needed. If both can, you may want different compensation rules: restaurant cancellation might give a coupon, user cancellation might not. The "until when" reveals a guard condition on the state machine: CANCELLED is only reachable from PLACED and ACCEPTED, not from PREPARING onward. Without this, a user could cancel while the cook is making their food — operationally absurd and unfair to the restaurant. This guard is encoded directly in your <code>VALID_TRANSITIONS</code> dict and your <code>can_cancel()</code> method.
+      </div>
+    </div>
+    <div class="d-row iv"><div class="d-speaker">Interviewer</div>"Both user and restaurant can cancel. Only before PREPARING starts."</div>
+
+    <div class="d-row you">
+      <div class="d-speaker">You</div>
+      "Should we integrate a real payment gateway, or just track payment state?"
+      <div class="why-inline">
+        <b>Why this determines whether you design 1 class or 5:</b> A real payment gateway (Razorpay, Stripe) involves: async webhooks from the gateway, idempotency keys to prevent double charges, retry logic with exponential backoff, PCI-DSS compliance requirements, and a <code>PaymentGateway</code> interface with concrete implementations per provider. This is an entire sub-system. If the interviewer wants state tracking only, your <code>Payment</code> class is a simple PENDING → PAID → REFUNDED state machine — about 10 lines. Designing the full gateway integration when they wanted just state tracking wastes 15 minutes on scope you don't need.
+      </div>
+    </div>
+    <div class="d-row iv"><div class="d-speaker">Interviewer</div>"Just track state — PENDING, PAID, REFUNDED. No real gateway."</div>
+
+    <div class="d-row you">
+      <div class="d-speaker">You</div>
+      "Do restaurants have operating hours? Should the system reject orders if a restaurant is closed?"
+      <div class="why-inline">
+        <b>Why you need this before writing <code>place_order()</code>:</b> If restaurants can be closed, <code>place_order()</code> must validate this early — before touching inventory. If you forget this requirement, you design a system that processes orders at 3am from a closed restaurant. When the requirement surfaces later, you have to find every place where "is the restaurant valid?" is checked and add the closed check — scattered instead of centralized. Asking now means you add a single field (<code>is_open: bool</code> on Restaurant) and a single guard clause in <code>place_order()</code>, and you're done.
+      </div>
+    </div>
+    <div class="d-row iv"><div class="d-speaker">Interviewer</div>"Yes — restaurants have an open/closed flag. Reject orders if closed."</div>
+
+    <div class="d-row you">
+      <div class="d-speaker">You</div>
+      "Is delivery agent assignment automatic or manual? And when in the lifecycle does it happen?"
+      <div class="why-inline">
+        <b>Why the timing of assignment matters as much as whether it is automatic:</b> "Automatic" means you need an algorithm — which is the Strategy pattern, a full design decision. "Manual" means a dispatcher assigns and you just record it. But the timing question is equally important. Assigning at ACCEPTED vs READY has major operational consequences (explored in trade-offs section). If you design assignment to happen at ACCEPTED without asking, the interviewer who imagined READY assignment will think you made a naive mistake. One sentence of clarification prevents this.
+      </div>
+    </div>
+    <div class="d-row iv"><div class="d-speaker">Interviewer</div>"Automatic — nearest available agent assigned when order reaches READY."</div>
+
+    <div class="d-row you">
+      <div class="d-speaker">You</div>
+      "Do menu items have a fixed inventory count? What should happen if two users simultaneously order the last available item?"
+      <div class="why-inline">
+        <b>Why this question shows senior awareness:</b> Without inventory, you would skip <code>inventory_count</code> entirely and never write <code>deduct_stock()</code>. But the concurrent ordering question is the deeper signal: it forces you to acknowledge that the naive "check-then-deduct" approach has a race condition. Two threads can both pass the <code>is_in_stock()</code> check before either deducts, resulting in negative inventory and two orders for one item. Naming this bug proactively — even if you don't solve it fully in LLD — is the kind of insight that distinguishes a junior from a senior candidate.
+      </div>
+    </div>
+    <div class="d-row iv"><div class="d-speaker">Interviewer</div>"Yes — items have inventory counts. Decrement on order. Raise an error if stock is zero."</div>
+
+  </div>
+
+  <h3>Final Requirements</h3>
+  <div class="req-box">
+    <h4>In scope</h4>
+    <ul class="req-list">
+      <li>Users browse restaurants (filtered by city/cuisine). Menus show items with price and availability.</li>
+      <li>Users place a single-restaurant order with multiple items and quantities.</li>
+      <li>Full state machine: PLACED → ACCEPTED → PREPARING → READY → PICKED_UP → DELIVERED (+ CANCELLED before PREPARING).</li>
+      <li>Restaurants accept/reject and update status up through READY.</li>
+      <li>Delivery agents are auto-assigned at READY (nearest-to-restaurant), update to PICKED_UP and DELIVERED.</li>
+      <li>Menu items have inventory counts. Decrement on order, raise error if insufficient.</li>
+      <li>Restaurants have an <code>is_open</code> flag. Orders rejected if closed.</li>
+      <li>Payment state tracked: PENDING → PAID (on DELIVERED) → REFUNDED (on CANCELLED).</li>
+    </ul>
+    <h4 style="margin-top:16px;">Out of scope</h4>
+    <ul class="req-list out">
+      <li>Real payment gateway (Razorpay, Stripe, UPI).</li>
+      <li>Multi-restaurant orders or cart splitting.</li>
+      <li>Coupons, surge pricing, or promotions.</li>
+      <li>GPS tracking and route optimization.</li>
+      <li>User authentication or sessions.</li>
+      <li>Ratings, reviews, and recommendations.</li>
+      <li>UI or rendering layer of any kind.</li>
+    </ul>
+  </div>
+
+  <div class="why-box">
+    <div class="wl"><i class="fa-solid fa-lightbulb"></i> Why calling out "out of scope" matters</div>
+    <p>Writing out-of-scope items does three things simultaneously. First, it proves you thought about GPS routing, coupon logic, and auth — and made a deliberate decision to exclude them, not an accidental one. Second, it protects you from scope creep mid-design: if the interviewer drifts toward ratings, you can say "I scoped that out — want me to extend the design?" Third, it makes your design look complete rather than incomplete. A design with no stated boundaries looks like you forgot things. A design with explicit boundaries looks like engineering judgement.</p>
+  </div>
+</div>
+
+<!-- ======== SECTION 2: ENTITIES ======== -->
+<div class="section" id="s-ent">
+  <div class="sec-eyebrow">Step 2 · ~5 minutes</div>
+  <div class="sec-title">Core Entities &amp; Relationships</div>
+  <div class="sec-intro">Read the requirements and circle every noun. That is your candidate list. Now apply a ruthless filter: does this noun have <em>state that changes over time</em> AND <em>behavior (rules) that enforces rules on that state</em>? If yes → class. If only data → dataclass or Enum. If neither → a field on something else. The most common beginner mistake is making everything a class. The second most common is collapsing things that should be separate.</div>
+
+  <h3>Noun-by-noun evaluation</h3>
+  <table class="etable">
+    <thead><tr><th style="width:16%">Noun</th><th style="width:13%">Decision</th><th>Deep reasoning — including what breaks if you get it wrong</th></tr></thead>
+    <tbody>
+      <tr>
+        <td><span class="badge bk">Keep</span>User</td>
+        <td>Full class</td>
+        <td>
+          Has mutable state (name, address, order history) and behavior (can place orders, can cancel before PREPARING). If User were just a <code>user_id</code> string, there is nowhere to put "what addresses does this user have saved?" When the interviewer later asks "support multiple delivery addresses," you would have no clean home for it.
+        </td>
+      </tr>
+      <tr>
+        <td><span class="badge bk">Keep</span>Restaurant</td>
+        <td>Full class</td>
+        <td>
+          Has mutable state (<code>is_open</code>, its menu list) and behavior (can be opened/closed, can manage its menu). Critically, <code>is_open</code> is mutable — restaurants open and close throughout the day. If Restaurant were just a string name, <code>place_order()</code> would have no clean place to check whether the restaurant is open. You would end up with a dict like <code>open_restaurants: set</code> scattered somewhere, which is state that belongs on the object itself.
+        </td>
+      </tr>
+      <tr>
+        <td><span class="badge bk">Keep</span>MenuItem</td>
+        <td>Full class</td>
+        <td>
+          This surprises beginners. "It's just a name and price — why not a dict?" Because <code>inventory_count</code> is mutable state, and the rules around it — you cannot go below zero, you must check both <code>is_available</code> AND count, restoring stock must be encapsulated — are behavior. If you store menu items as plain dicts, the inventory rules scatter into wherever they're needed. One caller forgets to check <code>is_available</code>. Another forgets to validate before decrementing. Encapsulating rules in <code>MenuItem</code> means the rules are always enforced, by everyone, automatically — because the only way to change inventory is through the method that validates it.
+        </td>
+      </tr>
+      <tr>
+        <td><span class="badge bk">Keep</span>Order</td>
+        <td>Full class</td>
+        <td>
+          The most obviously necessary entity. It is the central object that ties everything together: user, restaurant, items, payment, agent, and status. Has a rich state machine (7 states, ~10 transitions), complex behavior (calculate total, cancellation guard, transition validation), and it changes constantly throughout its lifecycle. Almost every system operation either creates, reads, or updates an Order.
+        </td>
+      </tr>
+      <tr>
+        <td><span class="badge bk">Keep</span>OrderItem</td>
+        <td>Full class</td>
+        <td>
+          <strong>This is the insight that separates juniors from seniors.</strong> You cannot store a <code>list[MenuItem]</code> inside Order. Here is the concrete failure: Ravi orders a Chicken Biryani on Monday when the price is ₹220. The restaurant raises the price to ₹280 on Wednesday. If Order stores a reference to <code>MenuItem</code>, then on Thursday when Ravi opens order history, your code calls <code>order.items[0].price</code> and gets ₹280 — the <em>current</em> price, not the price Ravi was charged. His invoice is wrong. His refund amount is wrong. Your finance team's revenue reports are wrong. <code>OrderItem</code> is an immutable snapshot of exactly what was ordered at exactly what price at exactly the moment of ordering. This is called temporal data integrity — non-negotiable in any system that handles money.
+        </td>
+      </tr>
+      <tr>
+        <td><span class="badge bk">Keep</span>DeliveryAgent</td>
+        <td>Full class</td>
+        <td>
+          Has mutable availability state (three meaningful states: AVAILABLE, ON_DELIVERY, OFFLINE — not a simple boolean) and behavioral rules: can only be assigned to one order at a time, can only complete a delivery if they currently have an assignment. These rules need to live somewhere consistent. If you scatter agent status into a dict or a primitive, there is nothing preventing code from assigning an OFFLINE agent or calling "complete delivery" when no order is active.
+        </td>
+      </tr>
+      <tr>
+        <td><span class="badge bk">Keep</span>Payment</td>
+        <td>Full class</td>
+        <td>
+          Deliberately separate from Order even though it is 1:1 with it. This surprises beginners. "If every Order has exactly one Payment, why not put payment fields inside Order?" The answer is <em>reason for change</em>. Order changes when the food lifecycle changes. Payment changes when the money lifecycle changes. If Swiggy adds split payments (two users split a bill), the Payment model changes drastically — multiple payers, partial amounts, multiple statuses. That change should not open the Order class at all. Separating them now is designing for change — the change will happen, and when it does, it stays local.
+        </td>
+      </tr>
+      <tr>
+        <td><span class="badge bs">Skip</span>City / Cuisine</td>
+        <td>Enum / string</td>
+        <td>
+          No behavior. No mutable state. "Mumbai" does not do anything. "North Indian" does not enforce any rules. They are pure filter labels. Making them classes would give you an empty methods section — a code smell signaling over-engineering. Keep them as <code>Enum</code> (for type safety and autocomplete) or plain strings on <code>Restaurant</code>.
+        </td>
+      </tr>
+      <tr>
+        <td><span class="badge bs">Skip</span>Address</td>
+        <td>@dataclass</td>
+        <td>
+          Pure data: street, city, pincode, latitude, longitude. No behavior, no mutable state. Python's <code>@dataclass</code> or <code>NamedTuple</code> is ideal — structured (so fields have names, not just positions), lightweight (no boilerplate), but not a full class with methods. If you find yourself writing methods on <code>Address</code>, you have probably found a behavior that belongs somewhere else (like a distance calculation utility function, not Address itself).
+        </td>
+      </tr>
+    </tbody>
+  </table>
+
+  <div class="why-box">
+    <div class="wl"><i class="fa-solid fa-lightbulb"></i> The one-question test for "class vs field"</div>
+    <p>Ask yourself: <strong>"Would this thing ever need to enforce a rule on its own data?"</strong> <code>MenuItem</code> enforces "you cannot deduct stock below zero" — that is a rule, so it is a class. <code>Address</code> never enforces anything — it just holds data, so it is a dataclass. If you cannot think of a single meaningful method on your candidate entity, it is almost certainly not a class. When in doubt, start as a dataclass and promote to a full class when you need to add a method.</p>
+  </div>
+
+  <div class="why-box">
+    <div class="wl"><i class="fa-solid fa-lightbulb"></i> Why 1:1 Payment-to-Order is not over-engineering</div>
+    <p>Beginners often collapse Payment into Order because "they're always together." But ask: <em>what changes them?</em> Order changes because a restaurant accepted food, a cook started preparing, or a delivery agent picked up the order. Payment changes because money moved — authorization, capture, refund. These are different business events, often handled by different teams (logistics team vs. payments team). If Swiggy adds EMI installments, or split payments, or corporate billing — the Payment model becomes very complex. None of that complexity should leak into Order. Separate them now and each can evolve independently forever.</p>
+  </div>
+</div>
+
+<!-- ======== SECTION 3: CLASS DESIGN ======== -->
+<div class="section" id="s-cls">
+  <div class="sec-eyebrow">Step 3 · ~15 minutes</div>
+  <div class="sec-title">Class Design — Every Line Justified</div>
+  <div class="sec-intro">Design top-down: start with the orchestrator (the single entry point), then the most complex domain object (Order), then supporting entities. For every field ask: "what happens if this field doesn't exist?" For every method: "who else would own this if I removed it?" If the answer is "nobody," the field/method belongs here.</div>
+
+  <h3>SwiggySystem — the Single Entry Point</h3>
+  <p>In every well-structured LLD there is one orchestrator class. In Amazon Locker it is <code>Locker</code>. In an Elevator problem it is <code>ElevatorController</code>. In Connect Four it is <code>Game</code>. For Swiggy it is <code>SwiggySystem</code>. External code talks to this class only — nothing else is public-facing. It owns all registries and coordinates all cross-entity operations. It does not implement business rules — it delegates to the right entity. Without this, callers must decide "should I call User.place_order() or Restaurant.receive_order()?" — ambiguity that causes coupling.</p>
+
+  <div class="ann-wrap">
+    <div class="ann-header"><span>SwiggySystem — fields and methods</span></div>
+
+    <div class="ann-row">
+      <div class="ann-code"><span class="kw">class</span> <span class="cls">SwiggySystem</span>:</div>
+      <div class="ann-why">
+        <span class="wlabel">Why a dedicated orchestrator?</span>
+        <span class="wmain">Without a single entry point, callers must know which entity owns which operation. "Place order" — do I call <code>User.place_order()</code>? <code>Restaurant.receive_order()</code>? Both? <code>SwiggySystem</code> is the facade: one public interface for all operations. This hides the internal complexity from external code. The Facade pattern.</span>
+      </div>
+    </div>
+
+    <div class="ann-row">
+      <div class="ann-code">  restaurants: dict[str, Restaurant]</div>
+      <div class="ann-why">
+        <span class="wlabel">Why dict, not list?</span>
+        <span class="wmain">Lookup by <code>restaurant_id</code> is O(1) with a dict vs O(n) with a list. Every operation — place order, search menus, update status — begins by fetching the relevant restaurant. A list means scanning all restaurants every time. Dicts give instant lookup with zero extra code.</span>
+        <div class="wfail"><b>If you used a list:</b> <code>place_order()</code> scans all restaurants to find the right one. With 50,000 restaurants in the system, every order placement is a 50,000-item scan — a performance disaster.</div>
+      </div>
+    </div>
+
+    <div class="ann-row">
+      <div class="ann-code">  users: dict[str, User]</div>
+      <div class="ann-why">
+        <span class="wlabel">Why validate users centrally?</span>
+        <span class="wmain"><code>SwiggySystem</code> must verify that a <code>user_id</code> belongs to a real registered user before processing their order. Without this registry, you trust whatever ID is passed in — a security hole. The dict is the system's source of truth for who exists.</span>
+        <div class="wfail"><b>Without this:</b> Anyone can pass any <code>user_id</code> string and place an order. There is no check. The order succeeds for a non-existent user.</div>
+      </div>
+    </div>
+
+    <div class="ann-row">
+      <div class="ann-code">  orders: dict[str, Order]</div>
+      <div class="ann-why">
+        <span class="wlabel">Why centralize orders instead of storing them on User?</span>
+        <span class="wmain">Orders are queried from multiple entry points: by users (order history), by restaurants (incoming orders), by agents (assigned order), and by system operations (status updates). Centralizing them in one dict means one authoritative source. If you scattered Order objects across User and Restaurant, you would have inconsistent state when the same Order is updated from two places.</span>
+      </div>
+    </div>
+
+    <div class="ann-row">
+      <div class="ann-code">  agents: dict[str, DeliveryAgent]</div>
+      <div class="ann-why">
+        <span class="wlabel">Why does SwiggySystem own agents?</span>
+        <span class="wmain">Agent assignment is a system-level operation — scan all agents, find the nearest available one. No single entity (not Order, not Restaurant) has visibility into all agents. Only SwiggySystem does. Whoever needs to find agents must own the full list.</span>
+      </div>
+    </div>
+
+    <div class="ann-row">
+      <div class="ann-code">  def place_order(
+    user_id, restaurant_id,
+    items) → Order</div>
+      <div class="ann-why">
+        <span class="wlabel">Why not Order.create() instead?</span>
+        <span class="wmain">Creating an Order requires: validate Restaurant (needs <code>self.restaurants</code>), check each MenuItem stock (needs restaurant's menu), deduct inventory, snapshot prices, create Payment. No single entity has visibility into all of these. If <code>Order.create()</code> existed, it would need a reference back to SwiggySystem — a circular dependency. SwiggySystem.place_order() is the right home because it already owns all necessary registries.</span>
+      </div>
+    </div>
+
+    <div class="ann-row">
+      <div class="ann-code">  def cancel_order(
+    order_id,
+    cancelled_by) → bool</div>
+      <div class="ann-why">
+        <span class="wlabel">Why accept cancelled_by?</span>
+        <span class="wmain">Cancellation has cascading side effects: restore inventory, update payment to REFUNDED, notify user. The <code>cancelled_by</code> parameter enables: (1) audit logging, (2) different compensation logic — if the restaurant cancels, maybe the user gets a coupon; if the user cancels, no coupon. These business rules need to know who cancelled.</span>
+      </div>
+    </div>
+
+    <div class="ann-row">
+      <div class="ann-code">  def update_order_status(
+    order_id, new_status,
+    actor_id) → bool</div>
+      <div class="ann-why">
+        <span class="wlabel">Why centralize all status updates here?</span>
+        <span class="wmain">Status changes have side effects: when READY → trigger agent assignment. When DELIVERED → mark Payment as PAID, free the agent. If entities updated their own status independently, these side effects would be missed. Routing all updates through SwiggySystem ensures the orchestrator can chain all necessary follow-up actions.</span>
+        <div class="wfail"><b>If updates were scattered:</b> Restaurant calls <code>order.status = READY</code> directly. Agent assignment never happens. Order sits forever with food ready but no agent.</div>
+      </div>
+    </div>
+  </div>
+
+  <h3>Order — the Most Complex Class</h3>
+  <p>Order is the heart of the system. Every field exists because something else needs it. Every method enforces a rule that would otherwise be scattered and potentially forgotten. Spend the most time on this class.</p>
+
+  <div class="ann-wrap">
+    <div class="ann-header"><span>Order — fields, state machine, methods</span></div>
+
+    <div class="ann-row">
+      <div class="ann-code"><span class="kw">class</span> <span class="cls">OrderStatus</span>(Enum):
+    PLACED    = auto()
+    ACCEPTED  = auto()
+    PREPARING = auto()
+    READY     = auto()
+    PICKED_UP = auto()
+    DELIVERED = auto()
+    CANCELLED = auto()</div>
+      <div class="ann-why">
+        <span class="wlabel">Why Enum instead of string constants?</span>
+        <span class="wmain">If status is a plain string, nothing prevents <code>order.status = "prepearing"</code> (typo). The bug is silent until something checks the status and the match fails. An Enum makes invalid states <em>unrepresentable at the language level</em>: <code>OrderStatus.prepearing</code> is a <code>NameError</code> caught the moment you type it. Enums also enable exhaustive checking — a type checker warns if you forget a case.</span>
+        <div class="wfail"><b>With strings:</b> A typo in a status comparison silently fails. Orders get stuck in a state they can never exit because the comparison never matches.</div>
+        <div class="wfix"><b>With Enum:</b> <code>OrderStatus.PREPEARING</code> is a Python error at write time, not a runtime bug at 2am in production.</div>
+      </div>
+    </div>
+
+    <div class="ann-row">
+      <div class="ann-code">  order_id: str  <span class="cm"># UUID, not int</span></div>
+      <div class="ann-why">
+        <span class="wlabel">Why UUID, not an auto-increment integer?</span>
+        <span class="wmain">Integer IDs are sequential and guessable. A curious user sees their order ID is 10042 and tries 10043 to probe another user's order data. UUID strings (e.g. <code>"a3f8b2c1-4d5e-..."</code>) are 128-bit random values — statistically impossible to guess. Even in an LLD interview, using UUID signals basic security hygiene awareness. It costs nothing and prevents an entire class of attack.</span>
+      </div>
+    </div>
+
+    <div class="ann-row">
+      <div class="ann-code">  items: list[OrderItem]</div>
+      <div class="ann-why">
+        <span class="wlabel">Why OrderItem, not list[MenuItem]?</span>
+        <span class="wmain">This is the temporal data integrity point. <code>MenuItem.price</code> can change at any time. Storing <code>MenuItem</code> references means <code>order.total()</code> returns a different value next week if the restaurant changed their prices. Refund amounts would be wrong. Invoices would be wrong. <code>OrderItem</code> freezes the price at the moment of ordering — it is an immutable record of what was ordered at what price when.</span>
+      </div>
+    </div>
+
+    <div class="ann-row">
+      <div class="ann-code">  delivery_agent_id: str | None</div>
+      <div class="ann-why">
+        <span class="wlabel">Why Optional/None, not empty string ""?</span>
+        <span class="wmain">An order starts with no agent — the agent is assigned only when READY. <code>str | None</code> makes this explicit: any code that uses <code>delivery_agent_id</code> must handle the <code>None</code> case or the type checker warns. An empty string <code>""</code> as sentinel is easy to forget to check — it passes truthiness tests in some languages and is semantically confusing.</span>
+      </div>
+    </div>
+
+    <div class="ann-row">
+      <div class="ann-code">  created_at: datetime</div>
+      <div class="ann-why">
+        <span class="wlabel">Why store creation time — it seems minor?</span>
+        <span class="wmain">It is never minor in production. Real needs: (1) SLA enforcement — alert if not ACCEPTED within 5 minutes; (2) auto-cancellation — cancel orders unaccepted for 10+ minutes; (3) analytics — peak order hours, average prep time per restaurant; (4) dispute resolution — "I placed this at 7:03, not 7:15." Without <code>created_at</code>, every one of these is either impossible or requires a painful migration to add later.</span>
+      </div>
+    </div>
+
+    <div class="ann-row">
+      <div class="ann-code">  VALID_TRANSITIONS = {
+    PLACED:    [ACCEPTED,CANCELLED],
+    ACCEPTED:  [PREPARING,CANCELLED],
+    PREPARING: [READY],
+    READY:     [PICKED_UP],
+    PICKED_UP: [DELIVERED],
+  }</div>
+      <div class="ann-why">
+        <span class="wlabel">Why a dict of allowed transitions?</span>
+        <span class="wmain">This is the State Machine pattern. The alternative is scattered if/else in every method — transition rules are duplicated and easy to get wrong. Here, all transition logic lives in one data structure. Adding a new state (e.g. RETURNED) is one dict entry. To audit what is allowed from any state, read one dict entry. Nothing is hidden in method bodies. The rules are data, not code.</span>
+        <div class="wfail"><b>Without this:</b> You add a RETURNED status for door-step rejections. You add PICKED_UP → RETURNED to <code>update_status()</code>. But you forget to update <code>can_cancel()</code>, which now incorrectly allows cancelling RETURNED orders — triggering a double refund bug in production.</div>
+        <div class="wfix"><b>With VALID_TRANSITIONS:</b> CANCELLED is simply absent from RETURNED's entry. The double-refund bug is structurally impossible — no special-case code needed.</div>
+      </div>
+    </div>
+
+    <div class="ann-row">
+      <div class="ann-code">  def update_status(self, new):
+    allowed = VALID_TRANSITIONS
+              .get(self.status,[])
+    if new not in allowed:
+        raise InvalidTransitionError()
+    self.status = new</div>
+      <div class="ann-why">
+        <span class="wlabel">Why raise, not return False?</span>
+        <span class="wmain">A <code>False</code> return value is silent failure. Callers can and often do ignore it: <code>order.update_status(CANCELLED)</code> — return value discarded. The order stays in PREPARING. The bug is invisible until someone checks the status later and can't explain why a cancelled order is still being cooked. <code>InvalidTransitionError</code> is loud failure — the message says "tried to go from PREPARING to CANCELLED," which is debuggable. Always raise on invalid state transitions.</span>
+      </div>
+    </div>
+
+    <div class="ann-row">
+      <div class="ann-code">  def can_cancel(self) → bool:
+    return self.status in [
+        PLACED, ACCEPTED]</div>
+      <div class="ann-why">
+        <span class="wlabel">Why a dedicated can_cancel() on Order, not inline in SwiggySystem?</span>
+        <span class="wmain">This is the <strong>Tell, Don't Ask</strong> principle. <code>SwiggySystem.cancel_order()</code> could check <code>if order.status in [PLACED, ACCEPTED]</code> directly. But that means the rule "cancellable before PREPARING" lives in the orchestrator, not in Order. If you add a second cancellation path (admin portal, restaurant tablet), the developer must remember to copy the check. By putting it on Order, the rule is enforced no matter who calls cancel. The knowledge about what "cancellable" means belongs to Order, not its callers.</span>
+      </div>
+    </div>
+
+    <div class="ann-row">
+      <div class="ann-code">  def calculate_total(self):
+    return sum(
+      i.price_at_order * i.quantity
+      for i in self.items)</div>
+      <div class="ann-why">
+        <span class="wlabel">Why compute total dynamically instead of storing it?</span>
+        <span class="wmain">Storing <code>total_amount</code> as a field means two sources of truth that can drift apart. If an item quantity were somehow updated after creation (even theoretically), the stored total would be stale but the stored value would lie about the current state. Computing from OrderItems is always correct because OrderItems are the source of truth. This is the "derive, don't store" principle: if a value can be reliably computed from other fields, compute it — never store a redundant copy that can become stale.</span>
+      </div>
+    </div>
+  </div>
+
+  <h3>MenuItem — Inventory Rules Encapsulated</h3>
+  <div class="ann-wrap">
+    <div class="ann-header"><span>MenuItem — all fields and inventory methods</span></div>
+
+    <div class="ann-row">
+      <div class="ann-code">  inventory_count: int</div>
+      <div class="ann-why">
+        <span class="wlabel">Why int, not float?</span>
+        <span class="wmain">You cannot have 2.5 portions of a biryani. Inventory is a count of discrete physical units. Using <code>float</code> allows nonsensical states like <code>inventory_count = 1.7</code> — which arises from floating-point arithmetic bugs like <code>2.0 - 0.3</code>. <code>int</code> makes the implicit assumption explicit and prevents an entire class of floating-point bugs on something that should be a simple counter.</span>
+      </div>
+    </div>
+
+    <div class="ann-row">
+      <div class="ann-code">  def is_in_stock(self, qty):
+    return (self.is_available
+        and self.inventory_count
+            >= qty)</div>
+      <div class="ann-why">
+        <span class="wlabel">Why check BOTH is_available AND inventory_count?</span>
+        <span class="wmain"><code>inventory_count</code> might be 10, but the restaurant may have paused that item — they ran out of an ingredient. <code>is_available</code> is the restaurant's manual override flag. Both must be true simultaneously. By AND-ing them in one method, every caller gets both checks for free — they physically cannot forget to check one of them, because there's only one method to call.</span>
+        <div class="wfail"><b>If you only check inventory_count:</b> A restaurant pauses a biryani because they ran out of rice. The item still shows stock=5. Orders come in. The restaurant can't fulfil them. Angry customers, forced cancellations.</div>
+      </div>
+    </div>
+
+    <div class="ann-row">
+      <div class="ann-code">  def deduct_stock(self, qty):
+    if not self.is_in_stock(qty):
+        raise InsufficientStockError()
+    self.inventory_count -= qty</div>
+      <div class="ann-why">
+        <span class="wlabel">Why re-check inside deduct_stock() when place_order() already checked?</span>
+        <span class="wmain">This is <strong>design by contract</strong>. Methods must validate their own preconditions regardless of what the caller did. If someone adds a new code path that calls <code>deduct_stock()</code> directly (bypassing the external check), the guard here catches it. Methods should never trust that callers did the right thing — callers are under-pressure developers who sometimes skip guards. The check is one method call — cheap. The bug it prevents is a negative inventory count — expensive to detect and fix in production.</span>
+      </div>
+    </div>
+
+    <div class="ann-row">
+      <div class="ann-code">  def restore_stock(self, qty):
+    self.inventory_count += qty</div>
+      <div class="ann-why">
+        <span class="wlabel">Why a restore method instead of direct field access?</span>
+        <span class="wmain"><code>cancel_order()</code> could do <code>item.inventory_count += qty</code> directly. But that exposes <code>MenuItem</code>'s internals to the outside world. If the restore logic ever becomes conditional (e.g. "only restore if the item is still on the menu, not if it was permanently removed"), you would need to find and update every caller. <code>restore_stock()</code> is the single point of change — the logic is encapsulated. This is the principle of encapsulation: expose behavior, not data.</span>
+      </div>
+    </div>
+  </div>
+
+  <h3>DeliveryAgent — Availability as First-Class State</h3>
+  <div class="ann-wrap">
+    <div class="ann-header"><span>DeliveryAgent — status, fields, methods</span></div>
+
+    <div class="ann-row">
+      <div class="ann-code"><span class="kw">class</span> <span class="cls">AgentStatus</span>(Enum):
+    AVAILABLE   = auto()
+    ON_DELIVERY = auto()
+    OFFLINE     = auto()</div>
+      <div class="ann-why">
+        <span class="wlabel">Why three states instead of a boolean is_available?</span>
+        <span class="wmain">A boolean can only distinguish two states: available or not. But "not available" has two meaningfully different sub-cases: the agent is currently on a delivery (they will become available again soon), or they logged out of the app for the day (they will not). This matters for: dispatch scheduling (don't wait for an OFFLINE agent to free up), agent earnings tracking (OFFLINE agents are not working), and re-assignment logic (ON_DELIVERY agents will be available soon). Collapsing these two states into a single <code>False</code> loses information you will inevitably need.</span>
+      </div>
+    </div>
+
+    <div class="ann-row">
+      <div class="ann-code">  current_order_id: str | None</div>
+      <div class="ann-why">
+        <span class="wlabel">Why store the order ID on the agent?</span>
+        <span class="wmain">Two reasons: (1) <strong>Consistency check</strong> — if status is ON_DELIVERY but <code>current_order_id</code> is None, something went wrong. This inconsistency is immediately detectable. (2) <strong>O(1) re-assignment lookup</strong> — if an agent cancels mid-delivery, you need to know which order to re-assign. With this field it's instant. Without it, you scan all orders looking for one with this agent's ID — O(n) in the number of orders.</span>
+      </div>
+    </div>
+
+    <div class="ann-row">
+      <div class="ann-code">  def assign_order(self, order_id):
+    self.current_order_id = order_id
+    self.status = ON_DELIVERY</div>
+      <div class="ann-why">
+        <span class="wlabel">Why update both fields in one atomic method?</span>
+        <span class="wmain">These two fields must always be consistent: ON_DELIVERY requires a non-None <code>current_order_id</code>. If you update them separately, there is a window between the two assignments where the object is in an inconsistent state: status is ON_DELIVERY but current_order_id is still None. Even in a single-threaded system this is fragile. One method that does both updates eliminates the inconsistent window — the same reasoning behind database transactions.</span>
+      </div>
+    </div>
+
+    <div class="ann-row">
+      <div class="ann-code">  def complete_delivery(self):
+    self.current_order_id = None
+    self.status = AVAILABLE</div>
+      <div class="ann-why">
+        <span class="wlabel">Why not let SwiggySystem update these fields directly?</span>
+        <span class="wmain">If <code>SwiggySystem</code> did <code>agent.status = AVAILABLE; agent.current_order_id = None</code> directly, it would be reaching into DeliveryAgent's internals. If the completion logic needs to change (e.g. "log delivery duration before going available"), you must find every place that does this sequence. <code>complete_delivery()</code> is the single place — encapsulation means one place to change, not many.</span>
+      </div>
+    </div>
+  </div>
+
+  <h3>OrderItem — the Price Snapshot (Immutable Value Object)</h3>
+  <div class="ann-wrap">
+    <div class="ann-header"><span>OrderItem — frozen dataclass with computed subtotal</span></div>
+
+    <div class="ann-row">
+      <div class="ann-code">@dataclass(frozen=True)
+<span class="kw">class</span> <span class="cls">OrderItem</span>:
+    item_id: str
+    name: str
+    quantity: int
+    price_at_order: float</div>
+      <div class="ann-why">
+        <span class="wlabel">Why @dataclass(frozen=True) — what does "frozen" do?</span>
+        <span class="wmain"><code>frozen=True</code> makes all fields read-only after construction. No code can do <code>order_item.price_at_order = new_price</code> — Python raises a <code>FrozenInstanceError</code>. This enforces the price snapshot guarantee at the language level, not just by convention. Without <code>frozen=True</code>, someone could accidentally mutate the price field — slowly corrupting order history in a way that's hard to trace.</span>
+        <div class="wfail"><b>Without frozen:</b> A developer writes a "price correction" script that iterates all OrderItems and updates prices. Suddenly all order history shows current prices. Customers dispute their bills. Finance reconciliation is impossible.</div>
+        <div class="wfix"><b>With frozen=True:</b> That script fails immediately on the first <code>FrozenInstanceError</code>. The mistake is caught before any data is corrupted.</div>
+      </div>
+    </div>
+
+    <div class="ann-row">
+      <div class="ann-code">    @property
+    def subtotal(self):
+        return (self.quantity
+            * self.price_at_order)</div>
+      <div class="ann-why">
+        <span class="wlabel">Why @property for subtotal instead of storing it?</span>
+        <span class="wmain">Subtotal = quantity × price_at_order. Both inputs are already stored, so the calculation is always correct and trivially cheap. Storing subtotal as a separate field would create a third source of truth that could drift (if you update quantity but forget to recalculate subtotal). The <code>@property</code> decorator makes it look like a field to callers (<code>item.subtotal</code> not <code>item.subtotal()</code>) while computing it fresh every time. Derive, never store, values that are purely a function of other fields.</span>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ======== SECTION 4: FLOWS ======== -->
+<div class="section" id="s-flow">
+  <div class="sec-eyebrow">Step 4 · ~10 minutes</div>
+  <div class="sec-title">Key Flows — Every Step Justified</div>
+  <div class="sec-intro">Flows stress-test your entity design. For each step, the question is: <em>which entity is responsible for this, and why that entity rather than any other?</em> Tracing flows end-to-end reveals missing methods, wrong ownership, and sequencing bugs before you write code.</div>
+
+  <h3>Flow 1 — Placing an Order</h3>
+
+  <div class="ann-wrap">
+    <div class="ann-header"><span>SwiggySystem.place_order(user_id, restaurant_id, items_requested)</span></div>
+
+    <div class="ann-row">
+      <div class="ann-code">Step 1: Validate user
+user = self.users.get(user_id)
+if not user:
+    raise UserNotFoundError()</div>
+      <div class="ann-why">
+        <span class="wlabel">Why validate user first — before anything else?</span>
+        <span class="wmain">Fail fast on the cheapest check. A missing user_id means no order is possible, and validating it costs one dict lookup. If you check it last, you have already done restaurant validation, menu parsing, and inventory checking — all wasted work on a request that will fail anyway. Always guard cheapest preconditions first. This is the "guard clauses first" pattern.</span>
+      </div>
+    </div>
+
+    <div class="ann-row">
+      <div class="ann-code">Step 2: Validate restaurant
+  is open
+if not restaurant.is_open:
+    raise RestaurantClosedError()</div>
+      <div class="ann-why">
+        <span class="wlabel">Why check is_open before inventory?</span>
+        <span class="wmain">If the restaurant is closed, no order can proceed regardless of stock levels. Checking this before touching any <code>MenuItem</code> is more efficient (skip all item lookups) and gives the user a clearer, more relevant error: "restaurant is closed" rather than "item out of stock" (which would be misleading — the item isn't the problem). Validate structural preconditions before operational ones.</span>
+      </div>
+    </div>
+
+    <div class="ann-row">
+      <div class="ann-code">Step 3: Check ALL items first
+for item, qty in items_requested:
+    if not item.is_in_stock(qty):
+        raise InsufficientStockError(
+            item.name)</div>
+      <div class="ann-why">
+        <span class="wlabel">Why check ALL items before deducting ANY?</span>
+        <span class="wmain">This is the most critical sequencing decision. Imagine you deduct item A, then find item B is out of stock. You must now roll back A's deduction — restore its inventory. That rollback is extra code and an extra risk (what if the rollback fails?). By checking all items first in a read-only pass, and only then deducting, you ensure you will never need a rollback. If any item fails the check, the whole function exits without touching inventory. This is the two-phase commit pattern applied to a simple list.</span>
+        <div class="wfail"><b>If you check-and-deduct per item:</b> Items A and B are deducted. Item C check fails. You must now restore A and B's stock. You have introduced a rollback code path. That path rarely executes, so it is rarely tested, so it often has its own bugs.</div>
+      </div>
+    </div>
+
+    <div class="ann-row">
+      <div class="ann-code">Step 4: Deduct stock
+for item, qty in items_requested:
+    item.deduct_stock(qty)</div>
+      <div class="ann-why">
+        <span class="wlabel">Why deduct before creating the Order object?</span>
+        <span class="wmain">If deduction fails (race condition: another user grabbed the last item between steps 3 and 4), no Order object is ever created. There is nothing to clean up — no orphan Order records in a bad state. Ordering it this way means a failed order leaves zero trace in the system. The invariant is: if an Order object exists, its inventory was successfully deducted.</span>
+      </div>
+    </div>
+
+    <div class="ann-row">
+      <div class="ann-code">Step 5: Snapshot prices
+order_items = [
+    OrderItem(
+      item_id=item.item_id,
+      name=item.name,
+      quantity=qty,
+      price_at_order=item.price)
+    for item, qty in items_requested]</div>
+      <div class="ann-why">
+        <span class="wlabel">Why snapshot here, and what exactly are we snapshotting?</span>
+        <span class="wmain">We snapshot after confirming all items are valid and in stock — not before, because there's no point creating OrderItems for items that will be rejected. At this exact moment, <code>item.price</code> is captured into <code>price_at_order</code>. Any price change the restaurant makes one second later is irrelevant to this order. We also snapshot <code>item.name</code> — so even if the item is renamed, the order history shows the name that was visible at ordering time. This is the commit point: these items, at these prices, in these quantities, are locked.</span>
+      </div>
+    </div>
+
+    <div class="ann-row">
+      <div class="ann-code">Step 6: Create Order
+order = Order(
+    order_id=str(uuid4()),
+    user_id=user_id,
+    restaurant_id=restaurant_id,
+    items=order_items,
+    status=OrderStatus.PLACED,
+    created_at=datetime.now())</div>
+      <div class="ann-why">
+        <span class="wlabel">Why PLACED and not ACCEPTED as the initial status?</span>
+        <span class="wmain">PLACED means "the user has committed to this order but the restaurant has not yet responded." This separation exists because restaurant acceptance is asynchronous — it happens seconds to minutes later when a restaurant employee taps "Accept" on their tablet. If you start at ACCEPTED, you're claiming the restaurant agreed before they were asked. PLACED captures the correct initial state: user commitment, no restaurant response yet.</span>
+      </div>
+    </div>
+
+    <div class="ann-row">
+      <div class="ann-code">Step 7: Create Payment
+payment = Payment(
+    order_id=order.order_id,
+    amount=order.calculate_total(),
+    status=PaymentStatus.PENDING)</div>
+      <div class="ann-why">
+        <span class="wlabel">Why create Payment last, after Order?</span>
+        <span class="wmain">Payment is the financial record of commitment. It should only exist if the Order successfully exists. If Order creation somehow fails (UUID collision — rare, but possible), there should be no Payment record orphaned without an Order. PENDING means "money has been authorized but not captured." It moves to PAID only at DELIVERED, because that's when the service is fully rendered. REFUNDED on cancellation returns the money.</span>
+      </div>
+    </div>
+
+    <div class="ann-row">
+      <div class="ann-code">Step 8: Register and return
+self.orders[order.order_id] = order
+return order</div>
+      <div class="ann-why">
+        <span class="wlabel">Why register in the dict before returning?</span>
+        <span class="wmain">The registry is the system's source of truth. If you return the Order but forget to store it, any subsequent call — <code>update_order_status(order_id)</code>, <code>cancel_order(order_id)</code> — will raise "order not found." Storing must happen before returning so the Order is immediately findable by anything that comes after. In production this would be a database write inside a transaction along with the inventory deductions — atomicity ensures either everything commits or nothing does.</span>
+      </div>
+    </div>
+  </div>
+
+  <h3>Flow 2 — The State Machine (each transition explained)</h3>
+  <div class="state-row">
+    <span class="sp sg">PLACED</span><span class="sarrow">→</span>
+    <span class="sp sb">ACCEPTED</span><span class="sarrow">→</span>
+    <span class="sp spu">PREPARING</span><span class="sarrow">→</span>
+    <span class="sp sam">READY</span><span class="sarrow">→</span>
+    <span class="sp sco">PICKED_UP</span><span class="sarrow">→</span>
+    <span class="sp ste">DELIVERED</span>
+  </div>
+  <p>↳ <span class="sp srd" style="font-size:11px; padding:3px 10px;">CANCELLED</span> is reachable from PLACED and ACCEPTED only — the cancellation window closes at PREPARING.</p>
+
+  <div class="ann-wrap">
+    <div class="ann-header"><span>Why each transition is what it is</span></div>
+
+    <div class="ann-row">
+      <div class="ann-code">PLACED → ACCEPTED
+PLACED → CANCELLED</div>
+      <div class="ann-why">
+        <span class="wlabel">Why does PLACED have exactly two exits?</span>
+        <span class="wmain">The restaurant either says yes (ACCEPTED) or no (CANCELLED). There is no other reasonable outcome of a freshly placed order. The user can also cancel immediately (changed their mind). These are the only two actors who can act on a PLACED order, and both of their actions are covered. Any other state from PLACED would be operationally nonsensical — you cannot jump to PREPARING without the restaurant accepting first.</span>
+      </div>
+    </div>
+
+    <div class="ann-row">
+      <div class="ann-code">ACCEPTED → PREPARING
+ACCEPTED → CANCELLED</div>
+      <div class="ann-why">
+        <span class="wlabel">Why can ACCEPTED still go to CANCELLED?</span>
+        <span class="wmain">ACCEPTED means the restaurant tapped "Accept" — but the cook hasn't started yet. There is a brief window (seconds to a minute) where cancellation is still fair to everyone. Once actual cooking begins, cancellation wastes food, ingredients, and labor. So the cancel window closes not at ACCEPTED (when the intent to cook exists) but at PREPARING (when actual cooking begins). This is a deliberate business policy encoded as a state machine constraint.</span>
+      </div>
+    </div>
+
+    <div class="ann-row">
+      <div class="ann-code">PREPARING → READY only
+CANCELLED not allowed</div>
+      <div class="ann-why">
+        <span class="wlabel">Why block cancellation after PREPARING?</span>
+        <span class="wmain">Ingredients have been used. Labor has been spent. A biryani half-cooked cannot become uncooked. Cancellation at this point means wasted food, wasted effort, and lost revenue. The constraint is enforced by simply not including CANCELLED in PREPARING's <code>VALID_TRANSITIONS</code> list. No special case code needed — the absence of the entry makes it structurally impossible to cancel. This is the power of declarative state machines over procedural if/else.</span>
+      </div>
+    </div>
+
+    <div class="ann-row">
+      <div class="ann-code">READY → PICKED_UP
+(agent assigned automatically)</div>
+      <div class="ann-why">
+        <span class="wlabel">Why assign the agent at READY, not ACCEPTED?</span>
+        <span class="wmain">Assigning at ACCEPTED means the agent might arrive at the restaurant 15–20 minutes before the food is done. The agent is idle, the food isn't ready. At scale — 50,000 concurrent orders on a Friday night — a large fraction of your agent fleet is sitting outside restaurants waiting. That idle time is lost earnings for agents and wasted capacity for the platform. Assigning at READY means the agent is dispatched when the food is literally ready to go. Food may wait 1–2 minutes for the agent to arrive — far better than an agent waiting 15 minutes for food.</span>
+      </div>
+    </div>
+
+    <div class="ann-row">
+      <div class="ann-code">DELIVERED → (terminal)
+No further transitions allowed</div>
+      <div class="ann-why">
+        <span class="wlabel">Why make DELIVERED a terminal state with no exits?</span>
+        <span class="wmain">DELIVERED means the customer physically received the food. There is no reasonable next state. Making it terminal has three important effects: (1) <code>complete_delivery()</code> frees the agent to take new assignments; (2) Payment moves to PAID — the service is rendered; (3) Any call to <code>update_status()</code> on a DELIVERED order raises <code>InvalidTransitionError</code> — preventing accidental double-delivery records or status corruption from a bug that re-processes old events.</span>
+      </div>
+    </div>
+  </div>
+
+  <h3>Flow 3 — Agent Assignment (inside-out explanation)</h3>
+  <div class="ann-wrap">
+    <div class="ann-header"><span>SwiggySystem.assign_delivery_agent(order_id)</span></div>
+
+    <div class="ann-row">
+      <div class="ann-code">available = [
+  a for a in self.agents.values()
+  if a.is_available()]</div>
+      <div class="ann-why">
+        <span class="wlabel">Why call is_available() instead of checking status directly?</span>
+        <span class="wmain">Encapsulation. <code>is_available()</code> owns the definition of "available." Today it checks <code>status == AVAILABLE</code>. Tomorrow it might also check "has this agent done fewer than 10 deliveries today?" (fatigue limit) or "is this agent within the service zone?" Every caller benefits from the updated definition automatically. If you check <code>agent.status == AVAILABLE</code> directly in 6 places, you must update all 6 when the definition changes.</span>
+      </div>
+    </div>
+
+    <div class="ann-row">
+      <div class="ann-code">nearest = min(available,
+  key=lambda a: distance(
+    a.location,
+    restaurant.location))</div>
+      <div class="ann-why">
+        <span class="wlabel">Why nearest-to-restaurant, not nearest-to-user?</span>
+        <span class="wmain">The agent's first task is to pick up the food from the restaurant. Nearest-to-restaurant minimizes the time between READY and PICKED_UP — the food doesn't wait cooling. After pickup, the agent goes to the user regardless. "Nearest to user" would only make sense with predictive routing (agent pre-positions near user before food is ready), which requires ETA prediction models — out of scope for LLD. This is also exactly where the Strategy pattern becomes powerful: replacing this lambda with an injected <code>AgentAssignmentStrategy.find_agent()</code> lets you swap algorithms without touching this method.</span>
+      </div>
+    </div>
+
+    <div class="ann-row">
+      <div class="ann-code">nearest.assign_order(order_id)
+order.delivery_agent_id =
+    nearest.agent_id</div>
+      <div class="ann-why">
+        <span class="wlabel">Why update both Order and Agent?</span>
+        <span class="wmain">The relationship must be recorded bidirectionally. Order knows which agent is handling it (<code>delivery_agent_id</code>). Agent knows which order they're on (<code>current_order_id</code>). This enables O(1) lookup in both directions: "which agent is on my order?" from Order. "Which order is this agent handling?" from Agent. Without one direction, you'd scan all orders or all agents — O(n) — to answer a very common question.</span>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ======== SECTION 4b: PLACE_ORDER PROGRESSION ======== -->
+<div class="section" id="s-place">
+  <div class="sec-eyebrow">Step 4b · Deep Dive</div>
+  <div class="sec-title">place_order() — Bad to Great</div>
+  <div class="sec-intro">The most common operation in the system is also the one with the most ways to get wrong. <code>place_order()</code> touches five entities, has three distinct validation layers, and contains a subtle sequencing decision that, if reversed, introduces a class of bugs that is nearly impossible to fix cleanly without a rewrite. Let's build it up from scratch.</div>
+
+  <!-- BAD -->
+  <div style="border:1px solid var(--border);border-radius:var(--r);overflow:hidden;margin:22px 0;">
+    <div style="display:flex;align-items:center;gap:10px;padding:12px 18px;background:var(--red-bg);border-bottom:1px solid var(--red-border);">
+      <span style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--red);background:white;border:1px solid var(--red-border);padding:2px 9px;border-radius:20px;">Bad</span>
+      <span style="font-size:14px;font-weight:600;color:var(--text);">Check-and-deduct per item, validation at the end</span>
+    </div>
+    <div style="padding:18px 20px;">
+      <h4>Approach</h4>
+      <p>The "obvious" implementation: loop through items, check stock and deduct in the same iteration, then validate the restaurant at the end — or worse, don't validate it at all.</p>
+      <div class="code-block"><span class="kw">def</span> <span class="nm">place_order</span>(self, user_id, restaurant_id, items):
+    order_items = []
+    <span class="kw">for</span> item, qty <span class="kw">in</span> items:
+        <span class="cm"># Check and deduct in the same loop — fatal mistake</span>
+        <span class="kw">if not</span> item.is_in_stock(qty):
+            <span class="kw">raise</span> InsufficientStockError(item.name)
+        item.deduct_stock(qty)       <span class="cm"># ← deducted before all items checked</span>
+        order_items.append(OrderItem(...))
+
+    <span class="cm"># Validate restaurant AFTER touching inventory — wrong order</span>
+    restaurant = self.restaurants.get(restaurant_id)
+    <span class="kw">if not</span> restaurant or <span class="kw">not</span> restaurant.is_open:
+        <span class="kw">raise</span> RestaurantClosedError()   <span class="cm"># inventory already deducted! 🔥</span>
+
+    order = Order(...)
+    <span class="kw">return</span> order</div>
+      <h4>Why this fails — two separate bugs</h4>
+      <p><b>Bug 1 — Partial inventory deduction:</b> You have 3 items. Item A and B deduct successfully. Item C is out of stock — exception raised. But A and B were already deducted. The exception propagates up, the order is never created, but A and B's inventory is now permanently reduced. Two items of stock vanish with no corresponding order. You have "ghost deductions" — inventory that's gone but no order to explain why. In a restaurant with 5 portions of a dish, this means real orders get rejected for "out of stock" that doesn't actually exist.</p>
+      <p><b>Bug 2 — Restaurant closed after inventory touched:</b> If the restaurant is closed, this code deducts inventory before discovering the restaurant can't fulfil the order. Again: deductions with no order. The rollback is now required, and it's not there.</p>
+      <div class="vbox"><b>The rollback trap:</b> The "fix" that seems obvious is adding rollback logic — if something fails, restore all the deductions made so far. This is more code, more complexity, and a path that executes rarely (in tests, never). Rollback code is the most undertested code in any codebase. Its bugs are discovered in production at the worst possible moment.</div>
+    </div>
+  </div>
+
+  <!-- GOOD -->
+  <div style="border:1px solid var(--border);border-radius:var(--r);overflow:hidden;margin:22px 0;">
+    <div style="display:flex;align-items:center;gap:10px;padding:12px 18px;background:var(--amber-bg);border-bottom:1px solid var(--amber-border);">
+      <span style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--amber);background:white;border:1px solid var(--amber-border);padding:2px 9px;border-radius:20px;">Good</span>
+      <span style="font-size:14px;font-weight:600;color:var(--text);">Validate everything first, then deduct</span>
+    </div>
+    <div style="padding:18px 20px;">
+      <h4>The insight</h4>
+      <p>Separate the two phases completely. Phase 1: read-only validation — check everything that can fail, touch nothing that changes state. Phase 2: mutation — deduct inventory, create objects. If Phase 1 passes completely, Phase 2 cannot fail (within our in-memory model). No rollback needed because no mutation happened during validation.</p>
+      <div class="code-block"><span class="kw">def</span> <span class="nm">place_order</span>(self, user_id, restaurant_id, items):
+    <span class="cm"># ── Phase 1: Read-only validation. Nothing mutated. ──────────────</span>
+    user = self.users.get(user_id)
+    <span class="kw">if not</span> user:
+        <span class="kw">raise</span> UserNotFoundError()
+
+    restaurant = self.restaurants.get(restaurant_id)
+    <span class="kw">if not</span> restaurant:
+        <span class="kw">raise</span> RestaurantNotFoundError()
+    <span class="kw">if not</span> restaurant.is_open:
+        <span class="kw">raise</span> RestaurantClosedError()
+
+    <span class="cm"># Check ALL items before deducting ANY</span>
+    <span class="kw">for</span> item, qty <span class="kw">in</span> items:
+        <span class="kw">if not</span> item.is_in_stock(qty):
+            <span class="kw">raise</span> InsufficientStockError(item.name)
+
+    <span class="cm"># ── Phase 2: Mutation. Only reached if Phase 1 passed fully. ─────</span>
+    <span class="kw">for</span> item, qty <span class="kw">in</span> items:
+        item.deduct_stock(qty)
+
+    order_items = [OrderItem(
+        item_id=item.item_id,
+        name=item.name,
+        quantity=qty,
+        price_at_order=item.price
+    ) <span class="kw">for</span> item, qty <span class="kw">in</span> items]
+
+    order = Order(
+        order_id=str(uuid4()),
+        user_id=user_id,
+        restaurant_id=restaurant_id,
+        items=order_items,
+        status=OrderStatus.PLACED,
+        created_at=datetime.now())
+
+    payment = Payment(
+        order_id=order.order_id,
+        amount=order.calculate_total(),
+        status=PaymentStatus.PENDING)
+    order.payment = payment
+
+    self.orders[order.order_id] = order
+    <span class="kw">return</span> order</div>
+      <h4>Why this is the right structure</h4>
+      <p>The invariant is clean: if an <code>Order</code> object exists in the system, its inventory was fully and correctly deducted. If any validation fails, no inventory is touched, no Order is created, and there is nothing to roll back. The two-phase structure makes this invariant trivially easy to reason about.</p>
+      <h4>The remaining question</h4>
+      <p>The code is correct, but within Phase 1, does the order of validation checks matter? User check vs. restaurant check vs. stock check — does it matter which comes first?</p>
+    </div>
+  </div>
+
+  <!-- GREAT -->
+  <div style="border:1px solid var(--border);border-radius:var(--r);overflow:hidden;margin:22px 0;">
+    <div style="display:flex;align-items:center;gap:10px;padding:12px 18px;background:var(--green-bg);border-bottom:1px solid var(--green-border);">
+      <span style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--green);background:white;border:1px solid var(--green-border);padding:2px 9px;border-radius:20px;">Great</span>
+      <span style="font-size:14px;font-weight:600;color:var(--text);">Two-phase with guard ordering: cheapest checks first</span>
+    </div>
+    <div style="padding:18px 20px;">
+      <h4>The insight</h4>
+      <p>Within Phase 1, order your checks from cheapest to most expensive and from most-likely-to-fail to least. A missing <code>user_id</code> is one dict lookup. Checking whether the restaurant is open is one field access. Scanning all items for stock availability requires N dict lookups. If the user doesn't exist, skip all of it. This is the <strong>"guard clause first" pattern</strong> — fail fast on the cheapest precondition.</p>
+      <div class="code-block"><span class="cm"># Guard ordering — most-likely-to-fail first, cheapest first</span>
+<span class="cm">#
+# 1. user validation   — O(1) dict lookup. If no user, nothing else matters.
+# 2. restaurant found  — O(1) dict lookup. Cheap structural check.
+# 3. restaurant open   — O(1) field access. Cheap. Fails for 3am orders.
+# 4. stock checks      — O(N) item loop. Expensive. Only run if above pass.
+#
+# Why does this order matter beyond performance?</span>
+
+<span class="cm"># Error clarity: if the restaurant is closed, the user gets</span>
+<span class="cm"># "restaurant is closed" — not "item out of stock."</span>
+<span class="cm"># The latter is misleading: the item IS in stock, but the</span>
+<span class="cm"># restaurant can't serve it right now. Wrong error → wrong</span>
+<span class="cm"># user action → frustrated customer → support ticket.</span>
+
+<span class="kw">def</span> <span class="nm">place_order</span>(self, user_id, restaurant_id, items):
+    <span class="cm"># Guard 1: entity existence — O(1) each</span>
+    user = self.users.get(user_id)
+    <span class="kw">if not</span> user:
+        <span class="kw">raise</span> UserNotFoundError(user_id)
+
+    restaurant = self.restaurants.get(restaurant_id)
+    <span class="kw">if not</span> restaurant:
+        <span class="kw">raise</span> RestaurantNotFoundError(restaurant_id)
+
+    <span class="cm"># Guard 2: structural state — O(1)</span>
+    <span class="kw">if not</span> restaurant.is_open:
+        <span class="kw">raise</span> RestaurantClosedError(restaurant.name)
+
+    <span class="cm"># Guard 3: per-item stock — O(N), only if above passed</span>
+    <span class="kw">for</span> item, qty <span class="kw">in</span> items:
+        <span class="kw">if not</span> item.is_in_stock(qty):
+            <span class="kw">raise</span> InsufficientStockError(
+                <span class="st">f"{item.name}: requested {qty}, "
+                f"available {item.inventory_count}"</span>)
+
+    <span class="cm"># ── Phase 2: mutation — only reachable if all guards passed ──────</span>
+    <span class="kw">for</span> item, qty <span class="kw">in</span> items:
+        item.deduct_stock(qty)
+
+    order_items = [OrderItem(
+        item_id=item.item_id, name=item.name,
+        quantity=qty, price_at_order=item.price
+    ) <span class="kw">for</span> item, qty <span class="kw">in</span> items]
+
+    order = Order(
+        order_id=str(uuid4()), user_id=user_id,
+        restaurant_id=restaurant_id, items=order_items,
+        status=OrderStatus.PLACED, created_at=datetime.now())
+
+    order.payment = Payment(
+        order_id=order.order_id,
+        amount=order.calculate_total(),
+        status=PaymentStatus.PENDING)
+
+    self.orders[order.order_id] = order
+    <span class="kw">return</span> order</div>
+
+      <h4>The three properties this design guarantees</h4>
+      <ul style="font-size:14px;color:var(--text2);line-height:1.8;margin:10px 0 0 0;padding-left:20px;">
+        <li><b>No partial mutations:</b> Phase 2 only starts if Phase 1 passes completely. The invariant "Order exists ↔ inventory was fully deducted" holds unconditionally.</li>
+        <li><b>No rollback code:</b> Rollback is only needed when you mutate before you're sure you should. Two-phase design eliminates the need entirely.</li>
+        <li><b>Correct error messages:</b> Guard ordering ensures the user gets the right error for the right reason. A closed restaurant surfaces that error, not a downstream stock error that would be misleading.</li>
+      </ul>
+
+      <div class="why-inline">
+        <b>What to say in the interview:</b> "I separate place_order() into two phases: a read-only validation phase and a mutation phase. Phase 2 only starts if Phase 1 passes completely. This eliminates any need for rollback — no mutation happens until I'm certain everything is valid. Within Phase 1, I order checks from cheapest to most expensive, which also ensures the user gets the most meaningful error message."
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ======== SECTION 5: PATTERNS ======== -->
+<div class="section" id="s-pat">
+  <div class="sec-eyebrow">Step 5 · Deep Dive</div>
+  <div class="sec-title">Design Patterns — Justified, Not Just Named</div>
+  <div class="sec-intro">Don't sprinkle patterns to impress. Name a pattern only when you can say: "Without this pattern, here is the specific problem I would face." Each pattern below includes the concrete problem it solves, how it's applied, and code showing the before-vs-after.</div>
+
+  <div class="pcard">
+    <div class="ptitle">1. State Machine Pattern <span class="ptag">applied in Order</span></div>
+    <p><b>The specific problem without it:</b> Every method on Order that cares about valid transitions would have scattered if/else blocks. <code>update_status()</code>, <code>cancel_order()</code>, and <code>update_status(DELIVERED)</code> each need to know what transitions are legal. Each time you add a state, you must find and update every method. Missing one causes bugs like: a DELIVERED order that can still be CANCELLED, triggering a double-refund.</p>
+
+    <p>There are three levels to how well you can model this. Each solves a specific failure the previous level has.</p>
+
+    <!-- BAD -->
+    <div style="border:1px solid var(--border);border-radius:var(--r);overflow:hidden;margin:18px 0;">
+      <div style="display:flex;align-items:center;gap:10px;padding:12px 18px;background:var(--red-bg);border-bottom:1px solid var(--red-border);">
+        <span style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--red);background:white;border:1px solid var(--red-border);padding:2px 9px;border-radius:20px;">Bad</span>
+        <span style="font-size:14px;font-weight:600;color:var(--text);">Scattered if/else in every method</span>
+      </div>
+      <div style="padding:16px 18px;">
+        <h4>Approach</h4>
+        <p>Each method that cares about transitions encodes the rules itself. <code>update_status()</code> has one set of checks. <code>can_cancel()</code> has another. Each developer who adds a feature adds their own if block.</p>
+        <div class="code-block"><span class="kw">def</span> <span class="nm">update_status</span>(self, new):
+    <span class="kw">if</span> self.status == PLACED:
+        <span class="kw">if</span> new <span class="kw">not in</span> [ACCEPTED, CANCELLED]:
+            <span class="kw">raise</span> InvalidTransitionError()
+    <span class="kw">elif</span> self.status == ACCEPTED:
+        <span class="kw">if</span> new <span class="kw">not in</span> [PREPARING, CANCELLED]:
+            <span class="kw">raise</span> InvalidTransitionError()
+    <span class="kw">elif</span> self.status == PREPARING:
+        <span class="kw">if</span> new != READY:
+            <span class="kw">raise</span> InvalidTransitionError()
+    <span class="cm"># ... 4 more elif blocks for remaining states</span>
+
+<span class="kw">def</span> <span class="nm">can_cancel</span>(self):
+    <span class="cm"># Developer separately hard-codes the cancellable states</span>
+    <span class="kw">return</span> self.status <span class="kw">in</span> [PLACED, ACCEPTED]</div>
+        <h4>Why this fails</h4>
+        <p>The rules are now in two places: <code>update_status()</code> and <code>can_cancel()</code>. They are independent. When a developer adds a RETURNED state (food rejected at the door), they add <code>PICKED_UP → RETURNED</code> to <code>update_status()</code> but forget to check <code>can_cancel()</code>. <code>can_cancel()</code> checks <code>status in [PLACED, ACCEPTED]</code> — RETURNED is not in that list, so it returns False correctly by accident. But if CANCELLED is never added to RETURNED's allowed transitions, you now have an inconsistency — one method allows the transition, another blocks it. Future developers can't tell which one is right.</p>
+        <div class="vbox"><b>The real production bug:</b> Add <code>RETURNED → CANCELLED</code> to update_status (seems reasonable) but forget to add RETURNED to can_cancel's list. Now <code>cancel_order()</code> calls <code>can_cancel()</code>, gets False, and rejects the cancellation — even though update_status would have allowed it. Two methods, two conflicting answers to the same question. Customer can't cancel their rejected order. Support tickets flood in.</div>
+      </div>
+    </div>
+
+    <!-- GOOD -->
+    <div style="border:1px solid var(--border);border-radius:var(--r);overflow:hidden;margin:18px 0;">
+      <div style="display:flex;align-items:center;gap:10px;padding:12px 18px;background:var(--amber-bg);border-bottom:1px solid var(--amber-border);">
+        <span style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--amber);background:white;border:1px solid var(--amber-border);padding:2px 9px;border-radius:20px;">Good</span>
+        <span style="font-size:14px;font-weight:600;color:var(--text);">Centralise into VALID_TRANSITIONS dict</span>
+      </div>
+      <div style="padding:16px 18px;">
+        <h4>The insight</h4>
+        <p>Rules as data beats rules as code. Move all transition logic into one dict. <code>update_status()</code> consults the dict. The if/else chain collapses to two lines. Adding a new state is one dict entry, zero method changes.</p>
+        <div class="code-block">VALID_TRANSITIONS = {
+    PLACED:    [ACCEPTED, CANCELLED],
+    ACCEPTED:  [PREPARING, CANCELLED],
+    PREPARING: [READY],
+    READY:     [PICKED_UP],
+    PICKED_UP: [DELIVERED],
+    <span class="cm"># DELIVERED and CANCELLED intentionally absent — terminal states</span>
+}
+
+<span class="kw">def</span> <span class="nm">update_status</span>(self, new):
+    allowed = VALID_TRANSITIONS.get(self.status, [])
+    <span class="kw">if</span> new <span class="kw">not in</span> allowed:
+        <span class="kw">raise</span> InvalidTransitionError(
+            <span class="st">f"Cannot go from {self.status} to {new}"</span>)
+    self.status = new
+
+<span class="kw">def</span> <span class="nm">can_cancel</span>(self):
+    <span class="cm"># Still separate: checks status directly</span>
+    <span class="kw">return</span> self.status <span class="kw">in</span> [PLACED, ACCEPTED]</div>
+        <h4>Why this is much better</h4>
+        <p>Adding a RETURNED state is now one dict entry: <code>PICKED_UP: [DELIVERED, RETURNED]</code>. <code>update_status()</code>'s body never changes. You can audit the entire state machine in seconds by reading the dict. Terminal states (DELIVERED, CANCELLED) are represented by their absence from the dict — no special-case code needed.</p>
+        <h4>The remaining problem</h4>
+        <p><code>can_cancel()</code> still hard-codes <code>[PLACED, ACCEPTED]</code>. It is not derived from <code>VALID_TRANSITIONS</code>. They can still drift apart. If a future developer adds <code>RETURNED → CANCELLED</code> to the dict but forgets to add RETURNED to <code>can_cancel()</code>'s list, the inconsistency is back. The centralisation is incomplete.</p>
+      </div>
+    </div>
+
+    <!-- GREAT -->
+    <div style="border:1px solid var(--border);border-radius:var(--r);overflow:hidden;margin:18px 0;">
+      <div style="display:flex;align-items:center;gap:10px;padding:12px 18px;background:var(--green-bg);border-bottom:1px solid var(--green-border);">
+        <span style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--green);background:white;border:1px solid var(--green-border);padding:2px 9px;border-radius:20px;">Great</span>
+        <span style="font-size:14px;font-weight:600;color:var(--text);">can_cancel() derives from VALID_TRANSITIONS — single source of truth</span>
+      </div>
+      <div style="padding:16px 18px;">
+        <h4>The insight</h4>
+        <p>"This order is cancellable" means exactly one thing: the CANCELLED state is a valid transition from the current status. That fact is already encoded in <code>VALID_TRANSITIONS</code>. <code>can_cancel()</code> should not maintain its own separate list — it should ask the dict.</p>
+        <div class="code-block">VALID_TRANSITIONS = {
+    PLACED:    [ACCEPTED, CANCELLED],
+    ACCEPTED:  [PREPARING, CANCELLED],
+    PREPARING: [READY],
+    READY:     [PICKED_UP],
+    PICKED_UP: [DELIVERED],
+}
+
+<span class="kw">def</span> <span class="nm">update_status</span>(self, new):
+    allowed = VALID_TRANSITIONS.get(self.status, [])
+    <span class="kw">if</span> new <span class="kw">not in</span> allowed:
+        <span class="kw">raise</span> InvalidTransitionError()
+    self.status = new
+
+<span class="kw">def</span> <span class="nm">can_cancel</span>(self):
+    <span class="cm"># Derived directly from the dict — no separate hard-coded list</span>
+    <span class="kw">return</span> CANCELLED <span class="kw">in</span> VALID_TRANSITIONS.get(self.status, [])
+
+<span class="cm"># Now add RETURNED state — only one change needed:</span>
+<span class="cm"># PICKED_UP: [DELIVERED, RETURNED]</span>
+<span class="cm"># RETURNED:  [CANCELLED]</span>
+<span class="cm"># can_cancel() automatically returns True for RETURNED.</span>
+<span class="cm"># No other code changes. Structural impossibility of drift.</span></div>
+        <h4>Why this is the right design</h4>
+        <p>"Cancellable" is defined entirely by whether CANCELLED appears in a state's allowed transitions. By deriving <code>can_cancel()</code> from <code>VALID_TRANSITIONS</code> rather than a separate list, there is literally only one place to update. The drift bug is structurally eliminated — not by discipline or code review, but by design.</p>
+        <div class="fbox"><b>Adding RETURNED state with this design:</b> Add two entries to the dict. <code>can_cancel()</code>, <code>update_status()</code>, and every other method that uses the state machine automatically handle it correctly. Zero additional changes. Zero risk of the inconsistency that plagued the Bad solution.</div>
+        <div class="why-inline">
+          <b>What to say in the interview:</b> "I derive <code>can_cancel()</code> from <code>VALID_TRANSITIONS</code> rather than maintaining a separate list. This way there is exactly one source of truth for transition rules. Adding any new state is one dict entry — no method needs to be audited for missed cases."
+        </div>
+      </div>
+    </div>
+
+    <p><b>The key insight:</b> Rules as data (the dict) beats rules as code (if/else). Data is easier to inspect, test, and extend. You can print the entire state machine in one line: <code>print(VALID_TRANSITIONS)</code>. You cannot "print" scattered if/else logic. And deriving all guards from the single dict closes the last gap.</p>
+  </div>
+
+  <div class="pcard">
+    <div class="ptitle">2. Observer Pattern <span class="ptag">for notifications on status change</span></div>
+    <p><b>The specific problem without it:</b> When an order moves to ACCEPTED, you need to: (1) send a push notification, (2) send an SMS, (3) update an in-app badge, (4) start a payment pre-authorization timer. Hardcoding all four actions inside <code>Order.update_status()</code> means Order now has four reasons to change: adding WhatsApp requires editing Order, removing SMS requires editing Order, changing payment pre-auth logic requires editing Order. Order becomes the kitchen sink class that everyone edits.</p>
+
+    <div class="compare-grid">
+      <div class="cb">
+        <div class="clabel">✗ Without Observer</div>
+        <pre>def update_status(self, new):
+    self.status = new
+    # Order now does everything:
+    push_service.send(self.user_id,
+        f"Order {new.name}")
+    sms_service.send(...)
+    payment_service.preauth(...)
+    analytics.track(...)</pre>
+        <div class="cexplain">Order depends on 4 external services. Testing Order requires mocking all 4. Adding WhatsApp = editing Order.</div>
+      </div>
+      <div class="cg">
+        <div class="clabel">✓ With Observer</div>
+        <pre>class OrderObserver(ABC):
+    def on_status_change(
+      self, order, new_status): ...
+
+class PushObserver(OrderObserver):
+    def on_status_change(self, o, ns):
+        push_service.send(o.user_id,...)
+
+# In Order:
+def update_status(self, new):
+    self.status = new
+    for obs in self._observers:
+        obs.on_status_change(self, new)</pre>
+        <div class="cexplain">Order knows nothing about push/SMS/analytics. Adding WhatsApp = new class, zero edits to Order. Testing Order = inject MockObserver.</div>
+      </div>
+    </div>
+    <p><b>The test-ability bonus:</b> With Observer, you can write <code>order = Order(observers=[MockObserver()])</code> in a test. The <code>MockObserver</code> records what status changes were broadcast. You test that the right events fired without any real push notifications or SMS sent — fast, reliable, no side effects.</p>
+  </div>
+
+  <div class="pcard">
+    <div class="ptitle">3. Strategy Pattern <span class="ptag">for agent assignment algorithm</span></div>
+    <p><b>The specific problem without it:</b> "Nearest available agent" is the current algorithm. Swiggy might later want "highest rated agent," "agent with fewest deliveries today," or "agent matched to restaurant's average speed." Without Strategy, each algorithm change requires editing <code>SwiggySystem.assign_delivery_agent()</code> — touching the most critical part of the system for what is essentially a business policy decision.</p>
+
+    <p>Before we look at the pattern, let's see how the <em>algorithm itself</em> evolves. Three quality levels — each solves a real failure the previous one has.</p>
+
+    <!-- BAD -->
+    <div style="border:1px solid var(--border);border-radius:var(--r);overflow:hidden;margin:18px 0;">
+      <div style="display:flex;align-items:center;gap:10px;padding:12px 18px;background:var(--red-bg);border-bottom:1px solid var(--red-border);">
+        <span style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--red);background:white;border:1px solid var(--red-border);padding:2px 9px;border-radius:20px;">Bad</span>
+        <span style="font-size:14px;font-weight:600;color:var(--text);">Random / first-available agent</span>
+      </div>
+      <div style="padding:16px 18px;">
+        <h4>Approach</h4>
+        <p>The simplest thing: iterate the agents list, return the first one whose status is AVAILABLE. No algorithm at all.</p>
+        <div class="code-block"><span class="kw">def</span> <span class="nm">assign_agent</span>(self, order):
+    <span class="kw">for</span> agent <span class="kw">in</span> self.agents.values():
+        <span class="kw">if</span> agent.status == AVAILABLE:
+            <span class="kw">return</span> agent
+    <span class="kw">raise</span> NoAgentAvailableError()</div>
+        <h4>Why this fails</h4>
+        <p>The order of iteration over a dict is insertion order — the first agent registered is always chosen until they go offline. Agent #1 gets 40 deliveries, Agent #7 gets 3. Agent #1 burns out. Agent #7 files a complaint about unfair work distribution. More critically: Agent #1 might be 12 km away from the restaurant while Agent #3 is 500 m away. The customer waits 25 minutes instead of 8. This is not a hypothetical — in a real system at peak hour, bad assignment directly translates to cold food and poor reviews.</p>
+      </div>
+    </div>
+
+    <!-- GOOD -->
+    <div style="border:1px solid var(--border);border-radius:var(--r);overflow:hidden;margin:18px 0;">
+      <div style="display:flex;align-items:center;gap:10px;padding:12px 18px;background:var(--amber-bg);border-bottom:1px solid var(--amber-border);">
+        <span style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--amber);background:white;border:1px solid var(--amber-border);padding:2px 9px;border-radius:20px;">Good</span>
+        <span style="font-size:14px;font-weight:600;color:var(--text);">Nearest available agent (distance only)</span>
+      </div>
+      <div style="padding:16px 18px;">
+        <h4>Approach</h4>
+        <p>Filter to available agents, then pick the one with minimum Euclidean distance to the restaurant. The agent closest to where the food is ready arrives fastest.</p>
+        <div class="code-block"><span class="kw">def</span> <span class="nm">find_agent</span>(self, agents, order):
+    available = [a <span class="kw">for</span> a <span class="kw">in</span> agents
+                 <span class="kw">if</span> a.status == AVAILABLE]
+    <span class="kw">if not</span> available:
+        <span class="kw">raise</span> NoAgentAvailableError()
+    <span class="kw">return</span> min(available,
+        key=<span class="kw">lambda</span> a: distance(
+            a.location,
+            order.restaurant.location))</div>
+        <h4>Why this is better</h4>
+        <p>This is correct for the common case and easy to explain. Nearest agent minimises pickup time, which directly reduces food wait time for the customer. This is what you should implement and defend in most interviews.</p>
+        <h4>The remaining problem</h4>
+        <p>Distance doesn't account for agent load. Imagine all 5 available agents are bunched 400 m from the restaurant. The nearest one has already done 11 deliveries today and is exhausted. Meanwhile a fresh agent 600 m away could handle it better. Pure distance ignores operational health of the agent pool — a real concern at scale where agent fatigue leads to more cancellations and slower deliveries over time.</p>
+        <p>There's a subtler issue too: if the system has 2 orders arriving simultaneously from nearby restaurants, the nearest-agent algorithm might dispatch the same agent to both (one gets missed), rather than spreading the two orders across two nearby agents intelligently.</p>
+      </div>
+    </div>
+
+    <!-- GREAT -->
+    <div style="border:1px solid var(--border);border-radius:var(--r);overflow:hidden;margin:18px 0;">
+      <div style="display:flex;align-items:center;gap:10px;padding:12px 18px;background:var(--green-bg);border-bottom:1px solid var(--green-border);">
+        <span style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--green);background:white;border:1px solid var(--green-border);padding:2px 9px;border-radius:20px;">Great</span>
+        <span style="font-size:14px;font-weight:600;color:var(--text);">Weighted score: distance + load + rating</span>
+      </div>
+      <div style="padding:16px 18px;">
+        <h4>The insight</h4>
+        <p>A single metric (distance) is rarely enough for a production system. Model agent suitability as a <em>score</em> composed of multiple weighted factors. Each factor contributes differently, and the weights can be tuned operationally without touching the algorithm code.</p>
+        <div class="code-block"><span class="kw">class</span> <span class="cls">WeightedScoringStrategy</span>(AgentStrategy):
+    <span class="cm"># Weights tunable via config — no code change needed</span>
+    W_DISTANCE = <span class="dn">0.6</span>
+    W_LOAD     = <span class="dn">0.25</span>
+    W_RATING   = <span class="dn">0.15</span>
+
+    <span class="kw">def</span> <span class="nm">find_agent</span>(self, agents, order):
+        available = [a <span class="kw">for</span> a <span class="kw">in</span> agents
+                     <span class="kw">if</span> a.status == AVAILABLE]
+        <span class="kw">if not</span> available:
+            <span class="kw">raise</span> NoAgentAvailableError()
+
+        rest_loc = order.restaurant.location
+
+        <span class="kw">def</span> <span class="nm">score</span>(agent):
+            <span class="cm"># Lower distance  → higher score (invert)</span>
+            dist_score = <span class="dn">1</span> / (<span class="dn">1</span> + distance(agent.location, rest_loc))
+            <span class="cm"># Fewer deliveries today → higher score (invert)</span>
+            load_score = <span class="dn">1</span> / (<span class="dn">1</span> + agent.deliveries_today)
+            <span class="cm"># Higher rating → higher score (direct)</span>
+            rating_score = agent.rating / <span class="dn">5.0</span>
+
+            <span class="kw">return</span> (self.W_DISTANCE * dist_score +
+                    self.W_LOAD     * load_score +
+                    self.W_RATING   * rating_score)
+
+        <span class="kw">return</span> max(available, key=score)</div>
+        <h4>Why this is better</h4>
+        <p>Distance still dominates (0.6 weight) — so nearby agents are preferred. But a fresh agent 200 m farther scores better than an exhausted agent right next door. A highly rated agent breaks ties meaningfully. The weights are configuration, not code — an ops team can tune them based on real delivery data without a deployment.</p>
+        <div class="why-inline">
+          <b>The key point for the interviewer:</b> In an interview you implement the "Good" tier — nearest available — and then proactively say: "In production, I'd use a weighted scoring strategy that factors in agent load and rating. The Strategy pattern means this is a new class with zero changes to SwiggySystem — I swap the injection." That sentence earns you senior-level credit without spending time implementing the full scorer.
+        </div>
+      </div>
+    </div>
+
+    <p><b>Now the pattern itself:</b> All three algorithms above implement the same interface. That's Strategy. SwiggySystem doesn't know or care which one is wired in — it just calls <code>self.strategy.find_agent(available, order)</code>.</p>
+
+    <div class="compare-grid">
+      <div class="cb">
+        <div class="clabel">✗ Without Strategy</div>
+        <pre>def assign_delivery_agent(self, oid):
+    available = [...]
+    if self.mode == "nearest":
+        agent = min(available,
+            key=lambda a: dist(...))
+    elif self.mode == "highest_rated":
+        agent = max(available,
+            key=lambda a: a.rating)
+    elif self.mode == "fewest_today":
+        agent = min(available,
+            key=lambda a: a.count)</pre>
+        <div class="cexplain">Adding a new algorithm = editing SwiggySystem. Every edit risks breaking existing algorithms. Tests must cover all branches.</div>
+      </div>
+      <div class="cg">
+        <div class="clabel">✓ With Strategy</div>
+        <pre>class AgentStrategy(ABC):
+    def find_agent(
+      self, agents, order): ...
+
+class NearestStrategy(AgentStrategy):
+    def find_agent(self, agents, o):
+        return min(agents,
+            key=lambda a: dist(
+              a.location,
+              o.restaurant.location))
+
+# In SwiggySystem.__init__:
+self.strategy = strategy  # injected
+
+# In assign_delivery_agent:
+agent = self.strategy.find_agent(
+    available, order)</pre>
+        <div class="cexplain">New algorithm = new class. SwiggySystem never changes. Swap algorithms at construction time or even at runtime.</div>
+      </div>
+    </div>
+    <p><b>The runtime swapping bonus:</b> Different cities might use different strategies. You could inject a <code>PeakHoursStrategy</code> during dinner rush and revert to <code>NearestStrategy</code> at 3am — without touching any business logic. This is only possible if the algorithm is injected, not embedded.</p>
+  </div>
+
+  <div class="pcard">
+    <div class="ptitle">4. Factory Pattern <span class="ptag">for Order creation</span></div>
+    <p><b>The specific problem without it:</b> Order creation involves 7+ steps: generate UUID, validate inputs, check inventory, deduct stock, snapshot prices, create OrderItems, create Payment. If you spread these steps across a constructor and a few helper methods, it's possible to create a half-initialized Order — one where inventory was deducted but Payment was never created, or one where items were snapshotted but stock was never deducted. A half-initialized object is a silent bug that corrupts data silently.</p>
+    <p><b>The Factory solution:</b> <code>OrderFactory.create(user, restaurant, cart)</code> owns all creation steps in sequence. It either returns a fully initialized Order or raises an exception. No caller can construct an Order any other way. The constructor can be made private or simply documented as "do not call directly." The invariant is enforced structurally.</p>
+  </div>
+
+  <div class="pcard">
+    <div class="ptitle">5. Repository Pattern <span class="ptag">for storage abstraction</span></div>
+    <p><b>The specific problem without it:</b> <code>SwiggySystem</code> currently uses Python dicts. When you move to PostgreSQL, every <code>self.orders[id]</code> becomes a SQL query, every <code>self.orders.values()</code> becomes a table scan, and every assignment becomes an INSERT or UPDATE. You have to find and change every occurrence across all of <code>SwiggySystem</code>'s methods.</p>
+
+    <div class="compare-grid">
+      <div class="cb">
+        <div class="clabel">✗ Without Repository</div>
+        <pre># Scattered across SwiggySystem:
+order = self.orders[order_id]
+self.orders[new_id] = new_order
+user_orders = [o for o in
+  self.orders.values()
+  if o.user_id == uid]</pre>
+        <div class="cexplain">The dict is referenced 15+ times. Switching to DB means 15 changes. Each is a chance to introduce a bug. Business logic is tangled with storage logic.</div>
+      </div>
+      <div class="cg">
+        <div class="clabel">✓ With Repository</div>
+        <pre>class OrderRepository(ABC):
+    def get(self, id) -> Order: ...
+    def save(self, order): ...
+    def find_by_user(
+      self, uid) -> list[Order]: ...
+
+class InMemOrderRepo(OrderRepository):
+    def __init__(self):
+        self._store = {}
+    # dict impl for LLD
+
+class PgOrderRepo(OrderRepository):
+    # SQL impl for production
+
+# SwiggySystem uses either one:</pre>
+        <div class="cexplain">Switching from dict to DB = swap InMemOrderRepo for PgOrderRepo at construction. Zero changes to any business logic in SwiggySystem.</div>
+      </div>
+    </div>
+    <p><b>What to say in an interview:</b> "In my LLD I use a plain dict. In production this is replaced by an <code>OrderRepository</code> backed by PostgreSQL, with zero changes to business logic." This one sentence shows you understand the separation of concerns between business logic and persistence — a key senior-level insight.</p>
+  </div>
+</div>
+
+<!-- ======== SECTION 6: SOLID ======== -->
+<div class="section" id="s-sol">
+  <div class="sec-eyebrow">Step 6 · Deep Dive</div>
+  <div class="sec-title">SOLID Principles — Each With a Real Violation Scenario</div>
+  <div class="sec-intro">SOLID is not a checklist to recite in interviews. Each principle solves a real category of bug. For each principle: the formal definition, what a violation looks like concretely in this Swiggy design, and the specific decision that upholds it.</div>
+
+  <div class="solid-grid">
+    <div class="solid-card">
+      <div class="solid-letter">S</div>
+      <div class="solid-name">Single Responsibility Principle</div>
+      <div class="solid-def">"A class should have one, and only one, reason to change."</div>
+      <div class="vbox"><b>Violation in Swiggy:</b> Imagine <code>Order</code> has: <code>update_status()</code>, <code>calculate_total()</code>, <code>send_push_notification()</code>, <code>charge_payment()</code>, and <code>assign_nearest_agent()</code>. Now Order changes when: the state machine rules change (logistics team), pricing rules change (product team), notification service changes (mobile team), payment gateway changes (payments team), and agent algorithm changes (ops team). Five teams edit the same class. Constant merge conflicts. One team's change accidentally breaks another team's logic.</div>
+      <div class="fbox"><b>How this design upholds it:</b> Order has one reason to change — order lifecycle rules. Payment has one reason — money state. MenuItem has one reason — inventory rules. Each class is the exclusive owner of one concept, edited by one team, for one reason.</div>
+    </div>
+
+    <div class="solid-card">
+      <div class="solid-letter">O</div>
+      <div class="solid-name">Open / Closed Principle</div>
+      <div class="solid-def">"Software entities should be open for extension, but closed for modification."</div>
+      <div class="vbox"><b>Violation in Swiggy:</b> Swiggy wants to add WhatsApp order notifications. Without OCP: open <code>Order.update_status()</code>, add <code>whatsapp_service.send(...)</code> after the push notification call. Now Order — already tested and stable — is edited. Any mistake in the WhatsApp logic can break push notifications. Every new channel requires editing this method forever.</div>
+      <div class="fbox"><b>How this design upholds it:</b> Add a <code>WhatsAppObserver</code> class implementing <code>OrderObserver</code>. Register it with Order at startup. Order.update_status() doesn't change — it just calls <code>obs.on_status_change()</code> for each observer, and the new observer is now in the list. Extension by addition, not modification.</div>
+    </div>
+
+    <div class="solid-card">
+      <div class="solid-letter">L</div>
+      <div class="solid-name">Liskov Substitution Principle</div>
+      <div class="solid-def">"Subclasses must be substitutable for their base class without breaking the program."</div>
+      <div class="vbox"><b>Violation in Swiggy:</b> <code>HighPriorityStrategy</code> extends <code>AgentAssignmentStrategy</code> but overrides <code>find_agent()</code> to return <code>None</code> when no premium agent is available — breaking the contract that <code>find_agent()</code> always returns an agent or raises an exception. <code>SwiggySystem</code> calls <code>agent.assign_order(order_id)</code> on the returned value. It crashes with <code>AttributeError: 'NoneType' has no attribute 'assign_order'</code>. The base class promised an Agent. The subclass returned None. Substitution is broken.</div>
+      <div class="fbox"><b>How this design upholds it:</b> Every concrete strategy must fulfill the same contract: <code>find_agent()</code> returns a <code>DeliveryAgent</code> or raises <code>NoAgentAvailableError</code> — never None, never a different exception type. SwiggySystem handles both cases. Any strategy can be substituted safely.</div>
+    </div>
+
+    <div class="solid-card">
+      <div class="solid-letter">I</div>
+      <div class="solid-name">Interface Segregation Principle</div>
+      <div class="solid-def">"Clients should not be forced to depend on interfaces they don't use."</div>
+      <div class="vbox"><b>Violation in Swiggy:</b> A single <code>ISystemActor</code> interface with methods: <code>place_order()</code>, <code>cancel_order()</code>, <code>accept_order()</code>, <code>assign_agent()</code>, <code>mark_delivered()</code>. DeliveryAgent implements this interface — but must provide empty or raising implementations for <code>place_order()</code>, <code>cancel_order()</code>, and <code>accept_order()</code> since agents do none of those. Empty method bodies are a code smell: they signal a poorly designed interface forcing actors to implement things irrelevant to them.</div>
+      <div class="fbox"><b>How this design upholds it:</b> Separate narrow interfaces: <code>IOrderPlacer</code> (for Users: place, cancel), <code>IOrderAcceptor</code> (for Restaurants: accept, reject, update status), <code>IDeliverer</code> (for Agents: pick up, deliver). Each actor implements only the interface relevant to their role. <code>OrderObserver</code> has exactly one method. No one implements what they don't need.</div>
+    </div>
+
+    <div class="solid-card solid-full">
+      <div class="solid-letter">D</div>
+      <div class="solid-name">Dependency Inversion Principle</div>
+      <div class="solid-def">"High-level modules should not depend on low-level modules. Both should depend on abstractions."</div>
+      <div class="vbox"><b>Violation in Swiggy:</b> <code>SwiggySystem.__init__()</code> creates <code>self.strategy = NearestAgentStrategy()</code> directly. <code>Order.__init__()</code> creates <code>self.notifiers = [TwilioSMSNotifier(), FirebasePushNotifier()]</code> directly. Now: (1) You cannot test <code>SwiggySystem</code> without running the real nearest-agent algorithm. (2) You cannot test <code>Order</code> without the real Twilio and Firebase SDKs. (3) Switching from Twilio to AWS SNS means opening <code>Order</code>'s constructor — a high-level business class — to change a low-level infrastructure detail.</div>
+      <div class="fbox"><b>How this design upholds it:</b> <code>SwiggySystem.__init__(strategy: AgentStrategy)</code> — the abstraction is injected, not created internally. <code>Order.__init__(observers: list[OrderObserver])</code> — same. In production code: <code>SwiggySystem(strategy=NearestAgentStrategy())</code>. In tests: <code>SwiggySystem(strategy=FakeStrategy())</code>. Tests run in milliseconds, with zero network calls, zero real notifications, zero real agent selection. This is only achievable if dependencies are injected from outside — high-level logic never knows which low-level implementation is wired in.</div>
+      <p style="margin-top:10px; font-size:13px; color:var(--text2)"><b>The practical impact:</b> A full test suite for SwiggySystem that runs in under 1 second with zero real services is only possible because of DIP. Without it, tests require real infrastructure, run slowly, and fail randomly due to network issues. DIP is not about cleanliness — it is about making the system testable, which is about making it maintainable at scale.</p>
+    </div>
+  </div>
+</div>
+
+<!-- ======== SECTION 7: TRADEOFFS ======== -->
+<div class="section" id="s-trd">
+  <div class="sec-eyebrow">Step 7 · Deep Dive</div>
+  <div class="sec-title">Trade-offs — Concrete Failures, Not Abstractions</div>
+  <div class="sec-intro">Every design decision is a bet. The wrong choice doesn't fail aesthetically — it fails with a specific, real scenario. For each trade-off: what breaks, why it breaks, and what the correct choice costs.</div>
+
+  <div class="tsec">
+    <div class="thead">1. OrderItem price snapshot vs direct MenuItem reference</div>
+    <div class="tbody">
+      <div class="scenario"><b>Concrete failure if you store MenuItem references:</b> Ravi orders Chicken Biryani at ₹220 on Monday. Restaurant changes the price to ₹280 on Wednesday. On Thursday, Ravi opens order history. Your code calls <code>order.items[0].item.price</code> and gets ₹280 — not the ₹220 Ravi was charged. (1) His receipt is wrong. (2) If he cancels for a refund, your system calculates the refund as ₹280 — ₹60 more than he paid. (3) Your finance team's daily revenue report adds ₹280 to Monday's revenue, not ₹220. (4) Your tax reporting is wrong. This is a data integrity failure with direct financial and legal consequences. No amount of "we'll be careful" prevents this — it's a structural issue.</div>
+      <div class="td-grid">
+        <div class="tpro"><span class="tlabel">✓ Chosen: OrderItem snapshot</span><code>price_at_order</code> is captured at the moment of ordering and frozen forever. Order history is historically correct regardless of any future price changes. Refund amounts are always exactly what the customer paid. Financial reconciliation is auditable.</div>
+        <div class="tcon"><span class="tlabel">Cost: slight storage duplication</span>You duplicate item name and price in every OrderItem. For millions of orders, this is real storage — but negligible compared to the cost of financial data corruption. Data correctness always outweighs storage savings in financial systems.</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="tsec">
+    <div class="thead">2. State machine dict vs scattered if/else</div>
+    <div class="tbody">
+      <div class="scenario"><b>Concrete failure without the state machine:</b> A developer adds a RETURNED status for orders where the customer refused delivery at the door. They add <code>PICKED_UP → RETURNED</code> to the <code>update_status()</code> if/else block. But they forget to update <code>can_cancel()</code>, which still only checks <code>status in [PLACED, ACCEPTED]</code> — RETURNED is not in that list, so the check passes. Now a user can call <code>cancel_order()</code> on a RETURNED order, triggering a refund. The order was already RETURNED (food came back to restaurant) — the restaurant isn't compensated, and the customer gets a refund for food they actually received. With VALID_TRANSITIONS, CANCELLED is simply absent from RETURNED's entry. <code>can_cancel()</code> never needed to be updated — it delegates to the dict, which already prevents it.</div>
+      <div class="td-grid">
+        <div class="tpro"><span class="tlabel">✓ Chosen: declarative VALID_TRANSITIONS dict</span>Rules are data, visible in one place. Adding a state = one dict entry. Method body never changes. Testing all valid transitions = one assertion. Structurally impossible to have an unintentional transition.</div>
+        <div class="tcon"><span class="tlabel">Alternative: separate OrderStateMachine class</span>Better for very complex state machines with entry/exit actions per state. For 7 states with simple transition rules, the dict approach is more readable and sufficient. Over-engineering for interview scope.</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="tsec">
+    <div class="thead">3. Inventory check-then-deduct vs atomic database lock</div>
+    <div class="tbody">
+      <div class="scenario"><b>Concrete failure with check-then-deduct in a concurrent system:</b> Restaurant has 1 Gulab Jamun left (<code>inventory_count = 1</code>). Priya and Arnav both open Swiggy simultaneously. Both apps call <code>is_in_stock(1)</code> — both see True (inventory is 1, neither has deducted yet). Priya's thread calls <code>deduct_stock(1)</code> first — inventory = 0. Then Arnav's thread calls <code>deduct_stock(1)</code> — inventory = -1. Both orders succeed. The restaurant receives two orders they can only fulfil one of. They must cancel one, refund a customer, and issue an apology coupon. This is a TOCTOU race condition (Time-Of-Check-Time-Of-Use) — the most common inventory bug in e-commerce systems. It is structurally unavoidable with check-then-deduct in a multi-threaded or multi-server environment.</div>
+      <div class="td-grid">
+        <div class="tpro"><span class="tlabel">✓ For LLD interview: simple deduct_stock()</span>The single-threaded in-memory model works correctly for interview scope. The code is clean, readable, and demonstrates the intent. Mention the race condition explicitly — earning credit without needing to implement SQL locking in a 35-minute interview.</div>
+        <div class="tcon"><span class="tlabel">Production fix: SELECT FOR UPDATE</span>In PostgreSQL: <code>SELECT * FROM menu_items WHERE id = ? FOR UPDATE</code> acquires a row-level lock. Check and deduct become one atomic operation. Alternatively: optimistic locking with a version field — if version mismatches on update, retry the operation. Redis: <code>DECR</code> is atomic by design — use it for high-throughput inventory.</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="tsec">
+    <div class="thead">4. Agent assignment: at READY vs at ACCEPTED</div>
+    <div class="tbody">
+      <div class="scenario"><b>Concrete operational failure if you assign at ACCEPTED:</b> Restaurant accepts order at 7:00pm. An agent is immediately dispatched and arrives at the restaurant at 7:08pm. The restaurant takes until 7:25pm to prepare the food (complex order on a busy evening). The agent has been waiting outside for 17 minutes — idle time with no earnings, wasted fuel, blocking their next assignment. At peak demand on a Friday evening with 50,000 concurrent orders in Mumbai, assume 30% of orders have agents waiting 10+ minutes for food. That is 15,000 agents spending 10 minutes idle per order. Multiply by agent opportunity cost and fuel: millions of rupees of waste per week. Real food platforms assign at READY (or even later, using predictive ETA models) precisely to minimize this.</div>
+      <div class="td-grid">
+        <div class="tpro"><span class="tlabel">✓ Chosen: assign at READY</span>Agent is dispatched exactly when food is ready for pickup. Minimizes idle wait time at restaurant. Maximizes deliveries per agent per shift. Food may wait 1–2 minutes for agent arrival — far better than 10–15 minutes of agent idle time.</div>
+        <div class="tcon"><span class="tlabel">Cost: brief post-READY wait</span>Food sits warm for a minute or two. Real Swiggy mitigates this with predictive pre-positioning — routing agents toward restaurants whose orders will likely hit READY soon. This requires ETA prediction ML models, out of LLD scope. Worth mentioning to show awareness of real-world solutions.</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="tsec">
+    <div class="thead">5. Payment as separate class vs fields inside Order</div>
+    <div class="tbody">
+      <div class="scenario"><b>Concrete merge conflict scenario if payment is inside Order:</b> Swiggy adds split payments (two users split the bill). Now Order needs two <code>payer_user_id</code> fields, two <code>payment_status</code> fields, two amounts. Swiggy adds EMI — a payment now has a list of installments, each with due date and status. Order is bloated. Swiggy adds corporate billing — companies get monthly invoices. Order needs an <code>invoice_id</code>, a <code>billing_company_id</code>, and payment_status becomes "invoiced" not "paid." Now the payments engineer and the logistics engineer both modify Order constantly. Every time either team deploys, the other team must rebase and resolve merge conflicts on the same file. This is the operational cost of insufficient separation.</div>
+      <div class="td-grid">
+        <div class="tpro"><span class="tlabel">✓ Chosen: Payment as separate class</span>Order tracks food lifecycle. Payment tracks money lifecycle. Each class can evolve independently and in parallel. Adding new payment types never requires opening Order. Different teams own different classes with no merge conflicts.</div>
+        <div class="tcon"><span class="tlabel">Cost: one extra indirection</span>For the simple single-payer case, a separate Payment class feels like indirection for no benefit. Acceptable: the cost is one extra method call. The benefit is a clean boundary that pays off the moment payment requirements change — and payment requirements always change.</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ======== SECTION 8: Q&A ======== -->
+<div class="section" id="s-qa">
+  <div class="sec-eyebrow">Step 8 · Interview Simulation</div>
+  <div class="sec-title">Interview Q&amp;A — Deep Answers</div>
+  <div class="sec-intro">These are the questions that come after you present your design. They test whether you understand your own design or just memorized it. Every answer below goes deeper than the surface — not just what, but exactly why and what breaks if you choose differently.</div>
+
+  <div class="qa">
+    <div class="qa-q" onclick="t(this)">How would you handle concurrent orders for the same last item? <i class="fa-solid fa-chevron-down"></i></div>
+    <div class="qa-a">
+      <p>This is a TOCTOU (Time-Of-Check-Time-Of-Use) race condition — the most common inventory bug in e-commerce. Here's the exact failure sequence:</p>
+      <p>Both Priya and Arnav call <code>is_in_stock(1)</code> — both see <code>inventory_count = 1</code>, both get <code>True</code>. Neither has deducted yet. Priya's thread deducts: inventory = 0. Arnav's thread then deducts: inventory = -1. Both orders succeed. Negative inventory means one order can't be fulfilled.</p>
+      <h4>For the LLD interview (what you say)</h4>
+      <p>"My current in-memory implementation has this race condition. In production I'd fix it at the database layer using <code>SELECT FOR UPDATE</code> — this acquires a row-level lock on the <code>menu_items</code> row, making the check and deduct one atomic operation. Alternatively, optimistic locking: store a version number on each row, read it with the check, and include <code>WHERE version = $read_version</code> in the UPDATE. If version mismatched (someone else deducted first), retry. For very high throughput, use Redis <code>DECR</code> which is atomically guaranteed."</p>
+      <p>Simply naming the race condition and its production fix earns significant credit. Most candidates don't acknowledge it at all.</p>
+    </div>
+  </div>
+
+  <div class="qa">
+    <div class="qa-q" onclick="t(this)">Why did you separate Payment from Order when they're always 1:1? <i class="fa-solid fa-chevron-down"></i></div>
+    <div class="qa-a">
+      <p>The 1:1 ratio today does not predict the 1:1 ratio tomorrow. Here's the argument from first principles:</p>
+      <p><b>Reason-for-change test:</b> Order changes when the food lifecycle changes — restaurant accepts, cook starts, agent picks up. Payment changes when money moves — authorization, capture, refund. These are different events, triggered by different systems, modified by different teams.</p>
+      <p><b>What happens if you collapse them:</b> Swiggy adds split payments (two friends share a meal). Now Order needs two <code>payer_user_id</code>s, two amounts, two <code>payment_status</code> fields. The payments engineer opens Order to add these. Meanwhile the logistics engineer is adding estimated delivery time fields. Both engineers are in the same file. Merge conflicts weekly.</p>
+      <p><b>The correct answer when pushed:</b> "The classes are 1:1 today, but they have different reasons to change and different rates of change. Order evolves when the logistics flow changes. Payment evolves when the money flow changes. Keeping them separate means each team owns their class with no cross-team interference. The cost is one extra object dereference — easily worth the boundary it creates."</p>
+    </div>
+  </div>
+
+  <div class="qa">
+    <div class="qa-q" onclick="t(this)">How would you add coupon/discount support without breaking existing classes? <i class="fa-solid fa-chevron-down"></i></div>
+    <div class="qa-a">
+      <p>This tests your understanding of the Open/Closed Principle — extend by adding, not by modifying.</p>
+      <p><b>Step 1: New Coupon entity.</b> Create a <code>Coupon</code> class with: <code>code: str</code>, <code>discount_type: Enum</code> (FLAT or PERCENT), <code>discount_value: float</code>, <code>min_order_value: float</code>, <code>is_valid(order_total) → bool</code>.</p>
+      <p><b>Step 2: Minimal change to calculate_total.</b> Add an optional parameter: <code>def calculate_total(self, coupon: Coupon | None = None) → float</code>. If coupon is provided and valid, apply the discount. Existing callers pass no coupon — they are unaffected.</p>
+      <p><b>Step 3: Coupon validation in SwiggySystem.</b> <code>place_order()</code> accepts an optional <code>coupon_code: str | None</code>. If provided, fetch the coupon from a <code>coupon_registry</code> dict, validate it, and pass it to OrderFactory or calculate_total. Coupon validation — is it expired? minimum order met? user hasn't used it already? — lives on <code>Coupon</code>, not scattered in SwiggySystem.</p>
+      <p>Net result: one new class, two small additions to existing method signatures. No existing class is fundamentally changed. This is the OCP in action.</p>
+    </div>
+  </div>
+
+  <div class="qa">
+    <div class="qa-q" onclick="t(this)">What happens end-to-end when a restaurant rejects an order? <i class="fa-solid fa-chevron-down"></i></div>
+    <div class="qa-a">
+      <p>The full sequence when a restaurant taps "Reject":</p>
+      <p><b>1. Status transition:</b> <code>order.update_status(OrderStatus.CANCELLED)</code> — PLACED → CANCELLED is a valid transition in VALID_TRANSITIONS. No exception raised.</p>
+      <p><b>2. Inventory restoration:</b> For each item in <code>order.items</code>, call <code>menu_item.restore_stock(order_item.quantity)</code>. The items are back in the restaurant's available stock. Another customer can order them.</p>
+      <p><b>3. Payment refund:</b> <code>order.payment.status = PaymentStatus.REFUNDED</code>. In production this triggers a refund to the customer's payment method. In our LLD, it's a status update.</p>
+      <p><b>4. Observer notifications:</b> <code>Order</code> calls <code>obs.on_status_change(order, CANCELLED)</code> for all registered observers. <code>PushNotificationObserver</code> sends "Your order was cancelled by the restaurant." <code>SMSObserver</code> sends an SMS. Each observer acts independently — adding a new notification channel doesn't change this flow.</p>
+      <p><b>5. Compensation (optional extension):</b> A <code>CancellationCompensationObserver</code> can detect that <code>cancelled_by == restaurant</code> and issue a discount coupon. None of the existing code changes for this — just a new observer registered at startup.</p>
+      <p>The key point for the interviewer: all five steps are coordinated by <code>SwiggySystem.cancel_order()</code> but executed by the right entity each time. SwiggySystem orchestrates; it doesn't do the work itself.</p>
+    </div>
+  </div>
+
+  <div class="qa">
+    <div class="qa-q" onclick="t(this)">How would you make this design fully unit-testable? <i class="fa-solid fa-chevron-down"></i></div>
+    <div class="qa-a">
+      <p>Testability is a direct consequence of Dependency Inversion. Here's what a test for <code>place_order()</code> looks like when DIP is applied:</p>
+      <div class="code-block"><span class="kw">def</span> <span class="nm">test_place_order_deducts_inventory</span>():
+    <span class="cm"># Arrange: inject fakes for everything external</span>
+    mock_observer = MockOrderObserver()   <span class="cm"># records calls, no push sent</span>
+    fake_strategy = FakeAgentStrategy()   <span class="cm"># returns predetermined agent</span>
+    repo = InMemoryOrderRepository()
+
+    system = SwiggySystem(
+        strategy=fake_strategy,
+        order_repo=repo
+    )
+    restaurant = Restaurant(is_open=<span class="nm">True</span>, ...)
+    item = MenuItem(name=<span class="st">"Biryani"</span>, price=<span class="dn">220</span>,
+                    inventory_count=<span class="dn">3</span>)
+    restaurant.menu = [item]
+    system.restaurants[restaurant.id] = restaurant
+
+    <span class="cm"># Act</span>
+    order = system.place_order(
+        user_id=<span class="st">"u1"</span>,
+        restaurant_id=restaurant.id,
+        items=[(item, <span class="dn">2</span>)])
+
+    <span class="cm"># Assert</span>
+    assert item.inventory_count == <span class="dn">1</span>  <span class="cm"># 3 - 2</span>
+    assert order.status == OrderStatus.PLACED
+    assert order.calculate_total() == <span class="dn">440</span>  <span class="cm"># 2 × 220</span></div>
+      <p>This test: runs in milliseconds, requires zero real databases, sends zero real notifications, uses zero real agent selection. All because every dependency is injected. This is only possible because of DIP. Without it, you cannot instantiate <code>SwiggySystem</code> without starting real services.</p>
+    </div>
+  </div>
+
+  <div class="qa">
+    <div class="qa-q" onclick="t(this)">How would you support multiple saved addresses per user? <i class="fa-solid fa-chevron-down"></i></div>
+    <div class="qa-a">
+      <p>This tests whether your design is extensible without major surgery. Here's the minimal set of changes:</p>
+      <p><b>On User:</b> Change <code>address: Address</code> to <code>addresses: list[Address]</code> and add <code>default_address_id: str</code>. Add methods: <code>add_address(address) → str</code> (returns new ID), <code>remove_address(address_id)</code>, <code>set_default_address(address_id)</code>, <code>get_address(address_id) → Address</code>.</p>
+      <p><b>On OrderItem / Order:</b> Add a <code>delivery_address: Address</code> field to Order. This is <em>not</em> a reference to the User's address — it is a snapshot of the address at order time. (Same reasoning as price snapshots: if the user changes their address after placing the order, the in-progress order should still go to the original address.)</p>
+      <p><b>On place_order():</b> Add an optional <code>address_id: str | None</code> parameter. If provided, fetch that specific address. If None, use the user's <code>default_address_id</code>. Snapshot the address into <code>order.delivery_address</code>.</p>
+      <p>The key insight for the interviewer: <em>no other class changes</em>. Restaurant doesn't care. DeliveryAgent doesn't care. Order just gains one extra field that was already conceptually missing. This is what "designed for change" looks like in practice.</p>
+    </div>
+  </div>
+
+  <div class="qa">
+    <div class="qa-q" onclick="t(this)">Why does can_cancel() live on Order and not in SwiggySystem? <i class="fa-solid fa-chevron-down"></i></div>
+    <div class="qa-a">
+      <p>This is the <strong>Tell, Don't Ask</strong> principle in action, which is a corollary to encapsulation.</p>
+      <p><b>The alternative that seems simpler:</b> <code>SwiggySystem.cancel_order()</code> just checks <code>if order.status in [PLACED, ACCEPTED]: proceed</code>. This works. But now the rule "cancellable before PREPARING" lives in SwiggySystem, not in Order.</p>
+      <p><b>Why that's a problem:</b> Later you add an admin portal with its own cancellation endpoint. The developer writes <code>AdminSystem.force_cancel(order_id)</code> and forgets to copy the status check — because it was buried in SwiggySystem, not obviously associated with Order itself. Now admins can cancel DELIVERED orders, triggering refunds for completed deliveries.</p>
+      <p><b>With can_cancel() on Order:</b> Every code path that touches cancellation — SwiggySystem, AdminSystem, a future API endpoint — calls <code>order.can_cancel()</code>. The rule is in one place, always enforced, impossible to forget. You are "telling" the Order what to do (cancel itself) rather than "asking" it for its status and making decisions externally.</p>
+      <p>The general principle: if a rule is about an entity's own state, put the enforcement of that rule on the entity itself.</p>
+    </div>
+  </div>
+
+  <div class="qa">
+    <div class="qa-q" onclick="t(this)">Walk me through the complete sequence when an order is successfully delivered. <i class="fa-solid fa-chevron-down"></i></div>
+    <div class="qa-a">
+      <p>The agent marks the order delivered. Here's every step in order, with the entity responsible for each:</p>
+      <p><b>1. Actor validation:</b> <code>SwiggySystem.update_order_status(order_id, DELIVERED, actor_id=agent_id)</code> verifies the actor_id matches <code>order.delivery_agent_id</code>. An agent can only update the order they're assigned to.</p>
+      <p><b>2. State transition:</b> <code>order.update_status(DELIVERED)</code> — PICKED_UP → DELIVERED is valid. Status is updated. No exception.</p>
+      <p><b>3. Observer chain fires:</b> Order broadcasts to all observers:</p>
+      <p>→ <code>PushNotificationObserver</code>: sends "Your order has been delivered!" to the user.</p>
+      <p>→ <code>PaymentObserver</code>: updates <code>payment.status = PAID</code>. Money is captured.</p>
+      <p>→ <code>AnalyticsObserver</code>: logs delivery time, restaurant performance, agent performance.</p>
+      <p>→ <code>RatingRequestObserver</code>: queues a rating prompt to appear in the app 5 minutes later.</p>
+      <p><b>4. Agent is freed:</b> <code>agent.complete_delivery()</code> atomically sets <code>current_order_id = None</code> and <code>status = AVAILABLE</code>. The agent immediately becomes eligible for the next assignment. Without this step, the agent would stay ON_DELIVERY forever, unavailable for new orders.</p>
+      <p><b>5. Order is terminal:</b> DELIVERED has no exits in VALID_TRANSITIONS. Any future call to <code>update_status()</code> on this order raises <code>InvalidTransitionError</code>. The order is immutable from this point.</p>
+      <p>Key takeaway for the interviewer: SwiggySystem orchestrates the sequence but each entity handles its own piece. No single class does everything — each class does exactly its one thing.</p>
+    </div>
+  </div>
+
+</div>
+
+</main>
+
+<script>
+function show(id, el) {
+  document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
+  document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+  document.getElementById('s-' + id).classList.add('active');
+  el.classList.add('active');
+  window.scrollTo(0, 0);
+}
+function t(el) {
+  el.classList.toggle('open');
+  el.nextElementSibling.classList.toggle('show');
+}
+</script>
+</body>
+</html>

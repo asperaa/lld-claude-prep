@@ -1,0 +1,1903 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Elevator System — LLD Interview Guide</title>
+<style>
+  :root {
+    --bg: #0d0f14;
+    --bg2: #141720;
+    --bg3: #1c2030;
+    --border: rgba(255,255,255,0.08);
+    --border2: rgba(255,255,255,0.14);
+    --text: #e8eaf0;
+    --muted: #8890a4;
+    --accent: #6c7aff;
+    --accent2: #4ecdc4;
+    --accent3: #f7c36a;
+    --accent4: #ff6b6b;
+    --green: #56d9a0;
+    --purple: #b47fff;
+    --mono: 'JetBrains Mono', 'Fira Code', 'Cascadia Code', monospace;
+    --sans: 'DM Sans', 'Inter', sans-serif;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: var(--sans);
+    font-size: 15px;
+    line-height: 1.7;
+  }
+
+  /* ── HEADER ─────────────────────────────────────────── */
+  .hero {
+    background: linear-gradient(135deg, #0d0f14 0%, #141030 50%, #0d0f14 100%);
+    border-bottom: 1px solid var(--border);
+    padding: 56px 48px 44px;
+    position: relative;
+    overflow: hidden;
+  }
+  .hero::before {
+    content: '';
+    position: absolute;
+    top: -80px; right: -80px;
+    width: 400px; height: 400px;
+    background: radial-gradient(circle, rgba(108,122,255,0.12) 0%, transparent 70%);
+    pointer-events: none;
+  }
+  .hero-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    background: rgba(108,122,255,0.12);
+    border: 1px solid rgba(108,122,255,0.3);
+    border-radius: 20px;
+    padding: 4px 14px;
+    font-size: 12px;
+    color: var(--accent);
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+    margin-bottom: 20px;
+  }
+  .hero h1 {
+    font-size: 42px;
+    font-weight: 700;
+    letter-spacing: -0.02em;
+    line-height: 1.1;
+    margin-bottom: 12px;
+  }
+  .hero h1 span { color: var(--accent); }
+  .hero p { color: var(--muted); font-size: 16px; max-width: 600px; }
+  .hero-meta {
+    display: flex;
+    gap: 24px;
+    margin-top: 28px;
+    flex-wrap: wrap;
+  }
+  .meta-pill {
+    display: flex; align-items: center; gap: 6px;
+    background: var(--bg3);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 6px 14px;
+    font-size: 13px;
+    color: var(--muted);
+  }
+  .meta-pill .dot { width: 6px; height: 6px; border-radius: 50%; }
+
+  /* ── NAV ─────────────────────────────────────────────── */
+  .nav-rail {
+    position: sticky;
+    top: 0;
+    z-index: 100;
+    background: rgba(13,15,20,0.95);
+    backdrop-filter: blur(12px);
+    border-bottom: 1px solid var(--border);
+    padding: 0 48px;
+    display: flex;
+    gap: 2px;
+    overflow-x: auto;
+  }
+  .nav-rail a {
+    color: var(--muted);
+    text-decoration: none;
+    font-size: 13px;
+    padding: 12px 16px;
+    white-space: nowrap;
+    border-bottom: 2px solid transparent;
+    transition: color 0.2s, border-color 0.2s;
+  }
+  .nav-rail a:hover { color: var(--text); border-color: var(--border2); }
+  .nav-rail a.active { color: var(--accent); border-color: var(--accent); }
+
+  /* ── LAYOUT ──────────────────────────────────────────── */
+  .content { max-width: 1100px; margin: 0 auto; padding: 48px 48px; }
+  .section { margin-bottom: 72px; }
+  .section-header {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    margin-bottom: 32px;
+  }
+  .section-num {
+    width: 32px; height: 32px;
+    background: rgba(108,122,255,0.15);
+    border: 1px solid rgba(108,122,255,0.3);
+    border-radius: 8px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 13px; font-weight: 600;
+    color: var(--accent);
+    flex-shrink: 0;
+  }
+  .section-title {
+    font-size: 24px;
+    font-weight: 600;
+    letter-spacing: -0.01em;
+  }
+
+  /* ── CARDS ───────────────────────────────────────────── */
+  .card {
+    background: var(--bg2);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 24px;
+    margin-bottom: 20px;
+  }
+  .card-title {
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--accent2);
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    margin-bottom: 12px;
+  }
+  .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+  .grid-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 16px; }
+
+  /* ── CODE ────────────────────────────────────────────── */
+  .code-block {
+    background: #0a0c12;
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    overflow: hidden;
+    margin: 20px 0;
+  }
+  .code-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 10px 16px;
+    background: rgba(255,255,255,0.03);
+    border-bottom: 1px solid var(--border);
+  }
+  .code-lang {
+    font-size: 12px;
+    color: var(--muted);
+    display: flex; align-items: center; gap: 8px;
+  }
+  .code-lang .lang-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--accent3); }
+  .code-copy {
+    background: none;
+    border: 1px solid var(--border);
+    border-radius: 5px;
+    color: var(--muted);
+    font-size: 11px;
+    cursor: pointer;
+    padding: 3px 10px;
+    transition: all 0.2s;
+    font-family: var(--sans);
+  }
+  .code-copy:hover { border-color: var(--border2); color: var(--text); }
+  pre {
+    padding: 20px;
+    overflow-x: auto;
+    font-family: var(--mono);
+    font-size: 13px;
+    line-height: 1.65;
+    tab-size: 4;
+  }
+
+  /* ── PYTHON SYNTAX COLORS ─────────────────────────────── */
+  .kw   { color: #c792ea; }
+  .kw2  { color: #89ddff; }
+  .str  { color: #c3e88d; }
+  .num  { color: var(--accent3); }
+  .cmt  { color: #546e7a; font-style: italic; }
+  .cls  { color: #ffcb6b; }
+  .fn   { color: #82aaff; }
+  .dec  { color: var(--accent2); }
+  .self { color: #f07178; }
+
+  /* ── PATTERN CARDS ───────────────────────────────────── */
+  .pattern-card {
+    background: var(--bg2);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    overflow: hidden;
+    margin-bottom: 28px;
+    transition: border-color 0.2s;
+  }
+  .pattern-card:hover { border-color: var(--border2); }
+  .pattern-header {
+    padding: 20px 24px 16px;
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    align-items: flex-start;
+    gap: 16px;
+  }
+  .pattern-icon {
+    width: 40px; height: 40px;
+    border-radius: 10px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 18px;
+    flex-shrink: 0;
+  }
+  .pattern-name { font-size: 17px; font-weight: 600; margin-bottom: 4px; }
+  .pattern-why { font-size: 13px; color: var(--muted); }
+  .pattern-body { padding: 20px 24px; }
+
+  /* ── TAGS ────────────────────────────────────────────── */
+  .tag {
+    display: inline-block;
+    font-size: 11px;
+    font-weight: 600;
+    padding: 3px 10px;
+    border-radius: 5px;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+  }
+  .tag-blue  { background: rgba(108,122,255,0.15); color: var(--accent); }
+  .tag-teal  { background: rgba(78,205,196,0.15); color: var(--accent2); }
+  .tag-amber { background: rgba(247,195,106,0.15); color: var(--accent3); }
+  .tag-red   { background: rgba(255,107,107,0.15); color: var(--accent4); }
+  .tag-green { background: rgba(86,217,160,0.15); color: var(--green); }
+  .tag-purple{ background: rgba(180,127,255,0.15); color: var(--purple); }
+
+  /* ── UML DIAGRAM ─────────────────────────────────────── */
+  .uml-wrap {
+    background: var(--bg3);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    overflow-x: auto;
+    padding: 24px;
+    margin: 20px 0;
+  }
+
+  /* ── FLOW DIAGRAM ────────────────────────────────────── */
+  .flow-box {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    background: var(--bg3);
+    border: 1px solid var(--border2);
+    border-radius: 8px;
+    padding: 10px 16px;
+    font-size: 13px;
+  }
+
+  /* ── Q&A ─────────────────────────────────────────────── */
+  .qa-item {
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    overflow: hidden;
+    margin-bottom: 12px;
+  }
+  .qa-q {
+    background: var(--bg3);
+    padding: 14px 20px;
+    font-size: 14px;
+    font-weight: 500;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    cursor: pointer;
+    user-select: none;
+    gap: 12px;
+  }
+  .qa-q:hover { background: rgba(255,255,255,0.04); }
+  .qa-q .q-badge {
+    font-size: 11px;
+    color: var(--accent);
+    background: rgba(108,122,255,0.12);
+    border-radius: 4px;
+    padding: 2px 8px;
+    white-space: nowrap;
+  }
+  .qa-q .arrow {
+    color: var(--muted);
+    font-size: 12px;
+    transition: transform 0.2s;
+    flex-shrink: 0;
+  }
+  .qa-a {
+    display: none;
+    padding: 16px 20px;
+    border-top: 1px solid var(--border);
+    font-size: 14px;
+    color: #ccd0dc;
+    line-height: 1.7;
+  }
+  .qa-a.open { display: block; }
+  .qa-q.open .arrow { transform: rotate(90deg); }
+
+  /* ── TABLE ───────────────────────────────────────────── */
+  table { width: 100%; border-collapse: collapse; font-size: 13px; }
+  th {
+    text-align: left;
+    padding: 10px 14px;
+    background: var(--bg3);
+    color: var(--muted);
+    font-weight: 600;
+    font-size: 12px;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    border-bottom: 1px solid var(--border);
+  }
+  td {
+    padding: 10px 14px;
+    border-bottom: 1px solid var(--border);
+    vertical-align: top;
+  }
+  tr:last-child td { border-bottom: none; }
+  tr:hover td { background: rgba(255,255,255,0.02); }
+
+  /* ── REQUIREMENTS ────────────────────────────────────── */
+  .req-row {
+    display: flex;
+    gap: 12px;
+    align-items: flex-start;
+    padding: 10px 0;
+    border-bottom: 1px solid var(--border);
+  }
+  .req-row:last-child { border-bottom: none; }
+  .req-id {
+    font-size: 11px;
+    font-family: var(--mono);
+    color: var(--muted);
+    min-width: 48px;
+    padding-top: 2px;
+  }
+  .req-text { font-size: 14px; flex: 1; }
+
+  /* ── COMPLEXITY TABLE ─────────────────────────────────── */
+  .complexity-badge {
+    font-family: var(--mono);
+    font-size: 12px;
+    padding: 2px 8px;
+    border-radius: 4px;
+    background: var(--bg3);
+    border: 1px solid var(--border);
+  }
+
+  /* ── SIMULATOR ───────────────────────────────────────── */
+  .sim-wrap {
+    background: var(--bg2);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    padding: 28px;
+    margin: 24px 0;
+  }
+  .elevator-shaft {
+    display: flex;
+    gap: 16px;
+    margin: 20px 0;
+    align-items: flex-end;
+  }
+  .shaft-col { display: flex; flex-direction: column; gap: 4px; }
+  .shaft-label {
+    font-size: 11px;
+    color: var(--muted);
+    text-align: center;
+    margin-bottom: 8px;
+  }
+  .floor-cell {
+    width: 52px; height: 32px;
+    border-radius: 6px;
+    border: 1px solid var(--border);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 12px;
+    font-family: var(--mono);
+    transition: all 0.3s;
+    background: var(--bg3);
+    color: var(--muted);
+  }
+  .floor-cell.active {
+    border-color: var(--accent);
+    background: rgba(108,122,255,0.2);
+    color: var(--accent);
+  }
+  .floor-cell.going-up { border-color: var(--green); background: rgba(86,217,160,0.15); color: var(--green); }
+  .floor-cell.going-down { border-color: var(--accent3); background: rgba(247,195,106,0.15); color: var(--accent3); }
+  .floor-cell.request { border-color: var(--accent4); background: rgba(255,107,107,0.15); color: var(--accent4); }
+  .sim-controls { display: flex; gap: 10px; flex-wrap: wrap; margin-top: 16px; }
+  .sim-btn {
+    background: var(--bg3);
+    border: 1px solid var(--border2);
+    border-radius: 8px;
+    color: var(--text);
+    font-size: 13px;
+    cursor: pointer;
+    padding: 8px 16px;
+    font-family: var(--sans);
+    transition: all 0.15s;
+  }
+  .sim-btn:hover { background: rgba(108,122,255,0.15); border-color: var(--accent); color: var(--accent); }
+  .sim-btn.primary { background: var(--accent); border-color: var(--accent); color: white; }
+  .sim-btn.primary:hover { background: #7b87ff; }
+  .sim-log {
+    background: #0a0c12;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 14px 16px;
+    font-family: var(--mono);
+    font-size: 12px;
+    color: var(--muted);
+    height: 120px;
+    overflow-y: auto;
+    margin-top: 16px;
+    line-height: 1.8;
+  }
+  .log-up   { color: var(--green); }
+  .log-down { color: var(--accent3); }
+  .log-open { color: var(--accent2); }
+  .log-req  { color: var(--accent4); }
+  .log-idle { color: var(--muted); }
+
+  /* ── MISC ────────────────────────────────────────────── */
+  .divider {
+    border: none;
+    border-top: 1px solid var(--border);
+    margin: 40px 0;
+  }
+  .info-box {
+    background: rgba(78,205,196,0.07);
+    border: 1px solid rgba(78,205,196,0.2);
+    border-radius: 8px;
+    padding: 14px 18px;
+    font-size: 13px;
+    color: #a0e8e4;
+    margin: 16px 0;
+  }
+  .warn-box {
+    background: rgba(247,195,106,0.07);
+    border: 1px solid rgba(247,195,106,0.2);
+    border-radius: 8px;
+    padding: 14px 18px;
+    font-size: 13px;
+    color: #f0d898;
+    margin: 16px 0;
+  }
+  h3 { font-size: 17px; font-weight: 600; margin: 28px 0 12px; }
+  h4 { font-size: 15px; font-weight: 600; margin: 20px 0 8px; color: var(--accent2); }
+  p { margin-bottom: 12px; }
+  ul, ol { padding-left: 20px; margin-bottom: 12px; }
+  li { margin-bottom: 6px; font-size: 14px; }
+  strong { font-weight: 600; color: var(--text); }
+  code {
+    font-family: var(--mono);
+    font-size: 12px;
+    background: var(--bg3);
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    padding: 1px 6px;
+    color: var(--accent2);
+  }
+  .back-top {
+    position: fixed;
+    bottom: 28px;
+    right: 28px;
+    background: var(--bg2);
+    border: 1px solid var(--border2);
+    border-radius: 50%;
+    width: 40px; height: 40px;
+    display: flex; align-items: center; justify-content: center;
+    cursor: pointer;
+    font-size: 16px;
+    color: var(--muted);
+    transition: all 0.2s;
+    text-decoration: none;
+    z-index: 200;
+  }
+  .back-top:hover { border-color: var(--accent); color: var(--accent); }
+
+  @media (max-width: 768px) {
+    .hero { padding: 32px 20px; }
+    .hero h1 { font-size: 28px; }
+    .content { padding: 32px 20px; }
+    .nav-rail { padding: 0 20px; }
+    .grid-2, .grid-3 { grid-template-columns: 1fr; }
+  }
+</style>
+</head>
+<body>
+
+<!-- HERO -->
+<div class="hero">
+  <div class="hero-badge">🏢 LLD Interview Guide</div>
+  <h1>Elevator <span>Control System</span></h1>
+  <p>A complete low-level design walkthrough — from requirements to Python implementation, design patterns, and interview Q&A.</p>
+  <div class="hero-meta">
+    <div class="meta-pill"><div class="dot" style="background:#6c7aff"></div> Python 3.10+</div>
+    <div class="meta-pill"><div class="dot" style="background:#56d9a0"></div> 6 Design Patterns</div>
+    <div class="meta-pill"><div class="dot" style="background:#f7c36a"></div> Interactive Simulator</div>
+    <div class="meta-pill"><div class="dot" style="background:#ff6b6b"></div> 15 Interview Q&amp;A</div>
+  </div>
+</div>
+
+<!-- NAV -->
+<nav class="nav-rail">
+  <a href="#requirements" class="active">Requirements</a>
+  <a href="#classes">Core Classes</a>
+  <a href="#patterns">Design Patterns</a>
+  <a href="#code">Full Code</a>
+  <a href="#tests">Tests</a>
+  <a href="#simulator">Simulator</a>
+  <a href="#qa">Interview Q&amp;A</a>
+</nav>
+
+<div class="content">
+
+<!-- ── SECTION 1: REQUIREMENTS ──────────────────────────── -->
+<section class="section" id="requirements">
+  <div class="section-header">
+    <div class="section-num">1</div>
+    <div class="section-title">Requirements &amp; Scope</div>
+  </div>
+
+  <div class="info-box">
+    💡 In an interview, always spend 3–4 minutes clarifying requirements before drawing any diagram. This shows structured thinking.
+  </div>
+
+  <div class="grid-2">
+    <div class="card">
+      <div class="card-title">Functional Requirements</div>
+      <div class="req-row"><span class="req-id">FR-01</span><span class="req-text">Building has <strong>N floors</strong> and <strong>M elevators</strong></span></div>
+      <div class="req-row"><span class="req-id">FR-02</span><span class="req-text">Users can press <strong>hall buttons</strong> (up/down) on any floor</span></div>
+      <div class="req-row"><span class="req-id">FR-03</span><span class="req-text">Users inside car press <strong>destination buttons</strong></span></div>
+      <div class="req-row"><span class="req-id">FR-04</span><span class="req-text">System dispatches the <strong>best elevator</strong> to a request</span></div>
+      <div class="req-row"><span class="req-id">FR-05</span><span class="req-text">Elevator opens/closes doors, shows direction &amp; floor</span></div>
+      <div class="req-row"><span class="req-id">FR-06</span><span class="req-text">Support <strong>emergency stop</strong> button</span></div>
+      <div class="req-row"><span class="req-id">FR-07</span><span class="req-text">Maintain <strong>passenger count</strong> and respect weight capacity</span></div>
+    </div>
+    <div class="card">
+      <div class="card-title">Non-Functional Requirements</div>
+      <div class="req-row"><span class="req-id">NF-01</span><span class="req-text"><strong>Efficiency:</strong> minimise total wait time across all riders</span></div>
+      <div class="req-row"><span class="req-id">NF-02</span><span class="req-text"><strong>Scalability:</strong> easily add more floors or elevators</span></div>
+      <div class="req-row"><span class="req-id">NF-03</span><span class="req-text"><strong>Extensibility:</strong> swap scheduling algorithm without changing elevators</span></div>
+      <div class="req-row"><span class="req-id">NF-04</span><span class="req-text"><strong>Thread safety:</strong> concurrent requests handled correctly</span></div>
+      <div class="req-row"><span class="req-id">NF-05</span><span class="req-text"><strong>Observability:</strong> events logged/notified to displays and monitors</span></div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-title">Out of Scope (for this interview)</div>
+    <div style="display:flex;gap:10px;flex-wrap:wrap;margin-top:4px;">
+      <span class="tag tag-red">VIP / express floors</span>
+      <span class="tag tag-red">Power failure handling</span>
+      <span class="tag tag-red">Fire emergency mode</span>
+      <span class="tag tag-red">Predictive ML dispatch</span>
+      <span class="tag tag-red">Hardware motor control</span>
+    </div>
+  </div>
+</section>
+
+<!-- ── SECTION 2: CORE CLASSES ───────────────────────────── -->
+<section class="section" id="classes">
+  <div class="section-header">
+    <div class="section-num">2</div>
+    <div class="section-title">Core Classes &amp; UML</div>
+  </div>
+
+  <p style="color:var(--muted);margin-bottom:20px;">These six entities represent the real world. Each has a single, clear responsibility.</p>
+
+  <div class="grid-3" style="margin-bottom:24px;">
+    <div class="card">
+      <div class="card-title" style="color:var(--accent);">ElevatorDirection</div>
+      <p style="font-size:13px;color:var(--muted);">Enum: <code>UP</code>, <code>DOWN</code>, <code>IDLE</code>. Encodes the direction a car is moving or if it is stationary.</p>
+    </div>
+    <div class="card">
+      <div class="card-title" style="color:var(--accent);">ElevatorState</div>
+      <p style="font-size:13px;color:var(--muted);">Enum: <code>MOVING</code>, <code>DOORS_OPEN</code>, <code>IDLE</code>, <code>EMERGENCY</code>. Drives State pattern.</p>
+    </div>
+    <div class="card">
+      <div class="card-title" style="color:var(--accent);">Request</div>
+      <p style="font-size:13px;color:var(--muted);">A dataclass holding <code>floor</code> + <code>direction</code>. Represents one hall button press.</p>
+    </div>
+    <div class="card">
+      <div class="card-title" style="color:var(--accent2);">Elevator</div>
+      <p style="font-size:13px;color:var(--muted);">Core entity. Holds current floor, direction, state, pending stops, capacity. Moves step-by-step.</p>
+    </div>
+    <div class="card">
+      <div class="card-title" style="color:var(--accent2);">ElevatorController</div>
+      <p style="font-size:13px;color:var(--muted);">Manages all elevators. Receives external requests, delegates to a <em>Scheduler</em>.</p>
+    </div>
+    <div class="card">
+      <div class="card-title" style="color:var(--accent2);">Scheduler (Abstract)</div>
+      <p style="font-size:13px;color:var(--muted);">Strategy interface. Concrete: <code>NearestCarScheduler</code>, <code>SCANScheduler</code>.</p>
+    </div>
+  </div>
+
+  <!-- UML Diagram (SVG) -->
+  <div class="uml-wrap">
+    <svg width="100%" viewBox="0 0 1020 520" role="img">
+      <title>Elevator System UML class diagram</title>
+      <desc>Class diagram showing ElevatorController composing multiple Elevators, Strategy pattern with Scheduler interface, Observer pattern with EventBus and FloorDisplay.</desc>
+      <defs>
+        <marker id="arr" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+          <path d="M2 1L8 5L2 9" fill="none" stroke="context-stroke" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+        </marker>
+        <marker id="tri" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse">
+          <path d="M0 1L8 5L0 9Z" fill="#6c7aff" stroke="none"/>
+        </marker>
+        <marker id="diam" viewBox="0 0 10 10" refX="1" refY="5" markerWidth="8" markerHeight="8" orient="auto">
+          <path d="M1 5L5 2L9 5L5 8Z" fill="#4ecdc4" stroke="none"/>
+        </marker>
+      </defs>
+
+      <!-- ── ElevatorController ── -->
+      <rect x="10" y="30" width="200" height="120" rx="6" fill="#1c2030" stroke="#3a3f55" stroke-width="0.8"/>
+      <rect x="10" y="30" width="200" height="30" rx="6" fill="#252b3b" stroke="none"/>
+      <rect x="10" y="56" width="200" height="4" rx="0" fill="#252b3b" stroke="none"/>
+      <text x="110" y="51" font-family="JetBrains Mono,monospace" font-size="12" font-weight="600" fill="#6c7aff" text-anchor="middle">ElevatorController</text>
+      <text x="20" y="80" font-family="JetBrains Mono,monospace" font-size="10" fill="#8890a4">- elevators: List[Elevator]</text>
+      <text x="20" y="96" font-family="JetBrains Mono,monospace" font-size="10" fill="#8890a4">- scheduler: Scheduler</text>
+      <text x="20" y="112" font-family="JetBrains Mono,monospace" font-size="10" fill="#4ecdc4">+ request_elevator(req)</text>
+      <text x="20" y="128" font-family="JetBrains Mono,monospace" font-size="10" fill="#4ecdc4">+ step()</text>
+
+      <!-- ── Scheduler (abstract) ── -->
+      <rect x="10" y="230" width="200" height="95" rx="6" fill="#1c2030" stroke="#3a3f55" stroke-width="0.8" stroke-dasharray="4,3"/>
+      <rect x="10" y="230" width="200" height="30" rx="6" fill="#1f2535" stroke="none"/>
+      <text x="110" y="245" font-family="JetBrains Mono,monospace" font-size="10" fill="#b47fff" text-anchor="middle">«interface»</text>
+      <text x="110" y="260" font-family="JetBrains Mono,monospace" font-size="12" font-weight="600" fill="#b47fff" text-anchor="middle">Scheduler</text>
+      <text x="20" y="285" font-family="JetBrains Mono,monospace" font-size="10" fill="#4ecdc4">+ select(elevators, req)</text>
+      <text x="20" y="300" font-family="JetBrains Mono,monospace" font-size="10" fill="#8890a4">→ Elevator</text>
+
+      <!-- ── NearestCarScheduler ── -->
+      <rect x="10" y="400" width="185" height="60" rx="6" fill="#1c2030" stroke="#3a3f55" stroke-width="0.8"/>
+      <rect x="10" y="400" width="185" height="28" rx="6" fill="#1a2020" stroke="none"/>
+      <text x="103" y="419" font-family="JetBrains Mono,monospace" font-size="10" font-weight="600" fill="#56d9a0" text-anchor="middle">NearestCarScheduler</text>
+      <text x="20" y="444" font-family="JetBrains Mono,monospace" font-size="10" fill="#4ecdc4">+ select(...)</text>
+
+      <!-- ── SCANScheduler ── -->
+      <rect x="220" y="400" width="140" height="60" rx="6" fill="#1c2030" stroke="#3a3f55" stroke-width="0.8"/>
+      <rect x="220" y="400" width="140" height="28" rx="6" fill="#1a2020" stroke="none"/>
+      <text x="290" y="419" font-family="JetBrains Mono,monospace" font-size="10" font-weight="600" fill="#56d9a0" text-anchor="middle">SCANScheduler</text>
+      <text x="230" y="444" font-family="JetBrains Mono,monospace" font-size="10" fill="#4ecdc4">+ select(...)</text>
+
+      <!-- ── Elevator ── -->
+      <rect x="380" y="30" width="210" height="160" rx="6" fill="#1c2030" stroke="#3a3f55" stroke-width="0.8"/>
+      <rect x="380" y="30" width="210" height="30" rx="6" fill="#252b3b" stroke="none"/>
+      <text x="485" y="51" font-family="JetBrains Mono,monospace" font-size="12" font-weight="600" fill="#6c7aff" text-anchor="middle">Elevator</text>
+      <text x="390" y="78" font-family="JetBrains Mono,monospace" font-size="10" fill="#8890a4">- id: int</text>
+      <text x="390" y="94" font-family="JetBrains Mono,monospace" font-size="10" fill="#8890a4">- current_floor: int</text>
+      <text x="390" y="110" font-family="JetBrains Mono,monospace" font-size="10" fill="#8890a4">- direction: Direction</text>
+      <text x="390" y="126" font-family="JetBrains Mono,monospace" font-size="10" fill="#8890a4">- state: ElevatorState</text>
+      <text x="390" y="142" font-family="JetBrains Mono,monospace" font-size="10" fill="#8890a4">- stops: SortedSet</text>
+      <text x="390" y="158" font-family="JetBrains Mono,monospace" font-size="10" fill="#4ecdc4">+ add_stop(floor) / step()</text>
+      <text x="390" y="174" font-family="JetBrains Mono,monospace" font-size="10" fill="#4ecdc4">+ open_door() / close_door()</text>
+
+      <!-- ── Request ── -->
+      <rect x="380" y="240" width="200" height="85" rx="6" fill="#1c2030" stroke="#3a3f55" stroke-width="0.8"/>
+      <rect x="380" y="240" width="200" height="28" rx="6" fill="#252b3b" stroke="none"/>
+      <text x="480" y="259" font-family="JetBrains Mono,monospace" font-size="12" font-weight="600" fill="#f7c36a" text-anchor="middle">Request</text>
+      <text x="390" y="286" font-family="JetBrains Mono,monospace" font-size="10" fill="#8890a4">+ floor: int</text>
+      <text x="390" y="302" font-family="JetBrains Mono,monospace" font-size="10" fill="#8890a4">+ direction: Direction</text>
+
+      <!-- ── EventBus ── -->
+      <rect x="650" y="30" width="200" height="105" rx="6" fill="#1c2030" stroke="#3a3f55" stroke-width="0.8" stroke-dasharray="4,3"/>
+      <rect x="650" y="30" width="200" height="28" rx="6" fill="#1f2535" stroke="none"/>
+      <text x="750" y="45" font-family="JetBrains Mono,monospace" font-size="10" fill="#b47fff" text-anchor="middle">«interface»</text>
+      <text x="750" y="60" font-family="JetBrains Mono,monospace" font-size="12" font-weight="600" fill="#b47fff" text-anchor="middle">ElevatorObserver</text>
+      <text x="660" y="84" font-family="JetBrains Mono,monospace" font-size="10" fill="#4ecdc4">+ on_floor_change(elev, floor)</text>
+      <text x="660" y="100" font-family="JetBrains Mono,monospace" font-size="10" fill="#4ecdc4">+ on_door_open(elevator)</text>
+      <text x="660" y="116" font-family="JetBrains Mono,monospace" font-size="10" fill="#4ecdc4">+ on_state_change(elev, s)</text>
+
+      <!-- ── FloorDisplay ── -->
+      <rect x="650" y="200" width="190" height="75" rx="6" fill="#1c2030" stroke="#3a3f55" stroke-width="0.8"/>
+      <rect x="650" y="200" width="190" height="28" rx="6" fill="#1a2535" stroke="none"/>
+      <text x="745" y="219" font-family="JetBrains Mono,monospace" font-size="11" font-weight="600" fill="#56d9a0" text-anchor="middle">FloorDisplay</text>
+      <text x="660" y="244" font-family="JetBrains Mono,monospace" font-size="10" fill="#4ecdc4">+ on_floor_change(...)</text>
+      <text x="660" y="260" font-family="JetBrains Mono,monospace" font-size="10" fill="#4ecdc4">+ on_door_open(...)</text>
+
+      <!-- ── Logger ── -->
+      <rect x="650" y="300" width="190" height="62" rx="6" fill="#1c2030" stroke="#3a3f55" stroke-width="0.8"/>
+      <rect x="650" y="300" width="190" height="28" rx="6" fill="#1a2535" stroke="none"/>
+      <text x="745" y="319" font-family="JetBrains Mono,monospace" font-size="11" font-weight="600" fill="#56d9a0" text-anchor="middle">EventLogger</text>
+      <text x="660" y="344" font-family="JetBrains Mono,monospace" font-size="10" fill="#4ecdc4">+ on_state_change(...)</text>
+
+      <!-- ── ARROWS ── -->
+      <!-- Controller --uses--> Scheduler (Strategy) -->
+      <line x1="110" y1="150" x2="110" y2="228" stroke="#6c7aff" stroke-width="1" stroke-dasharray="4,3" marker-end="url(#arr)"/>
+      <text x="114" y="195" font-family="JetBrains Mono,monospace" font-size="9" fill="#6c7aff">«uses»</text>
+
+      <!-- Scheduler <|-- NearestCar (Inheritance) -->
+      <line x1="110" y1="325" x2="110" y2="398" stroke="#b47fff" stroke-width="1" marker-end="url(#tri)"/>
+      <!-- Scheduler <|-- SCANScheduler (Inheritance) -->
+      <path d="M160 325 Q220 360 290 398" fill="none" stroke="#b47fff" stroke-width="1" marker-end="url(#tri)"/>
+
+      <!-- Controller 1--* Elevator (Composition) -->
+      <line x1="210" y1="90" x2="378" y2="90" stroke="#4ecdc4" stroke-width="1" marker-start="url(#diam)" marker-end="url(#arr)"/>
+      <text x="270" y="82" font-family="JetBrains Mono,monospace" font-size="9" fill="#4ecdc4">1 .. *</text>
+
+      <!-- Controller --uses--> Request -->
+      <line x1="210" y1="120" x2="375" y2="260" stroke="#f7c36a" stroke-width="1" stroke-dasharray="4,3" marker-end="url(#arr)"/>
+
+      <!-- Elevator --notifies--> Observer -->
+      <line x1="590" y1="80" x2="648" y2="80" stroke="#b47fff" stroke-width="1" stroke-dasharray="4,3" marker-end="url(#arr)"/>
+      <text x="600" y="72" font-family="JetBrains Mono,monospace" font-size="9" fill="#b47fff">«notifies»</text>
+
+      <!-- Observer <|-- FloorDisplay -->
+      <line x1="750" y1="135" x2="750" y2="198" stroke="#b47fff" stroke-width="1" marker-end="url(#tri)"/>
+      <!-- Observer <|-- Logger -->
+      <path d="M840 135 L840 180 L745 180 L745 298" fill="none" stroke="#b47fff" stroke-width="1" marker-end="url(#tri)"/>
+
+      <!-- Legend -->
+      <text x="390" y="400" font-family="JetBrains Mono,monospace" font-size="9" fill="#546e7a">◆──── Composition</text>
+      <text x="390" y="418" font-family="JetBrains Mono,monospace" font-size="9" fill="#546e7a">──▷  Inheritance</text>
+      <text x="390" y="436" font-family="JetBrains Mono,monospace" font-size="9" fill="#546e7a">- - → Uses / Notifies</text>
+    </svg>
+  </div>
+
+  <div class="warn-box">
+    ⚡ <strong>Interview tip:</strong> The key insight is that <code>Elevator</code> does NOT know about scheduling logic. It just has a set of stops. The <code>Scheduler</code> decides <em>which</em> elevator gets assigned. This separation is why we can swap algorithms easily.
+  </div>
+</section>
+
+<!-- ── SECTION 3: DESIGN PATTERNS ───────────────────────── -->
+<section class="section" id="patterns">
+  <div class="section-header">
+    <div class="section-num">3</div>
+    <div class="section-title">Design Patterns Deep Dive</div>
+  </div>
+
+  <!-- PATTERN 1: State -->
+  <div class="pattern-card">
+    <div class="pattern-header">
+      <div class="pattern-icon" style="background:rgba(108,122,255,0.15);">🔄</div>
+      <div>
+        <div class="pattern-name">State Pattern <span class="tag tag-blue" style="margin-left:8px;font-size:10px;">Behavioural</span></div>
+        <div class="pattern-why">An elevator behaves very differently depending on whether it is moving, idle, or has its doors open. Instead of a giant <code>if/elif</code> chain, each behaviour lives in its own state class.</div>
+      </div>
+    </div>
+    <div class="pattern-body">
+      <div class="code-block">
+        <div class="code-header">
+          <div class="code-lang"><div class="lang-dot"></div> Python — ElevatorState (State Pattern)</div>
+          <button class="code-copy" onclick="copyCode(this)">Copy</button>
+        </div>
+        <pre><span class="kw">from</span> abc <span class="kw">import</span> ABC, abstractmethod
+<span class="kw">from</span> enum <span class="kw">import</span> Enum, auto
+
+<span class="kw">class</span> <span class="cls">Direction</span>(Enum):
+    UP   = <span class="fn">auto</span>()
+    DOWN = <span class="fn">auto</span>()
+    IDLE = <span class="fn">auto</span>()
+
+<span class="cmt"># ── Abstract state interface ─────────────────────</span>
+<span class="kw">class</span> <span class="cls">ElevatorStateHandler</span>(ABC):
+    <span class="dec">@abstractmethod</span>
+    <span class="kw">def</span> <span class="fn">on_request</span>(<span class="self">self</span>, elevator: <span class="str">"Elevator"</span>, floor: int) -> <span class="kw2">None</span>: ...
+    <span class="dec">@abstractmethod</span>
+    <span class="kw">def</span> <span class="fn">step</span>(<span class="self">self</span>, elevator: <span class="str">"Elevator"</span>) -> <span class="kw2">None</span>: ...
+
+<span class="cmt"># ── Concrete state: Idle ─────────────────────────</span>
+<span class="kw">class</span> <span class="cls">IdleState</span>(<span class="cls">ElevatorStateHandler</span>):
+    <span class="kw">def</span> <span class="fn">on_request</span>(<span class="self">self</span>, elevator, floor):
+        elevator.stops.add(floor)
+        <span class="cmt"># Transition: decide direction then move</span>
+        <span class="kw">if</span> floor > elevator.current_floor:
+            elevator.direction = Direction.UP
+        <span class="kw">else</span>:
+            elevator.direction = Direction.DOWN
+        elevator.state = MovingState()
+
+    <span class="kw">def</span> <span class="fn">step</span>(<span class="self">self</span>, elevator):
+        <span class="kw">pass</span>  <span class="cmt"># Nothing to do — already idle</span>
+
+<span class="cmt"># ── Concrete state: Moving ───────────────────────</span>
+<span class="kw">class</span> <span class="cls">MovingState</span>(<span class="cls">ElevatorStateHandler</span>):
+    <span class="kw">def</span> <span class="fn">on_request</span>(<span class="self">self</span>, elevator, floor):
+        elevator.stops.add(floor)  <span class="cmt"># Accept on the way</span>
+
+    <span class="kw">def</span> <span class="fn">step</span>(<span class="self">self</span>, elevator):
+        <span class="kw">if</span> elevator.direction == Direction.UP:
+            elevator.current_floor += <span class="num">1</span>
+        <span class="kw">else</span>:
+            elevator.current_floor -= <span class="num">1</span>
+
+        <span class="kw">if</span> elevator.current_floor <span class="kw">in</span> elevator.stops:
+            elevator.stops.remove(elevator.current_floor)
+            elevator.state = DoorsOpenState()  <span class="cmt"># → open doors</span>
+            elevator.notify(<span class="str">"door_open"</span>)
+            <span class="kw">return</span>
+
+        <span class="cmt"># No more stops in current direction → go idle</span>
+        <span class="kw">if</span> <span class="kw">not</span> elevator.stops:
+            elevator.direction = Direction.IDLE
+            elevator.state = IdleState()
+
+<span class="cmt"># ── Concrete state: DoorsOpen ────────────────────</span>
+<span class="kw">class</span> <span class="cls">DoorsOpenState</span>(<span class="cls">ElevatorStateHandler</span>):
+    <span class="kw">def</span> <span class="fn">on_request</span>(<span class="self">self</span>, elevator, floor):
+        elevator.stops.add(floor)
+
+    <span class="kw">def</span> <span class="fn">step</span>(<span class="self">self</span>, elevator):
+        <span class="cmt"># Doors close after one "tick"</span>
+        elevator.state = MovingState() <span class="kw">if</span> elevator.stops <span class="kw">else</span> IdleState()
+        elevator.notify(<span class="str">"door_close"</span>)</pre>
+      </div>
+      <div class="info-box">🎯 <strong>Why not an enum?</strong> If you used <code>if state == "MOVING": ...</code> everywhere, all state logic is scattered. With the State pattern, adding an <code>EmergencyState</code> is one new class — no existing code changes.</div>
+    </div>
+  </div>
+
+  <!-- PATTERN 2: Strategy -->
+  <div class="pattern-card">
+    <div class="pattern-header">
+      <div class="pattern-icon" style="background:rgba(78,205,196,0.15);">🧠</div>
+      <div>
+        <div class="pattern-name">Strategy Pattern <span class="tag tag-teal" style="margin-left:8px;font-size:10px;">Behavioural</span></div>
+        <div class="pattern-why">Different scheduling algorithms (Nearest Car, SCAN/elevator algorithm, load-balanced) are interchangeable. The controller doesn't know or care which one is active.</div>
+      </div>
+    </div>
+    <div class="pattern-body">
+      <div class="code-block">
+        <div class="code-header">
+          <div class="code-lang"><div class="lang-dot"></div> Python — Scheduler Strategy</div>
+          <button class="code-copy" onclick="copyCode(this)">Copy</button>
+        </div>
+        <pre><span class="kw">from</span> abc <span class="kw">import</span> ABC, abstractmethod
+
+<span class="kw">class</span> <span class="cls">Scheduler</span>(ABC):
+    <span class="dec">@abstractmethod</span>
+    <span class="kw">def</span> <span class="fn">select</span>(<span class="self">self</span>, elevators: list, request: <span class="str">"Request"</span>) -> <span class="str">"Elevator"</span>: ...
+
+<span class="cmt"># ── Strategy 1: Nearest Car ──────────────────────</span>
+<span class="kw">class</span> <span class="cls">NearestCarScheduler</span>(<span class="cls">Scheduler</span>):
+    <span class="kw">def</span> <span class="fn">select</span>(<span class="self">self</span>, elevators, request):
+        <span class="kw">def</span> <span class="fn">cost</span>(e):
+            distance = <span class="fn">abs</span>(e.current_floor - request.floor)
+            <span class="cmt"># Prefer idle elevators heavily</span>
+            idle_bonus = <span class="num">0</span> <span class="kw">if</span> isinstance(e.state, IdleState) <span class="kw">else</span> <span class="num">3</span>
+            <span class="cmt"># Prefer elevators already going the same direction</span>
+            wrong_dir   = <span class="num">0</span> <span class="kw">if</span> e.direction == request.direction <span class="kw">else</span> <span class="num">2</span>
+            <span class="kw">return</span> distance + idle_bonus + wrong_dir
+        <span class="kw">return</span> <span class="fn">min</span>(elevators, key=cost)
+
+<span class="cmt"># ── Strategy 2: SCAN (elevator algorithm) ────────</span>
+<span class="kw">class</span> <span class="cls">SCANScheduler</span>(<span class="cls">Scheduler</span>):
+    <span class="kw">def</span> <span class="fn">select</span>(<span class="self">self</span>, elevators, request):
+        <span class="kw">def</span> <span class="fn">scan_cost</span>(e):
+            cur, req = e.current_floor, request.floor
+            <span class="kw">if</span> e.direction == Direction.UP:
+                <span class="kw">if</span> req >= cur: <span class="kw">return</span> req - cur          <span class="cmt"># On the way up</span>
+                <span class="kw">return</span> (<span class="num">2</span> * e.max_floor - cur - req)       <span class="cmt"># Past top, coming back</span>
+            <span class="kw">elif</span> e.direction == Direction.DOWN:
+                <span class="kw">if</span> req <= cur: <span class="kw">return</span> cur - req          <span class="cmt"># On the way down</span>
+                <span class="kw">return</span> (cur + req)                         <span class="cmt"># Past bottom, going up</span>
+            <span class="kw">return</span> <span class="fn">abs</span>(req - cur)                         <span class="cmt"># Idle: pure distance</span>
+        <span class="kw">return</span> <span class="fn">min</span>(elevators, key=scan_cost)
+
+<span class="cmt"># ── Controller uses any scheduler ────────────────</span>
+<span class="kw">class</span> <span class="cls">ElevatorController</span>:
+    <span class="kw">def</span> <span class="fn">__init__</span>(<span class="self">self</span>, elevators, scheduler: <span class="cls">Scheduler</span>):
+        <span class="self">self</span>.elevators  = elevators
+        <span class="self">self</span>.scheduler  = scheduler  <span class="cmt"># Swappable at runtime!</span>
+
+    <span class="kw">def</span> <span class="fn">set_scheduler</span>(<span class="self">self</span>, scheduler: <span class="cls">Scheduler</span>):
+        <span class="self">self</span>.scheduler = scheduler  <span class="cmt"># Hot-swap algorithm</span>
+
+    <span class="kw">def</span> <span class="fn">request_elevator</span>(<span class="self">self</span>, request):
+        best = <span class="self">self</span>.scheduler.select(<span class="self">self</span>.elevators, request)
+        best.add_stop(request.floor)
+        <span class="kw">return</span> best</pre>
+      </div>
+    </div>
+  </div>
+
+  <!-- PATTERN 3: Observer -->
+  <div class="pattern-card">
+    <div class="pattern-header">
+      <div class="pattern-icon" style="background:rgba(247,195,106,0.15);">📡</div>
+      <div>
+        <div class="pattern-name">Observer Pattern <span class="tag tag-amber" style="margin-left:8px;font-size:10px;">Behavioural</span></div>
+        <div class="pattern-why">Floor displays, loggers, and alarms all need to react to elevator events. Instead of the elevator calling each one directly (tight coupling), it publishes events to subscribers.</div>
+      </div>
+    </div>
+    <div class="pattern-body">
+      <div class="code-block">
+        <div class="code-header">
+          <div class="code-lang"><div class="lang-dot"></div> Python — Observer</div>
+          <button class="code-copy" onclick="copyCode(this)">Copy</button>
+        </div>
+        <pre><span class="kw">from</span> abc <span class="kw">import</span> ABC, abstractmethod
+
+<span class="kw">class</span> <span class="cls">ElevatorObserver</span>(ABC):
+    <span class="dec">@abstractmethod</span>
+    <span class="kw">def</span> <span class="fn">on_floor_change</span>(<span class="self">self</span>, elevator, floor: int): ...
+    <span class="dec">@abstractmethod</span>
+    <span class="kw">def</span> <span class="fn">on_door_open</span>(<span class="self">self</span>, elevator): ...
+    <span class="dec">@abstractmethod</span>
+    <span class="kw">def</span> <span class="fn">on_state_change</span>(<span class="self">self</span>, elevator, state): ...
+
+<span class="cmt"># ── Concrete Observer: Floor Display ─────────────</span>
+<span class="kw">class</span> <span class="cls">FloorDisplay</span>(<span class="cls">ElevatorObserver</span>):
+    <span class="kw">def</span> <span class="fn">on_floor_change</span>(<span class="self">self</span>, elevator, floor):
+        arrow = <span class="str">"▲"</span> <span class="kw">if</span> elevator.direction == Direction.UP <span class="kw">else</span> <span class="str">"▼"</span>
+        <span class="fn">print</span>(<span class="str">f"[Display] Elevator {elevator.id} → Floor {floor} {arrow}"</span>)
+    <span class="kw">def</span> <span class="fn">on_door_open</span>(<span class="self">self</span>, elevator):
+        <span class="fn">print</span>(<span class="str">f"[Display] 🚪 DOORS OPEN @ Floor {elevator.current_floor}"</span>)
+    <span class="kw">def</span> <span class="fn">on_state_change</span>(<span class="self">self</span>, elevator, state): <span class="kw">pass</span>
+
+<span class="cmt"># ── Concrete Observer: Event Logger ──────────────</span>
+<span class="kw">class</span> <span class="cls">EventLogger</span>(<span class="cls">ElevatorObserver</span>):
+    <span class="kw">def</span> <span class="fn">__init__</span>(<span class="self">self</span>):
+        <span class="self">self</span>.log = []
+    <span class="kw">def</span> <span class="fn">on_floor_change</span>(<span class="self">self</span>, elevator, floor):
+        <span class="self">self</span>.log.append((<span class="str">"floor"</span>, elevator.id, floor))
+    <span class="kw">def</span> <span class="fn">on_door_open</span>(<span class="self">self</span>, elevator):
+        <span class="self">self</span>.log.append((<span class="str">"open"</span>, elevator.id, elevator.current_floor))
+    <span class="kw">def</span> <span class="fn">on_state_change</span>(<span class="self">self</span>, elevator, state):
+        <span class="self">self</span>.log.append((<span class="str">"state"</span>, elevator.id, <span class="fn">type</span>(state).__name__))
+
+<span class="cmt"># ── Elevator: Observable subject ─────────────────</span>
+<span class="kw">class</span> <span class="cls">Elevator</span>:
+    <span class="kw">def</span> <span class="fn">__init__</span>(<span class="self">self</span>, id, max_floor):
+        <span class="self">self</span>.id           = id
+        <span class="self">self</span>.max_floor    = max_floor
+        <span class="self">self</span>.current_floor = <span class="num">1</span>
+        <span class="self">self</span>.direction    = Direction.IDLE
+        <span class="self">self</span>.state        = IdleState()
+        <span class="self">self</span>.stops        = <span class="fn">set</span>()
+        <span class="self">self</span>._observers   = []
+
+    <span class="kw">def</span> <span class="fn">subscribe</span>(<span class="self">self</span>, observer: <span class="cls">ElevatorObserver</span>):
+        <span class="self">self</span>._observers.append(observer)
+
+    <span class="kw">def</span> <span class="fn">notify</span>(<span class="self">self</span>, event: str):
+        <span class="kw">for</span> obs <span class="kw">in</span> <span class="self">self</span>._observers:
+            <span class="kw">if</span>   event == <span class="str">"floor"</span>: obs.on_floor_change(<span class="self">self</span>, <span class="self">self</span>.current_floor)
+            <span class="kw">elif</span> event == <span class="str">"door_open"</span>: obs.on_door_open(<span class="self">self</span>)
+            <span class="kw">elif</span> event == <span class="str">"state"</span>: obs.on_state_change(<span class="self">self</span>, <span class="self">self</span>.state)</pre>
+      </div>
+    </div>
+  </div>
+
+  <!-- PATTERN 4: Singleton -->
+  <div class="pattern-card">
+    <div class="pattern-header">
+      <div class="pattern-icon" style="background:rgba(255,107,107,0.15);">1️⃣</div>
+      <div>
+        <div class="pattern-name">Singleton Pattern <span class="tag tag-red" style="margin-left:8px;font-size:10px;">Creational</span></div>
+        <div class="pattern-why">There is exactly one <code>ElevatorController</code> for a building. Using Singleton prevents accidental creation of a second controller which would create conflicting dispatch decisions.</div>
+      </div>
+    </div>
+    <div class="pattern-body">
+      <div class="code-block">
+        <div class="code-header">
+          <div class="code-lang"><div class="lang-dot"></div> Python — Thread-safe Singleton</div>
+          <button class="code-copy" onclick="copyCode(this)">Copy</button>
+        </div>
+        <pre><span class="kw">import</span> threading
+
+<span class="kw">class</span> <span class="cls">ElevatorController</span>:
+    _instance = <span class="kw2">None</span>
+    _lock     = threading.Lock()
+
+    <span class="kw">def</span> <span class="fn">__new__</span>(<span class="cls">cls</span>, *args, **kwargs):
+        <span class="kw">if</span> <span class="cls">cls</span>._instance <span class="kw">is</span> <span class="kw2">None</span>:
+            <span class="kw">with</span> <span class="cls">cls</span>._lock:               <span class="cmt"># double-checked locking</span>
+                <span class="kw">if</span> <span class="cls">cls</span>._instance <span class="kw">is</span> <span class="kw2">None</span>:
+                    <span class="cls">cls</span>._instance = <span class="fn">super</span>().__new__(<span class="cls">cls</span>)
+        <span class="kw">return</span> <span class="cls">cls</span>._instance
+
+    <span class="kw">def</span> <span class="fn">__init__</span>(<span class="self">self</span>, elevators=<span class="kw2">None</span>, scheduler=<span class="kw2">None</span>):
+        <span class="kw">if</span> <span class="fn">hasattr</span>(<span class="self">self</span>, <span class="str">'_ready'</span>): <span class="kw">return</span>
+        <span class="self">self</span>.elevators = elevators <span class="kw">or</span> []
+        <span class="self">self</span>.scheduler = scheduler <span class="kw">or</span> NearestCarScheduler()
+        <span class="self">self</span>._ready    = <span class="kw2">True</span>
+
+<span class="cmt"># Usage — always returns the same object</span>
+ctrl1 = ElevatorController()
+ctrl2 = ElevatorController()
+<span class="fn">assert</span> ctrl1 <span class="kw">is</span> ctrl2  <span class="cmt"># ✓ same instance</span></pre>
+      </div>
+      <div class="warn-box">⚠️ <strong>Interview warning:</strong> Interviewers sometimes ask "why not just a module-level variable?" The answer is that Singleton gives you lazy initialisation, thread-safe creation, and the ability to subclass or mock for testing.</div>
+    </div>
+  </div>
+
+  <!-- PATTERN 5: Factory -->
+  <div class="pattern-card">
+    <div class="pattern-header">
+      <div class="pattern-icon" style="background:rgba(86,217,160,0.15);">🏭</div>
+      <div>
+        <div class="pattern-name">Factory Method Pattern <span class="tag tag-green" style="margin-left:8px;font-size:10px;">Creational</span></div>
+        <div class="pattern-why">Creating an <code>Elevator</code> involves wiring up observers, setting capacity, floor range, etc. A factory encapsulates this so client code doesn't duplicate setup logic.</div>
+      </div>
+    </div>
+    <div class="pattern-body">
+      <div class="code-block">
+        <div class="code-header">
+          <div class="code-lang"><div class="lang-dot"></div> Python — ElevatorFactory</div>
+          <button class="code-copy" onclick="copyCode(this)">Copy</button>
+        </div>
+        <pre><span class="kw">from</span> dataclasses <span class="kw">import</span> dataclass
+
+<span class="dec">@dataclass</span>
+<span class="kw">class</span> <span class="cls">ElevatorConfig</span>:
+    id:           int
+    min_floor:    int
+    max_floor:    int
+    capacity:     int  <span class="cmt"># max passengers</span>
+    observers:    list = <span class="kw2">None</span>
+
+<span class="kw">class</span> <span class="cls">ElevatorFactory</span>:
+    <span class="dec">@staticmethod</span>
+    <span class="kw">def</span> <span class="fn">create</span>(config: <span class="cls">ElevatorConfig</span>) -> <span class="str">"Elevator"</span>:
+        elev = Elevator(
+            id        = config.id,
+            max_floor = config.max_floor,
+            min_floor = config.min_floor,
+            capacity  = config.capacity,
+        )
+        <span class="kw">for</span> obs <span class="kw">in</span> (config.observers <span class="kw">or</span> []):
+            elev.subscribe(obs)
+        <span class="kw">return</span> elev
+
+    <span class="dec">@staticmethod</span>
+    <span class="kw">def</span> <span class="fn">create_fleet</span>(n: int, max_floor: int) -> list:
+        <span class="cmt">"""Create N identical elevators with shared logger."""</span>
+        logger = EventLogger()
+        display = FloorDisplay()
+        <span class="kw">return</span> [
+            ElevatorFactory.create(ElevatorConfig(
+                id=i, min_floor=<span class="num">1</span>, max_floor=max_floor,
+                capacity=<span class="num">10</span>, observers=[logger, display]
+            ))
+            <span class="kw">for</span> i <span class="kw">in</span> <span class="fn">range</span>(n)
+        ]</pre>
+      </div>
+    </div>
+  </div>
+
+  <!-- PATTERN 6: Command -->
+  <div class="pattern-card">
+    <div class="pattern-header">
+      <div class="pattern-icon" style="background:rgba(180,127,255,0.15);">📋</div>
+      <div>
+        <div class="pattern-name">Command Pattern <span class="tag tag-purple" style="margin-left:8px;font-size:10px;">Behavioural</span></div>
+        <div class="pattern-why">Button presses are encapsulated as Command objects. This lets us queue, log, undo, or replay requests — essential for features like "cancel my request" or audit trails.</div>
+      </div>
+    </div>
+    <div class="pattern-body">
+      <div class="code-block">
+        <div class="code-header">
+          <div class="code-lang"><div class="lang-dot"></div> Python — Command Pattern for button presses</div>
+          <button class="code-copy" onclick="copyCode(this)">Copy</button>
+        </div>
+        <pre><span class="kw">from</span> abc <span class="kw">import</span> ABC, abstractmethod
+<span class="kw">from</span> dataclasses <span class="kw">import</span> dataclass, field
+
+<span class="kw">class</span> <span class="cls">Command</span>(ABC):
+    <span class="dec">@abstractmethod</span>
+    <span class="kw">def</span> <span class="fn">execute</span>(<span class="self">self</span>): ...
+
+<span class="dec">@dataclass</span>
+<span class="kw">class</span> <span class="cls">HallCallCommand</span>(<span class="cls">Command</span>):
+    <span class="cmt">"""Pressed UP/DOWN button on a floor."""</span>
+    controller: <span class="cls">ElevatorController</span>
+    floor:      int
+    direction:  <span class="cls">Direction</span>
+
+    <span class="kw">def</span> <span class="fn">execute</span>(<span class="self">self</span>):
+        req = Request(floor=<span class="self">self</span>.floor, direction=<span class="self">self</span>.direction)
+        <span class="kw">return</span> <span class="self">self</span>.controller.request_elevator(req)
+
+<span class="dec">@dataclass</span>
+<span class="kw">class</span> <span class="cls">CarCallCommand</span>(<span class="cls">Command</span>):
+    <span class="cmt">"""Pressed floor button inside the car."""</span>
+    elevator: <span class="cls">Elevator</span>
+    floor:    int
+
+    <span class="kw">def</span> <span class="fn">execute</span>(<span class="self">self</span>):
+        <span class="self">self</span>.elevator.add_stop(<span class="self">self</span>.floor)
+
+<span class="dec">@dataclass</span>
+<span class="kw">class</span> <span class="cls">EmergencyStopCommand</span>(<span class="cls">Command</span>):
+    elevator: <span class="cls">Elevator</span>
+
+    <span class="kw">def</span> <span class="fn">execute</span>(<span class="self">self</span>):
+        <span class="self">self</span>.elevator.emergency_stop()
+
+<span class="cmt"># ── Command Queue (Button panel) ──────────────────</span>
+<span class="kw">class</span> <span class="cls">ButtonPanel</span>:
+    <span class="kw">def</span> <span class="fn">__init__</span>(<span class="self">self</span>):
+        <span class="self">self</span>._history: list[<span class="cls">Command</span>] = []
+
+    <span class="kw">def</span> <span class="fn">press</span>(<span class="self">self</span>, cmd: <span class="cls">Command</span>):
+        result = cmd.execute()
+        <span class="self">self</span>._history.append(cmd)
+        <span class="kw">return</span> result</pre>
+      </div>
+    </div>
+  </div>
+
+  <!-- Pattern Summary Table -->
+  <div class="card" style="margin-top:32px;">
+    <div class="card-title">Pattern Summary</div>
+    <table>
+      <thead>
+        <tr>
+          <th>Pattern</th>
+          <th>Type</th>
+          <th>Applied To</th>
+          <th>Benefit</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td><strong>State</strong></td>
+          <td><span class="tag tag-blue">Behavioural</span></td>
+          <td><code>Elevator</code></td>
+          <td>No giant if/else for moving/idle/open. Easy to add new states.</td>
+        </tr>
+        <tr>
+          <td><strong>Strategy</strong></td>
+          <td><span class="tag tag-blue">Behavioural</span></td>
+          <td><code>Scheduler</code></td>
+          <td>Swap dispatch algorithm (Nearest, SCAN) without touching Elevator or Controller.</td>
+        </tr>
+        <tr>
+          <td><strong>Observer</strong></td>
+          <td><span class="tag tag-blue">Behavioural</span></td>
+          <td><code>Elevator → displays/loggers</code></td>
+          <td>Elevator doesn't know about UI or logging. Zero coupling.</td>
+        </tr>
+        <tr>
+          <td><strong>Singleton</strong></td>
+          <td><span class="tag tag-amber">Creational</span></td>
+          <td><code>ElevatorController</code></td>
+          <td>Guarantees exactly one dispatch brain. Thread-safe creation.</td>
+        </tr>
+        <tr>
+          <td><strong>Factory</strong></td>
+          <td><span class="tag tag-amber">Creational</span></td>
+          <td><code>ElevatorFactory</code></td>
+          <td>Centralises wiring (observers, capacity, floors). Eliminates duplicate setup.</td>
+        </tr>
+        <tr>
+          <td><strong>Command</strong></td>
+          <td><span class="tag tag-blue">Behavioural</span></td>
+          <td><code>ButtonPanel</code></td>
+          <td>Button presses are objects → queueable, undoable, auditable.</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+</section>
+
+<!-- ── SECTION 4: FULL CODE ───────────────────────────────── -->
+<section class="section" id="code">
+  <div class="section-header">
+    <div class="section-num">4</div>
+    <div class="section-title">Complete Python Implementation</div>
+  </div>
+
+  <div class="code-block">
+    <div class="code-header">
+      <div class="code-lang"><div class="lang-dot"></div> elevator_system.py — full implementation</div>
+      <button class="code-copy" onclick="copyCode(this)">Copy</button>
+    </div>
+    <pre><span class="str">"""
+Elevator Control System — complete LLD implementation
+Patterns: State, Strategy, Observer, Singleton, Factory, Command
+"""</span>
+<span class="kw">from</span> __future__ <span class="kw">import</span> annotations
+<span class="kw">import</span> threading
+<span class="kw">from</span> abc <span class="kw">import</span> ABC, abstractmethod
+<span class="kw">from</span> dataclasses <span class="kw">import</span> dataclass, field
+<span class="kw">from</span> enum <span class="kw">import</span> Enum, auto
+<span class="kw">from</span> typing <span class="kw">import</span> Optional
+
+<span class="cmt"># ═══════════════════════════════════════════════════════
+#  ENUMS
+# ═══════════════════════════════════════════════════════</span>
+<span class="kw">class</span> <span class="cls">Direction</span>(Enum):
+    UP   = <span class="fn">auto</span>()
+    DOWN = <span class="fn">auto</span>()
+    IDLE = <span class="fn">auto</span>()
+
+<span class="cmt"># ═══════════════════════════════════════════════════════
+#  REQUEST (Data class)
+# ═══════════════════════════════════════════════════════</span>
+<span class="dec">@dataclass</span>
+<span class="kw">class</span> <span class="cls">Request</span>:
+    floor:     int
+    direction: Direction = Direction.UP
+
+<span class="cmt"># ═══════════════════════════════════════════════════════
+#  OBSERVER INTERFACE + IMPLEMENTATIONS
+# ═══════════════════════════════════════════════════════</span>
+<span class="kw">class</span> <span class="cls">ElevatorObserver</span>(ABC):
+    <span class="dec">@abstractmethod</span>
+    <span class="kw">def</span> <span class="fn">on_floor_change</span>(<span class="self">self</span>, elevator: Elevator, floor: int): ...
+    <span class="dec">@abstractmethod</span>
+    <span class="kw">def</span> <span class="fn">on_door_open</span>(<span class="self">self</span>, elevator: Elevator): ...
+    <span class="dec">@abstractmethod</span>
+    <span class="kw">def</span> <span class="fn">on_state_change</span>(<span class="self">self</span>, elevator: Elevator, state): ...
+
+<span class="kw">class</span> <span class="cls">FloorDisplay</span>(<span class="cls">ElevatorObserver</span>):
+    <span class="kw">def</span> <span class="fn">on_floor_change</span>(<span class="self">self</span>, elevator, floor):
+        arrow = <span class="str">"▲"</span> <span class="kw">if</span> elevator.direction == Direction.UP <span class="kw">else</span> <span class="str">"▼"</span>
+        <span class="fn">print</span>(<span class="str">f"  [Display E{elevator.id}] Floor {floor:2d} {arrow}"</span>)
+    <span class="kw">def</span> <span class="fn">on_door_open</span>(<span class="self">self</span>, elevator):
+        <span class="fn">print</span>(<span class="str">f"  [Display E{elevator.id}] 🚪 DOORS OPEN at floor {elevator.current_floor}"</span>)
+    <span class="kw">def</span> <span class="fn">on_state_change</span>(<span class="self">self</span>, elevator, state): <span class="kw">pass</span>
+
+<span class="kw">class</span> <span class="cls">EventLogger</span>(<span class="cls">ElevatorObserver</span>):
+    <span class="kw">def</span> <span class="fn">__init__</span>(<span class="self">self</span>): <span class="self">self</span>.log = []
+    <span class="kw">def</span> <span class="fn">on_floor_change</span>(<span class="self">self</span>, e, floor): <span class="self">self</span>.log.append((<span class="str">"floor"</span>, e.id, floor))
+    <span class="kw">def</span> <span class="fn">on_door_open</span>(<span class="self">self</span>, e): <span class="self">self</span>.log.append((<span class="str">"open"</span>, e.id, e.current_floor))
+    <span class="kw">def</span> <span class="fn">on_state_change</span>(<span class="self">self</span>, e, s): <span class="self">self</span>.log.append((<span class="str">"state"</span>, e.id, <span class="fn">type</span>(s).__name__))
+
+<span class="cmt"># ═══════════════════════════════════════════════════════
+#  STATE PATTERN — Elevator states
+# ═══════════════════════════════════════════════════════</span>
+<span class="kw">class</span> <span class="cls">ElevatorStateHandler</span>(ABC):
+    <span class="dec">@abstractmethod</span>
+    <span class="kw">def</span> <span class="fn">on_request</span>(<span class="self">self</span>, elev: Elevator, floor: int): ...
+    <span class="dec">@abstractmethod</span>
+    <span class="kw">def</span> <span class="fn">step</span>(<span class="self">self</span>, elev: Elevator): ...
+    <span class="kw">def</span> <span class="fn">__repr__</span>(<span class="self">self</span>): <span class="kw">return</span> <span class="self">self</span>.__class__.__name__
+
+<span class="kw">class</span> <span class="cls">IdleState</span>(<span class="cls">ElevatorStateHandler</span>):
+    <span class="kw">def</span> <span class="fn">on_request</span>(<span class="self">self</span>, elev, floor):
+        elev.stops.add(floor)
+        elev.direction = Direction.UP <span class="kw">if</span> floor >= elev.current_floor <span class="kw">else</span> Direction.DOWN
+        elev.state = MovingState()
+        elev.notify(<span class="str">"state"</span>)
+    <span class="kw">def</span> <span class="fn">step</span>(<span class="self">self</span>, elev): <span class="kw">pass</span>
+
+<span class="kw">class</span> <span class="cls">MovingState</span>(<span class="cls">ElevatorStateHandler</span>):
+    <span class="kw">def</span> <span class="fn">on_request</span>(<span class="self">self</span>, elev, floor): elev.stops.add(floor)
+    <span class="kw">def</span> <span class="fn">step</span>(<span class="self">self</span>, elev):
+        elev.current_floor += <span class="num">1</span> <span class="kw">if</span> elev.direction == Direction.UP <span class="kw">else</span> -<span class="num">1</span>
+        elev.notify(<span class="str">"floor"</span>)
+        <span class="kw">if</span> elev.current_floor <span class="kw">in</span> elev.stops:
+            elev.stops.remove(elev.current_floor)
+            elev.state = DoorsOpenState()
+            elev.notify(<span class="str">"state"</span>)
+            elev.notify(<span class="str">"door_open"</span>)
+            <span class="kw">return</span>
+        <span class="kw">if</span> <span class="kw">not</span> elev.stops:
+            elev.direction = Direction.IDLE
+            elev.state = IdleState()
+            elev.notify(<span class="str">"state"</span>)
+
+<span class="kw">class</span> <span class="cls">DoorsOpenState</span>(<span class="cls">ElevatorStateHandler</span>):
+    <span class="kw">def</span> <span class="fn">on_request</span>(<span class="self">self</span>, elev, floor): elev.stops.add(floor)
+    <span class="kw">def</span> <span class="fn">step</span>(<span class="self">self</span>, elev):
+        elev.notify(<span class="str">"door_close"</span>)
+        elev.state = MovingState() <span class="kw">if</span> elev.stops <span class="kw">else</span> IdleState()
+        elev.notify(<span class="str">"state"</span>)
+
+<span class="kw">class</span> <span class="cls">EmergencyState</span>(<span class="cls">ElevatorStateHandler</span>):
+    <span class="kw">def</span> <span class="fn">on_request</span>(<span class="self">self</span>, elev, floor):
+        <span class="fn">print</span>(<span class="str">f"[E{elev.id}] ⚠️  EMERGENCY — ignoring request"</span>)
+    <span class="kw">def</span> <span class="fn">step</span>(<span class="self">self</span>, elev): <span class="kw">pass</span>
+
+<span class="cmt"># ═══════════════════════════════════════════════════════
+#  ELEVATOR (Core entity)
+# ═══════════════════════════════════════════════════════</span>
+<span class="kw">class</span> <span class="cls">Elevator</span>:
+    <span class="kw">def</span> <span class="fn">__init__</span>(<span class="self">self</span>, id: int, max_floor: int,
+                 min_floor: int = <span class="num">1</span>, capacity: int = <span class="num">10</span>):
+        <span class="self">self</span>.id            = id
+        <span class="self">self</span>.max_floor     = max_floor
+        <span class="self">self</span>.min_floor     = min_floor
+        <span class="self">self</span>.capacity      = capacity
+        <span class="self">self</span>.current_floor = min_floor
+        <span class="self">self</span>.direction     = Direction.IDLE
+        <span class="self">self</span>.state: ElevatorStateHandler = IdleState()
+        <span class="self">self</span>.stops: set[int]              = <span class="fn">set</span>()
+        <span class="self">self</span>._observers: list[<span class="cls">ElevatorObserver</span>] = []
+        <span class="self">self</span>._lock          = threading.Lock()
+
+    <span class="kw">def</span> <span class="fn">subscribe</span>(<span class="self">self</span>, obs: ElevatorObserver): <span class="self">self</span>._observers.append(obs)
+
+    <span class="kw">def</span> <span class="fn">notify</span>(<span class="self">self</span>, event: str):
+        <span class="kw">for</span> obs <span class="kw">in</span> <span class="self">self</span>._observers:
+            <span class="kw">if</span>   event == <span class="str">"floor"</span>:      obs.on_floor_change(<span class="self">self</span>, <span class="self">self</span>.current_floor)
+            <span class="kw">elif</span> event == <span class="str">"door_open"</span>: obs.on_door_open(<span class="self">self</span>)
+            <span class="kw">elif</span> event == <span class="str">"state"</span>:     obs.on_state_change(<span class="self">self</span>, <span class="self">self</span>.state)
+
+    <span class="kw">def</span> <span class="fn">add_stop</span>(<span class="self">self</span>, floor: int):
+        <span class="kw">with</span> <span class="self">self</span>._lock:
+            <span class="self">self</span>.state.on_request(<span class="self">self</span>, floor)
+
+    <span class="kw">def</span> <span class="fn">step</span>(<span class="self">self</span>):
+        <span class="kw">with</span> <span class="self">self</span>._lock:
+            <span class="self">self</span>.state.step(<span class="self">self</span>)
+
+    <span class="kw">def</span> <span class="fn">emergency_stop</span>(<span class="self">self</span>):
+        <span class="self">self</span>.stops.clear()
+        <span class="self">self</span>.state = EmergencyState()
+        <span class="self">self</span>.direction = Direction.IDLE
+        <span class="fn">print</span>(<span class="str">f"[E{self.id}] ⚠️  EMERGENCY STOP at floor {self.current_floor}"</span>)
+
+    <span class="kw">def</span> <span class="fn">__repr__</span>(<span class="self">self</span>):
+        <span class="kw">return</span> (<span class="str">f"Elevator(id={self.id}, floor={self.current_floor}, "</span>
+                <span class="str">f"dir={self.direction.name}, state={self.state}, stops={sorted(self.stops)})"</span>)
+
+<span class="cmt"># ═══════════════════════════════════════════════════════
+#  STRATEGY PATTERN — Schedulers
+# ═══════════════════════════════════════════════════════</span>
+<span class="kw">class</span> <span class="cls">Scheduler</span>(ABC):
+    <span class="dec">@abstractmethod</span>
+    <span class="kw">def</span> <span class="fn">select</span>(<span class="self">self</span>, elevators: list[Elevator], request: Request) -> Elevator: ...
+
+<span class="kw">class</span> <span class="cls">NearestCarScheduler</span>(<span class="cls">Scheduler</span>):
+    <span class="kw">def</span> <span class="fn">select</span>(<span class="self">self</span>, elevators, request):
+        <span class="kw">def</span> <span class="fn">cost</span>(e):
+            dist      = <span class="fn">abs</span>(e.current_floor - request.floor)
+            idle_pen  = <span class="num">0</span> <span class="kw">if</span> isinstance(e.state, IdleState) <span class="kw">else</span> <span class="num">3</span>
+            wrong_dir = <span class="num">0</span> <span class="kw">if</span> (e.direction == request.direction
+                               <span class="kw">or</span> e.direction == Direction.IDLE) <span class="kw">else</span> <span class="num">2</span>
+            busy_pen  = <span class="fn">len</span>(e.stops)
+            <span class="kw">return</span> dist + idle_pen + wrong_dir + busy_pen
+        <span class="kw">return</span> <span class="fn">min</span>(elevators, key=cost)
+
+<span class="kw">class</span> <span class="cls">SCANScheduler</span>(<span class="cls">Scheduler</span>):
+    <span class="kw">def</span> <span class="fn">select</span>(<span class="self">self</span>, elevators, request):
+        <span class="kw">def</span> <span class="fn">scan_cost</span>(e):
+            cur, req = e.current_floor, request.floor
+            <span class="kw">if</span> e.direction == Direction.UP:
+                <span class="kw">return</span> req - cur <span class="kw">if</span> req >= cur <span class="kw">else</span> (<span class="num">2</span>*e.max_floor - cur - req)
+            <span class="kw">elif</span> e.direction == Direction.DOWN:
+                <span class="kw">return</span> cur - req <span class="kw">if</span> req <= cur <span class="kw">else</span> cur + req
+            <span class="kw">return</span> <span class="fn">abs</span>(req - cur)
+        <span class="kw">return</span> <span class="fn">min</span>(elevators, key=scan_cost)
+
+<span class="cmt"># ═══════════════════════════════════════════════════════
+#  SINGLETON — ElevatorController
+# ═══════════════════════════════════════════════════════</span>
+<span class="kw">class</span> <span class="cls">ElevatorController</span>:
+    _instance: Optional[ElevatorController] = <span class="kw2">None</span>
+    _lock = threading.Lock()
+
+    <span class="kw">def</span> <span class="fn">__new__</span>(<span class="cls">cls</span>, *args, **kwargs):
+        <span class="kw">if</span> <span class="kw">not</span> <span class="cls">cls</span>._instance:
+            <span class="kw">with</span> <span class="cls">cls</span>._lock:
+                <span class="kw">if</span> <span class="kw">not</span> <span class="cls">cls</span>._instance:
+                    <span class="cls">cls</span>._instance = <span class="fn">super</span>().__new__(<span class="cls">cls</span>)
+        <span class="kw">return</span> <span class="cls">cls</span>._instance
+
+    <span class="kw">def</span> <span class="fn">__init__</span>(<span class="self">self</span>, elevators=<span class="kw2">None</span>, scheduler: Scheduler = <span class="kw2">None</span>):
+        <span class="kw">if</span> <span class="fn">hasattr</span>(<span class="self">self</span>, <span class="str">'_ready'</span>): <span class="kw">return</span>
+        <span class="self">self</span>.elevators = elevators <span class="kw">or</span> []
+        <span class="self">self</span>.scheduler = scheduler <span class="kw">or</span> NearestCarScheduler()
+        <span class="self">self</span>._ready = <span class="kw2">True</span>
+
+    <span class="kw">def</span> <span class="fn">set_scheduler</span>(<span class="self">self</span>, s: Scheduler): <span class="self">self</span>.scheduler = s
+
+    <span class="kw">def</span> <span class="fn">request_elevator</span>(<span class="self">self</span>, request: Request) -> Elevator:
+        best = <span class="self">self</span>.scheduler.select(<span class="self">self</span>.elevators, request)
+        <span class="fn">print</span>(<span class="str">f"[Ctrl] Assigning E{best.id} to floor {request.floor} ({request.direction.name})"</span>)
+        best.add_stop(request.floor)
+        <span class="kw">return</span> best
+
+    <span class="kw">def</span> <span class="fn">step_all</span>(<span class="self">self</span>):
+        <span class="kw">for</span> e <span class="kw">in</span> <span class="self">self</span>.elevators: e.step()
+
+    <span class="dec">@classmethod</span>
+    <span class="kw">def</span> <span class="fn">reset</span>(<span class="cls">cls</span>):
+        <span class="str">"""For testing only — reset singleton"""</span>
+        <span class="cls">cls</span>._instance = <span class="kw2">None</span>
+
+<span class="cmt"># ═══════════════════════════════════════════════════════
+#  FACTORY
+# ═══════════════════════════════════════════════════════</span>
+<span class="kw">class</span> <span class="cls">ElevatorFactory</span>:
+    <span class="dec">@staticmethod</span>
+    <span class="kw">def</span> <span class="fn">create_fleet</span>(n: int, max_floor: int,
+                     observers: list = <span class="kw2">None</span>) -> list[Elevator]:
+        <span class="kw">return</span> [
+            Elevator(id=i, max_floor=max_floor,
+                     min_floor=<span class="num">1</span>, capacity=<span class="num">10</span>)
+            <span class="kw">for</span> i <span class="kw">in</span> <span class="fn">range</span>(<span class="num">1</span>, n+<span class="num">1</span>)
+        ]
+
+<span class="cmt"># ═══════════════════════════════════════════════════════
+#  COMMAND PATTERN
+# ═══════════════════════════════════════════════════════</span>
+<span class="kw">class</span> <span class="cls">Command</span>(ABC):
+    <span class="dec">@abstractmethod</span>
+    <span class="kw">def</span> <span class="fn">execute</span>(<span class="self">self</span>): ...
+
+<span class="dec">@dataclass</span>
+<span class="kw">class</span> <span class="cls">HallCallCommand</span>(<span class="cls">Command</span>):
+    controller: ElevatorController
+    floor: int
+    direction: Direction
+    <span class="kw">def</span> <span class="fn">execute</span>(<span class="self">self</span>):
+        <span class="kw">return</span> <span class="self">self</span>.controller.request_elevator(Request(<span class="self">self</span>.floor, <span class="self">self</span>.direction))
+
+<span class="dec">@dataclass</span>
+<span class="kw">class</span> <span class="cls">CarCallCommand</span>(<span class="cls">Command</span>):
+    elevator: Elevator
+    floor: int
+    <span class="kw">def</span> <span class="fn">execute</span>(<span class="self">self</span>): <span class="self">self</span>.elevator.add_stop(<span class="self">self</span>.floor)
+
+<span class="dec">@dataclass</span>
+<span class="kw">class</span> <span class="cls">EmergencyStopCommand</span>(<span class="cls">Command</span>):
+    elevator: Elevator
+    <span class="kw">def</span> <span class="fn">execute</span>(<span class="self">self</span>): <span class="self">self</span>.elevator.emergency_stop()
+
+<span class="cmt"># ═══════════════════════════════════════════════════════
+#  DEMO — run a simulation
+# ═══════════════════════════════════════════════════════</span>
+<span class="kw">if</span> __name__ == <span class="str">"__main__"</span>:
+    ElevatorController.reset()
+    display = FloorDisplay()
+
+    elevators = ElevatorFactory.create_fleet(<span class="num">2</span>, max_floor=<span class="num">10</span>)
+    <span class="kw">for</span> e <span class="kw">in</span> elevators: e.subscribe(display)
+
+    ctrl = ElevatorController(elevators, NearestCarScheduler())
+
+    <span class="fn">print</span>(<span class="str">"=== Scenario: Rush hour morning ==="</span>)
+    HallCallCommand(ctrl, floor=<span class="num">1</span>, direction=Direction.UP).execute()
+    HallCallCommand(ctrl, floor=<span class="num">3</span>, direction=Direction.UP).execute()
+    CarCallCommand(elevator=elevators[<span class="num">0</span>], floor=<span class="num">7</span>).execute()
+
+    <span class="fn">print</span>(<span class="str">"\n--- Simulation ticks ---"</span>)
+    <span class="kw">for</span> tick <span class="kw">in</span> <span class="fn">range</span>(<span class="num">12</span>):
+        <span class="fn">print</span>(<span class="str">f"\nTick {tick+1:2d} | {elevators[0]} | {elevators[1]}"</span>)
+        ctrl.step_all()</pre>
+  </div>
+</section>
+
+<!-- ── SECTION 5: TESTS ───────────────────────────────────── -->
+<section class="section" id="tests">
+  <div class="section-header">
+    <div class="section-num">5</div>
+    <div class="section-title">pytest Test Suite</div>
+  </div>
+
+  <div class="code-block">
+    <div class="code-header">
+      <div class="code-lang"><div class="lang-dot"></div> test_elevator.py</div>
+      <button class="code-copy" onclick="copyCode(this)">Copy</button>
+    </div>
+    <pre><span class="kw">import</span> pytest
+<span class="kw">from</span> elevator_system <span class="kw">import</span> (
+    Elevator, ElevatorController, ElevatorFactory,
+    NearestCarScheduler, SCANScheduler,
+    Request, Direction,
+    IdleState, MovingState, DoorsOpenState, EmergencyState,
+    HallCallCommand, CarCallCommand, EmergencyStopCommand,
+    EventLogger, FloorDisplay
+)
+
+<span class="dec">@pytest.fixture</span>(autouse=<span class="kw2">True</span>)
+<span class="kw">def</span> <span class="fn">reset_singleton</span>():
+    ElevatorController.reset()
+    <span class="kw">yield</span>
+    ElevatorController.reset()
+
+<span class="cmt"># ── STATE TESTS ───────────────────────────────────────</span>
+<span class="kw">class</span> <span class="cls">TestElevatorState</span>:
+    <span class="kw">def</span> <span class="fn">test_idle_transitions_to_moving_on_request</span>(<span class="self">self</span>):
+        e = Elevator(id=<span class="num">1</span>, max_floor=<span class="num">10</span>)
+        <span class="fn">assert</span> isinstance(e.state, IdleState)
+        e.add_stop(<span class="num">5</span>)
+        <span class="fn">assert</span> isinstance(e.state, MovingState)
+        <span class="fn">assert</span> e.direction == Direction.UP
+
+    <span class="kw">def</span> <span class="fn">test_moves_correctly_upward</span>(<span class="self">self</span>):
+        e = Elevator(id=<span class="num">1</span>, max_floor=<span class="num">10</span>)
+        e.add_stop(<span class="num">3</span>)
+        e.step(); e.step()  <span class="cmt"># floor 1→2→3 then doors open</span>
+        <span class="fn">assert</span> isinstance(e.state, DoorsOpenState)
+        <span class="fn">assert</span> e.current_floor == <span class="num">3</span>
+
+    <span class="kw">def</span> <span class="fn">test_transitions_to_idle_after_all_stops(self)</span>:
+        e = Elevator(id=<span class="num">1</span>, max_floor=<span class="num">10</span>)
+        e.add_stop(<span class="num">2</span>)
+        e.step()            <span class="cmt"># → floor 2, doors open</span>
+        e.step()            <span class="cmt"># close doors, no more stops → idle</span>
+        <span class="fn">assert</span> isinstance(e.state, IdleState)
+
+    <span class="kw">def</span> <span class="fn">test_emergency_ignores_new_requests</span>(<span class="self">self</span>):
+        e = Elevator(id=<span class="num">1</span>, max_floor=<span class="num">10</span>)
+        e.add_stop(<span class="num">5</span>)
+        e.emergency_stop()
+        <span class="fn">assert</span> isinstance(e.state, EmergencyState)
+        <span class="fn">assert</span> <span class="fn">len</span>(e.stops) == <span class="num">0</span>
+
+<span class="cmt"># ── STRATEGY TESTS ────────────────────────────────────</span>
+<span class="kw">class</span> <span class="cls">TestSchedulers</span>:
+    <span class="kw">def</span> <span class="fn">test_nearest_picks_closest_elevator</span>(<span class="self">self</span>):
+        e1 = Elevator(id=<span class="num">1</span>, max_floor=<span class="num">10</span>); e1.current_floor = <span class="num">1</span>
+        e2 = Elevator(id=<span class="num">2</span>, max_floor=<span class="num">10</span>); e2.current_floor = <span class="num">8</span>
+        req = Request(floor=<span class="num">9</span>, direction=Direction.UP)
+        chosen = NearestCarScheduler().select([e1, e2], req)
+        <span class="fn">assert</span> chosen.id == <span class="num">2</span>  <span class="cmt"># e2 is closer to floor 9</span>
+
+    <span class="kw">def</span> <span class="fn">test_scan_prefers_elevator_already_going_right_way</span>(<span class="self">self</span>):
+        e1 = Elevator(id=<span class="num">1</span>, max_floor=<span class="num">10</span>)
+        e1.current_floor = <span class="num">3</span>; e1.direction = Direction.UP
+        e2 = Elevator(id=<span class="num">2</span>, max_floor=<span class="num">10</span>)
+        e2.current_floor = <span class="num">6</span>; e2.direction = Direction.DOWN
+        req = Request(floor=<span class="num">7</span>, direction=Direction.UP)
+        chosen = SCANScheduler().select([e1, e2], req)
+        <span class="fn">assert</span> chosen.id == <span class="num">1</span>  <span class="cmt"># e1 going up from below</span>
+
+<span class="cmt"># ── SINGLETON TESTS ───────────────────────────────────</span>
+<span class="kw">class</span> <span class="cls">TestSingleton</span>:
+    <span class="kw">def</span> <span class="fn">test_same_instance</span>(<span class="self">self</span>):
+        ctrl1 = ElevatorController()
+        ctrl2 = ElevatorController()
+        <span class="fn">assert</span> ctrl1 <span class="kw">is</span> ctrl2
+
+<span class="cmt"># ── OBSERVER TESTS ────────────────────────────────────</span>
+<span class="kw">class</span> <span class="cls">TestObserver</span>:
+    <span class="kw">def</span> <span class="fn">test_observer_receives_floor_change</span>(<span class="self">self</span>):
+        logger = EventLogger()
+        e = Elevator(id=<span class="num">1</span>, max_floor=<span class="num">10</span>)
+        e.subscribe(logger)
+        e.add_stop(<span class="num">3</span>)
+        e.step()  <span class="cmt"># floor 1→2</span>
+        floor_events = [ev <span class="kw">for</span> ev <span class="kw">in</span> logger.log <span class="kw">if</span> ev[<span class="num">0</span>] == <span class="str">"floor"</span>]
+        <span class="fn">assert</span> <span class="fn">len</span>(floor_events) >= <span class="num">1</span>
+        <span class="fn">assert</span> floor_events[<span class="num">0</span>][<span class="num">2</span>] == <span class="num">2</span>
+
+<span class="cmt"># ── COMMAND TESTS ─────────────────────────────────────</span>
+<span class="kw">class</span> <span class="cls">TestCommands</span>:
+    <span class="kw">def</span> <span class="fn">test_hall_call_command_assigns_elevator</span>(<span class="self">self</span>):
+        elevators = ElevatorFactory.create_fleet(<span class="num">2</span>, <span class="num">10</span>)
+        ctrl = ElevatorController(elevators)
+        cmd = HallCallCommand(ctrl, floor=<span class="num">5</span>, direction=Direction.UP)
+        assigned = cmd.execute()
+        <span class="fn">assert</span> <span class="num">5</span> <span class="kw">in</span> assigned.stops
+
+    <span class="kw">def</span> <span class="fn">test_emergency_stop_command</span>(<span class="self">self</span>):
+        e = Elevator(id=<span class="num">1</span>, max_floor=<span class="num">10</span>)
+        e.add_stop(<span class="num">8</span>)
+        EmergencyStopCommand(e).execute()
+        <span class="fn">assert</span> isinstance(e.state, EmergencyState)
+        <span class="fn">assert</span> <span class="fn">len</span>(e.stops) == <span class="num">0</span></pre>
+  </div>
+</section>
+
+<!-- ── SECTION 6: SIMULATOR ──────────────────────────────── -->
+<section class="section" id="simulator">
+  <div class="section-header">
+    <div class="section-num">6</div>
+    <div class="section-title">Interactive Elevator Simulator</div>
+  </div>
+
+  <div class="sim-wrap">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;flex-wrap:wrap;gap:12px;">
+      <div>
+        <div style="font-size:16px;font-weight:600;margin-bottom:4px;">10-Floor Building · 2 Elevators</div>
+        <div style="font-size:13px;color:var(--muted);">Using Nearest Car Scheduler</div>
+      </div>
+      <div style="display:flex;gap:8px;flex-wrap:wrap;">
+        <span style="font-size:12px;display:flex;align-items:center;gap:5px;color:var(--accent);">● Current floor</span>
+        <span style="font-size:12px;display:flex;align-items:center;gap:5px;color:var(--green);">● Going up</span>
+        <span style="font-size:12px;display:flex;align-items:center;gap:5px;color:var(--accent3);">● Going down</span>
+        <span style="font-size:12px;display:flex;align-items:center;gap:5px;color:var(--accent4);">● Pending request</span>
+      </div>
+    </div>
+
+    <div class="elevator-shaft" id="simVisual">
+      <!-- Floor labels -->
+      <div class="shaft-col">
+        <div class="shaft-label">Floor</div>
+        <div id="floorLabels"></div>
+      </div>
+      <!-- Elevator A -->
+      <div class="shaft-col">
+        <div class="shaft-label" style="color:var(--accent);">Elevator A</div>
+        <div id="shaftA"></div>
+      </div>
+      <!-- Elevator B -->
+      <div class="shaft-col">
+        <div class="shaft-label" style="color:var(--accent2);">Elevator B</div>
+        <div id="shaftB"></div>
+      </div>
+      <!-- State info -->
+      <div style="display:flex;flex-direction:column;gap:12px;padding-left:16px;">
+        <div class="card" style="padding:14px;min-width:180px;">
+          <div style="font-size:11px;color:var(--muted);margin-bottom:8px;">ELEVATOR A</div>
+          <div id="infoA" style="font-size:13px;font-family:var(--mono);">Floor 1 · IDLE</div>
+          <div id="stopsA" style="font-size:11px;color:var(--muted);margin-top:4px;">Stops: —</div>
+        </div>
+        <div class="card" style="padding:14px;min-width:180px;">
+          <div style="font-size:11px;color:var(--muted);margin-bottom:8px;">ELEVATOR B</div>
+          <div id="infoB" style="font-size:13px;font-family:var(--mono);">Floor 1 · IDLE</div>
+          <div id="stopsB" style="font-size:11px;color:var(--muted);margin-top:4px;">Stops: —</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Request section -->
+    <div style="border-top:1px solid var(--border);padding-top:16px;margin-top:8px;">
+      <div style="font-size:13px;color:var(--muted);margin-bottom:10px;">Add hall call request:</div>
+      <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap;">
+        <select id="reqFloor" style="background:var(--bg3);border:1px solid var(--border2);border-radius:6px;color:var(--text);padding:7px 12px;font-size:13px;font-family:var(--sans);">
+          <option value="2">Floor 2</option><option value="3">Floor 3</option>
+          <option value="4">Floor 4</option><option value="5" selected>Floor 5</option>
+          <option value="6">Floor 6</option><option value="7">Floor 7</option>
+          <option value="8">Floor 8</option><option value="9">Floor 9</option>
+        </select>
+        <select id="reqDir" style="background:var(--bg3);border:1px solid var(--border2);border-radius:6px;color:var(--text);padding:7px 12px;font-size:13px;font-family:var(--sans);">
+          <option value="UP">▲ UP</option>
+          <option value="DOWN">▼ DOWN</option>
+        </select>
+        <button class="sim-btn" onclick="addRequest()">Add Request</button>
+        <button class="sim-btn" onclick="stepOnce()">Step →</button>
+        <button class="sim-btn primary" onclick="startAuto()" id="autoBtn">▶ Auto</button>
+        <button class="sim-btn" onclick="resetSim()">Reset</button>
+      </div>
+    </div>
+
+    <div class="sim-log" id="simLog"><span class="log-idle">Simulator ready. Add a request or press Auto.</span></div>
+  </div>
+</section>
+
+<!-- ── SECTION 7: Q&A ─────────────────────────────────────── -->
+<section class="section" id="qa">
+  <div class="section-header">
+    <div class="section-num">7</div>
+    <div class="section-title">Interview Q&amp;A</div>
+  </div>
+
+  <div id="qaList">
+
+    <div class="qa-item">
+      <div class="qa-q" onclick="toggleQA(this)"><span>What design pattern is most important here and why?</span><div style="display:flex;align-items:center;gap:8px;"><span class="q-badge">Core concept</span><span class="arrow">▶</span></div></div>
+      <div class="qa-a">The <strong>State pattern</strong> is the most critical because it solves the core complexity of the system — an elevator has very different behaviour depending on whether it is idle, moving, or has its doors open. Without State, every method would have a chain of if/elif checks like <code>if self.state == "MOVING": ...</code>. With State, you add a new behaviour (e.g., EmergencyState or MaintenanceState) by creating one new class without touching any existing code. This is the Open/Closed Principle in action.</div>
+    </div>
+
+    <div class="qa-item">
+      <div class="qa-q" onclick="toggleQA(this)"><span>How would you handle multiple elevators efficiently?</span><div style="display:flex;align-items:center;gap:8px;"><span class="q-badge">System design</span><span class="arrow">▶</span></div></div>
+      <div class="qa-a">The <strong>Strategy pattern</strong> for the Scheduler is the key. The controller asks the scheduler "which elevator should handle this request?" and the scheduler applies an algorithm. <strong>Nearest Car:</strong> minimise distance + penalise wrong direction. <strong>SCAN:</strong> like a disk algorithm, serve floors in one direction before reversing — great for consistent throughput. The controller never changes code; you just hot-swap the scheduler. For the interview, describe the cost function: distance + idle_bonus + direction_penalty + load_penalty.</div>
+    </div>
+
+    <div class="qa-item">
+      <div class="qa-q" onclick="toggleQA(this)"><span>How would you make the system thread-safe?</span><div style="display:flex;align-items:center;gap:8px;"><span class="q-badge">Concurrency</span><span class="arrow">▶</span></div></div>
+      <div class="qa-a">Three places need locks: (1) <strong>Elevator.add_stop()</strong> and <strong>Elevator.step()</strong> — use <code>threading.Lock()</code> per elevator so concurrent button presses and the movement thread don't race. (2) <strong>ElevatorController.__new__()</strong> — double-checked locking for the Singleton ensures only one instance is created even under concurrent initialisation. (3) The <strong>Scheduler.select()</strong> reads elevator state — if elevators can move while selection is happening, take a snapshot of the state first, then select from the snapshot.</div>
+    </div>
+
+    <div class="qa-item">
+      <div class="qa-q" onclick="toggleQA(this)"><span>How would you extend this for VIP/express floors?</span><div style="display:flex;align-items:center;gap:8px;"><span class="q-badge">Extensibility</span><span class="arrow">▶</span></div></div>
+      <div class="qa-a">Because of the Strategy pattern, you add a <code>VIPScheduler</code> that: only considers elevators designated as express, filters out non-VIP requests from those elevators, and routes VIP card-holders to those cars. The Elevator class doesn't change at all. You'd also add an <code>access_level</code> field to <code>Request</code> and have the controller pass that to the scheduler. This is a clean extension with zero modifications to core classes.</div>
+    </div>
+
+    <div class="qa-item">
+      <div class="qa-q" onclick="toggleQA(this)"><span>Explain the Observer pattern usage here.</span><div style="display:flex;align-items:center;gap:8px;"><span class="q-badge">Design pattern</span><span class="arrow">▶</span></div></div>
+      <div class="qa-a">The Elevator is the <em>subject</em>. Floor displays, logging systems, alarm systems, and building management software are all <em>observers</em>. When an elevator's state changes (moves to a new floor, opens doors), it calls <code>notify()</code> which triggers all registered observers. The key benefit: the Elevator has zero knowledge of who is listening — you can add a new monitoring system by just implementing <code>ElevatorObserver</code> and calling <code>subscribe()</code>. No elevator code changes.</div>
+    </div>
+
+    <div class="qa-item">
+      <div class="qa-q" onclick="toggleQA(this)"><span>Why use the Command pattern for button presses?</span><div style="display:flex;align-items:center;gap:8px;"><span class="q-badge">Design pattern</span><span class="arrow">▶</span></div></div>
+      <div class="qa-a">A button press is a request — encapsulating it as a Command object gives you: (1) <strong>Queueing</strong> — you can queue commands when elevators are busy and process them in order. (2) <strong>Undo/cancel</strong> — a cancel button can call <code>undo()</code> on the last command. (3) <strong>Audit trail</strong> — since every command is an object, you can log them with timestamps. (4) <strong>Decoupling</strong> — the button panel doesn't need to know about the elevator or controller directly; it just executes Commands.</div>
+    </div>
+
+    <div class="qa-item">
+      <div class="qa-q" onclick="toggleQA(this)"><span>What is the SCAN algorithm? When is it better than Nearest Car?</span><div style="display:flex;align-items:center;gap:8px;"><span class="q-badge">Algorithm</span><span class="arrow">▶</span></div></div>
+      <div class="qa-a">SCAN (also called the elevator algorithm) moves in one direction, picking up all requests on the way, then reverses at the top/bottom. Like a disk read head. <strong>Nearest Car advantage:</strong> lower average wait time for random, sparse requests. <strong>SCAN advantage:</strong> prevents starvation (no request waits too long), better throughput under heavy load (rush hour), and more predictable worst-case latency. In a real building with rush hours, you'd blend: SCAN during busy periods, Nearest Car otherwise.</div>
+    </div>
+
+    <div class="qa-item">
+      <div class="qa-q" onclick="toggleQA(this)"><span>How would you add capacity tracking (weight limit)?</span><div style="display:flex;align-items:center;gap:8px;"><span class="q-badge">Feature addition</span><span class="arrow">▶</span></div></div>
+      <div class="qa-a">Add <code>current_passengers: int</code> and <code>capacity: int</code> to <code>Elevator</code>. When doors open, increment/decrement passengers. In the scheduler's <code>select()</code> cost function, add a large penalty for elevators at capacity — effectively excluding them: <code>capacity_pen = float('inf') if e.current_passengers >= e.capacity else 0</code>. The <code>DoorsOpenState.step()</code> triggers observer events so a weight sensor observer can update the count. No core logic changes needed.</div>
+    </div>
+
+    <div class="qa-item">
+      <div class="qa-q" onclick="toggleQA(this)"><span>Why is ElevatorController a Singleton? What are the risks?</span><div style="display:flex;align-items:center;gap:8px;"><span class="q-badge">Trade-offs</span><span class="arrow">▶</span></div></div>
+      <div class="qa-a">It's Singleton because there is one brain per building — a second controller would create conflicting dispatch decisions. <strong>Risks:</strong> (1) Global state makes unit testing hard — you must reset the instance between tests. (2) It violates dependency injection principles, making mocking harder. <strong>Mitigations:</strong> Add a <code>reset()</code> class method for testing, or use dependency injection where the controller is passed in rather than retrieved from the class. For multi-building systems, the Singleton would be per-building, not global.</div>
+    </div>
+
+    <div class="qa-item">
+      <div class="qa-q" onclick="toggleQA(this)"><span>How would you design this for a skyscraper with 80+ floors?</span><div style="display:flex;align-items:center;gap:8px;"><span class="q-badge">Scale</span><span class="arrow">▶</span></div></div>
+      <div class="qa-a">Three key changes: (1) <strong>Zone-based dispatch</strong> — divide floors into zones (1–20, 21–40, etc.) and assign elevators to zones. Add a <code>ZoneScheduler</code> that first selects the right zone, then the best elevator in that zone. (2) <strong>Sky lobbies</strong> — express elevators to mid-building lobbies, then local elevators from there. Model each zone as its own Controller. (3) <strong>Destination Dispatch</strong> — instead of up/down buttons, users enter their floor at a lobby kiosk. The system can group passengers going to the same floor into one elevator, dramatically reducing stops.</div>
+    </div>
+
+    <div class="qa-item">
+      <div class="qa-q" onclick="toggleQA(this)"><span>What would you change if this were a real production system?</span><div style="display:flex;align-items:center;gap:8px;"><span class="q-badge">Production</span><span class="arrow">▶</span></div></div>
+      <div class="qa-a">Several additions: (1) <strong>Persistence</strong> — log every event to a database for maintenance analytics. (2) <strong>Hardware abstraction</strong> — the Elevator class would publish commands to motor controllers via a <code>MotorDriver</code> interface; the simulation just has a mock driver. (3) <strong>Health monitoring</strong> — each elevator has a heartbeat; if it misses a beat, remove it from the fleet and alert maintenance. (4) <strong>Fire safety mode</strong> — a special state that sends all elevators to ground floor and locks them. (5) <strong>Load prediction</strong> — pre-position elevators to floors with historically high demand at certain times.</div>
+    </div>
+
+  </div>
+</section>
+
+</div><!-- /content -->
+
+<a href="#" class="back-top">↑</a>
+
+<script>
+// ── NAV HIGHLIGHT ───────────────────────────────────
+const navLinks = document.querySelectorAll('.nav-rail a');
+const sections = document.querySelectorAll('.section');
+const observer = new IntersectionObserver(entries => {
+  entries.forEach(e => {
+    if (e.isIntersecting) {
+      navLinks.forEach(l => l.classList.remove('active'));
+      const link = document.querySelector(`.nav-rail a[href="#${e.target.id}"]`);
+      if (link) link.classList.add('active');
+    }
+  });
+}, { threshold: 0.3 });
+sections.forEach(s => observer.observe(s));
+
+// ── Q&A TOGGLE ──────────────────────────────────────
+function toggleQA(el) {
+  const ans = el.nextElementSibling;
+  const isOpen = ans.classList.contains('open');
+  document.querySelectorAll('.qa-a.open').forEach(a => { a.classList.remove('open'); a.previousElementSibling.classList.remove('open'); });
+  if (!isOpen) { ans.classList.add('open'); el.classList.add('open'); }
+}
+
+// ── COPY CODE ───────────────────────────────────────
+function copyCode(btn) {
+  const pre = btn.closest('.code-block').querySelector('pre');
+  navigator.clipboard.writeText(pre.innerText).then(() => {
+    btn.textContent = 'Copied!';
+    setTimeout(() => btn.textContent = 'Copy', 2000);
+  });
+}
+
+// ── SIMULATOR ───────────────────────────────────────
+const FLOORS = 10;
+const state = {
+  elevators: [
+    { id: 'A', floor: 1, dir: 'IDLE', stops: new Set(), state: 'IDLE' },
+    { id: 'B', floor: 1, dir: 'IDLE', stops: new Set(), state: 'IDLE' }
+  ],
+  requests: [],
+  autoInterval: null
+};
+
+function initSim() {
+  const labelsEl = document.getElementById('floorLabels');
+  const shaftA   = document.getElementById('shaftA');
+  const shaftB   = document.getElementById('shaftB');
+  labelsEl.innerHTML = ''; shaftA.innerHTML = ''; shaftB.innerHTML = '';
+  for (let f = FLOORS; f >= 1; f--) {
+    ['floorLabels','shaftA','shaftB'].forEach((id, i) => {
+      const cell = document.createElement('div');
+      cell.className = 'floor-cell';
+      if (id === 'floorLabels') { cell.textContent = f; cell.style.background='transparent'; cell.style.border='none'; cell.style.color='var(--muted)'; }
+      cell.style.marginBottom = '4px';
+      document.getElementById(id).appendChild(cell);
+    });
+  }
+  renderSim();
+}
+
+function getFloorCell(shaftId, floor) {
+  const shaft = document.getElementById(shaftId);
+  const cells = shaft.querySelectorAll('.floor-cell');
+  return cells[FLOORS - floor];
+}
+
+function renderSim() {
+  state.elevators.forEach((e, i) => {
+    const shaftId = i === 0 ? 'shaftA' : 'shaftB';
+    for (let f = 1; f <= FLOORS; f++) {
+      const cell = getFloorCell(shaftId, f);
+      cell.className = 'floor-cell';
+      if (f === e.floor) {
+        cell.textContent = e.dir === 'UP' ? '▲' : e.dir === 'DOWN' ? '▼' : '●';
+        cell.classList.add(e.dir === 'UP' ? 'going-up' : e.dir === 'DOWN' ? 'going-down' : 'active');
+      } else if (e.stops.has(f)) {
+        cell.textContent = '·'; cell.classList.add('request');
+      } else { cell.textContent = ''; }
+    }
+    const infoEl = document.getElementById('info' + e.id);
+    const stopsEl = document.getElementById('stops' + e.id);
+    infoEl.textContent = `Floor ${e.floor} · ${e.state}`;
+    infoEl.style.color = e.state === 'DOORS_OPEN' ? 'var(--accent2)' : e.state === 'MOVING' ? 'var(--green)' : 'var(--muted)';
+    const stopArr = [...e.stops].sort((a,b)=>a-b);
+    stopsEl.textContent = stopArr.length ? 'Stops: ' + stopArr.join(', ') : 'Stops: —';
+  });
+}
+
+function log(msg, cls='') {
+  const el = document.getElementById('simLog');
+  const line = document.createElement('div');
+  if (cls) line.className = cls;
+  line.textContent = msg;
+  el.appendChild(line);
+  el.scrollTop = el.scrollHeight;
+}
+
+function selectElevator(floor, dir) {
+  let best = null, bestCost = Infinity;
+  state.elevators.forEach(e => {
+    const dist = Math.abs(e.floor - floor);
+    const idle = e.state === 'IDLE' ? 0 : 3;
+    const wrongDir = (e.dir === dir || e.dir === 'IDLE') ? 0 : 2;
+    const busy = e.stops.size;
+    const cost = dist + idle + wrongDir + busy;
+    if (cost < bestCost) { bestCost = cost; best = e; }
+  });
+  return best;
+}
+
+function addRequest() {
+  const floor = parseInt(document.getElementById('reqFloor').value);
+  const dir = document.getElementById('reqDir').value;
+  const best = selectElevator(floor, dir);
+  best.stops.add(floor);
+  if (best.state === 'IDLE') {
+    best.dir = floor > best.floor ? 'UP' : floor < best.floor ? 'DOWN' : 'IDLE';
+    if (best.dir !== 'IDLE') best.state = 'MOVING';
+  }
+  log(`[Request] Floor ${floor} ${dir} → assigned to Elevator ${best.id}`, 'log-req');
+  renderSim();
+}
+
+function stepOnce() {
+  state.elevators.forEach(e => {
+    if (e.state === 'DOORS_OPEN') {
+      log(`[E${e.id}] 🚪 Doors closing at floor ${e.floor}`, 'log-open');
+      e.state = e.stops.size > 0 ? 'MOVING' : 'IDLE';
+      if (e.state === 'IDLE') e.dir = 'IDLE';
+      return;
+    }
+    if (e.state !== 'MOVING' || e.stops.size === 0) return;
+    const nextFloor = e.floor + (e.dir === 'UP' ? 1 : -1);
+    e.floor = nextFloor;
+    log(`[E${e.id}] ${e.dir === 'UP' ? '▲' : '▼'} → Floor ${e.floor}`,
+        e.dir === 'UP' ? 'log-up' : 'log-down');
+    if (e.stops.has(e.floor)) {
+      e.stops.delete(e.floor);
+      e.state = 'DOORS_OPEN';
+      log(`[E${e.id}] 🚪 DOORS OPEN at floor ${e.floor}`, 'log-open');
+      return;
+    }
+    if (e.stops.size === 0) { e.state = 'IDLE'; e.dir = 'IDLE'; }
+    else {
+      const maxStop = Math.max(...e.stops), minStop = Math.min(...e.stops);
+      if (e.dir === 'UP' && e.floor > maxStop) e.dir = 'DOWN';
+      if (e.dir === 'DOWN' && e.floor < minStop) e.dir = 'UP';
+    }
+  });
+  renderSim();
+}
+
+let autoInterval = null;
+function startAuto() {
+  const btn = document.getElementById('autoBtn');
+  if (autoInterval) {
+    clearInterval(autoInterval); autoInterval = null;
+    btn.textContent = '▶ Auto'; btn.classList.remove('primary');
+  } else {
+    autoInterval = setInterval(() => {
+      const anyActive = state.elevators.some(e => e.stops.size > 0 || e.state !== 'IDLE');
+      if (anyActive) stepOnce();
+    }, 700);
+    btn.textContent = '⏸ Pause'; btn.classList.add('primary');
+  }
+}
+
+function resetSim() {
+  if (autoInterval) { clearInterval(autoInterval); autoInterval = null; }
+  document.getElementById('autoBtn').textContent = '▶ Auto';
+  document.getElementById('autoBtn').classList.remove('primary');
+  state.elevators.forEach(e => { e.floor = 1; e.dir = 'IDLE'; e.stops.clear(); e.state = 'IDLE'; });
+  document.getElementById('simLog').innerHTML = '<span class="log-idle">Simulator reset.</span>';
+  renderSim();
+}
+
+initSim();
+</script>
+</body>
+</html>

@@ -1,0 +1,1793 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Logging System — LLD Interview Guide</title>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet"/>
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#0d0f14;--bg2:#13161e;--bg3:#1a1e28;--bg4:#21263380;
+  --border:#2a2f3f;--border2:#3a4055;
+  --text:#e8eaf0;--text2:#9ba3b8;--text3:#5a6278;
+  --blue:#4f9cf9;--blue-dim:#1e3a5f;
+  --green:#3ecf8e;--green-dim:#0f3d26;
+  --amber:#f5a623;--amber-dim:#3d2a0a;
+  --coral:#f06a6a;--coral-dim:#3d1515;
+  --purple:#a78bfa;--purple-dim:#2d1f5e;
+  --teal:#2dd4bf;--teal-dim:#0a3030;
+  --pink:#f472b6;--pink-dim:#3d1230;
+  --radius:8px;--radius-lg:14px;
+  --mono:'JetBrains Mono',monospace;
+  --sans:'DM Sans',sans-serif;
+}
+html{scroll-behavior:smooth}
+body{background:var(--bg);color:var(--text);font-family:var(--sans);font-size:15px;line-height:1.7;min-height:100vh}
+
+/* ── Layout ── */
+.shell{display:flex;min-height:100vh}
+.sidebar{width:260px;min-width:260px;background:var(--bg2);border-right:1px solid var(--border);position:sticky;top:0;height:100vh;overflow-y:auto;padding:1.5rem 0;flex-shrink:0}
+.content{flex:1;overflow-x:hidden;padding:2.5rem 3rem;max-width:900px}
+
+/* ── Sidebar ── */
+.sidebar-logo{padding:0 1.5rem 1.5rem;border-bottom:1px solid var(--border);margin-bottom:1rem}
+.sidebar-logo h1{font-size:14px;font-weight:600;color:var(--blue);letter-spacing:.05em;text-transform:uppercase}
+.sidebar-logo p{font-size:11px;color:var(--text3);margin-top:2px}
+.nav-group{margin-bottom:.25rem}
+.nav-label{font-size:10px;font-weight:600;color:var(--text3);letter-spacing:.1em;text-transform:uppercase;padding:.5rem 1.5rem .25rem}
+.nav-item{display:block;padding:.45rem 1.5rem;font-size:13px;color:var(--text2);text-decoration:none;border-left:2px solid transparent;transition:all .15s;cursor:pointer}
+.nav-item:hover{color:var(--text);background:var(--bg3)}
+.nav-item.active{color:var(--blue);border-left-color:var(--blue);background:var(--blue-dim)}
+
+/* ── Section titles ── */
+.section{margin-bottom:3.5rem}
+.section-badge{display:inline-flex;align-items:center;gap:6px;font-size:11px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;padding:4px 10px;border-radius:4px;margin-bottom:.75rem}
+.badge-pattern{background:var(--purple-dim);color:var(--purple)}
+.badge-class{background:var(--blue-dim);color:var(--blue)}
+.badge-concept{background:var(--teal-dim);color:var(--teal)}
+.badge-interview{background:var(--amber-dim);color:var(--amber)}
+.badge-advanced{background:var(--coral-dim);color:var(--coral)}
+.section h2{font-size:24px;font-weight:600;color:var(--text);margin-bottom:.4rem;line-height:1.3}
+.section .subtitle{color:var(--text2);font-size:14px;margin-bottom:1.5rem}
+
+/* ── Prose ── */
+p{color:var(--text2);margin-bottom:1rem;line-height:1.75}
+strong{color:var(--text);font-weight:500}
+.why-box{background:var(--bg3);border:1px solid var(--border);border-left:3px solid var(--blue);border-radius:var(--radius);padding:.9rem 1.2rem;margin:1.25rem 0;font-size:14px;color:var(--text2)}
+.why-box strong{color:var(--blue)}
+
+/* ── Code blocks ── */
+.code-wrap{background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius-lg);overflow:hidden;margin:1.25rem 0;font-size:13px}
+.code-header{display:flex;align-items:center;justify-content:space-between;padding:.6rem 1rem;border-bottom:1px solid var(--border);background:var(--bg3)}
+.code-header span{font-family:var(--mono);font-size:11px;color:var(--text3)}
+.code-header .lang{color:var(--green);font-weight:700;font-size:10px;text-transform:uppercase;letter-spacing:.08em}
+pre{padding:1.25rem 1.5rem;overflow-x:auto;line-height:1.65}
+code{font-family:var(--mono);font-size:12.5px}
+.code-wrap pre code{color:var(--text)}
+
+/* Syntax highlight classes */
+.kw{color:#c792ea} /* keyword */
+.cls{color:#82aaff} /* class */
+.fn{color:#82cfff} /* function */
+.st{color:#c3e88d} /* string */
+.cm{color:#546e7a;font-style:italic} /* comment */
+.nb{color:#f78c6c} /* number / built-in */
+.dc{color:#f78c6c} /* decorator */
+.pm{color:#89ddff} /* punctuation/operator */
+
+/* ── Pattern card ── */
+.pattern-grid{display:grid;grid-template-columns:1fr 1fr;gap:1rem;margin:1.5rem 0}
+.pattern-card{background:var(--bg3);border:1px solid var(--border);border-radius:var(--radius-lg);padding:1.2rem 1.4rem;transition:border-color .2s}
+.pattern-card:hover{border-color:var(--border2)}
+.pattern-card .p-icon{font-size:22px;margin-bottom:.5rem}
+.pattern-card h4{font-size:13px;font-weight:600;color:var(--text);margin-bottom:.3rem}
+.pattern-card p{font-size:12px;color:var(--text2);margin:0;line-height:1.5}
+.pattern-card .p-where{font-size:11px;margin-top:.5rem;color:var(--text3)}
+.pattern-card .p-where span{color:var(--blue);font-family:var(--mono)}
+
+/* ── Table ── */
+table{width:100%;border-collapse:collapse;font-size:13px;margin:1.25rem 0}
+th{background:var(--bg3);color:var(--text2);font-weight:500;text-align:left;padding:.7rem 1rem;border:1px solid var(--border);font-size:12px;text-transform:uppercase;letter-spacing:.05em}
+td{padding:.65rem 1rem;border:1px solid var(--border);color:var(--text2);vertical-align:top}
+td code{font-family:var(--mono);font-size:11.5px;color:var(--teal);background:var(--bg3);padding:1px 5px;border-radius:3px}
+td strong{color:var(--text)}
+tr:hover td{background:var(--bg3)}
+
+/* ── Q&A ── */
+.qa-list{display:flex;flex-direction:column;gap:1rem;margin-top:1.25rem}
+.qa-item{background:var(--bg3);border:1px solid var(--border);border-radius:var(--radius-lg);overflow:hidden}
+.qa-q{padding:1rem 1.2rem;cursor:pointer;display:flex;justify-content:space-between;align-items:center;gap:1rem;transition:background .15s}
+.qa-q:hover{background:var(--bg4)}
+.qa-q-text{font-size:14px;font-weight:500;color:var(--text)}
+.qa-chevron{color:var(--text3);font-size:18px;transition:transform .2s;flex-shrink:0;line-height:1}
+.qa-item.open .qa-chevron{transform:rotate(90deg)}
+.qa-a{display:none;padding:0 1.2rem 1.2rem;font-size:13.5px;color:var(--text2);border-top:1px solid var(--border);line-height:1.75}
+.qa-item.open .qa-a{display:block}
+.qa-a p{margin:.75rem 0 0}
+.qa-a code{font-family:var(--mono);font-size:12px;color:var(--teal);background:var(--bg);padding:1px 5px;border-radius:3px}
+
+/* ── Callout boxes ── */
+.callout{border-radius:var(--radius);padding:.9rem 1.2rem;margin:1.25rem 0;font-size:13.5px;line-height:1.7}
+.callout-warn{background:var(--amber-dim);border:1px solid #5a3e0c;color:#f5c867}
+.callout-tip{background:var(--green-dim);border:1px solid #0f5c30;color:#5de8a8}
+.callout-note{background:var(--blue-dim);border:1px solid #1a3f6f;color:#7ab8fd}
+.callout strong{color:inherit;font-weight:600}
+
+/* ── UML diagram ── */
+.uml-wrap{background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius-lg);padding:1.5rem;overflow-x:auto;margin:1.25rem 0}
+svg text{font-family:var(--mono)}
+
+/* ── Flow diagram ── */
+.flow{display:flex;align-items:center;gap:.5rem;flex-wrap:wrap;margin:1rem 0}
+.flow-box{background:var(--bg3);border:1px solid var(--border2);border-radius:var(--radius);padding:.4rem .9rem;font-size:12px;font-family:var(--mono);color:var(--text)}
+.flow-arrow{color:var(--text3);font-size:18px}
+.flow-box.hl{border-color:var(--blue);color:var(--blue);background:var(--blue-dim)}
+
+/* ── Chip tags ── */
+.chips{display:flex;flex-wrap:wrap;gap:.5rem;margin:.75rem 0}
+.chip{font-size:11px;padding:3px 9px;border-radius:20px;font-weight:500;font-family:var(--mono)}
+.chip-blue{background:var(--blue-dim);color:var(--blue);border:1px solid #1e3a6f}
+.chip-green{background:var(--green-dim);color:var(--green);border:1px solid #0f4a2a}
+.chip-amber{background:var(--amber-dim);color:var(--amber);border:1px solid #4a320a}
+.chip-purple{background:var(--purple-dim);color:var(--purple);border:1px solid #3d2a7a}
+.chip-coral{background:var(--coral-dim);color:var(--coral);border:1px solid #4a1a1a}
+.chip-teal{background:var(--teal-dim);color:var(--teal);border:1px solid #0a3a3a}
+
+/* ── Two-col ── */
+.two-col{display:grid;grid-template-columns:1fr 1fr;gap:1.5rem;margin:1.25rem 0}
+
+/* ── Divider ── */
+hr{border:none;border-top:1px solid var(--border);margin:2.5rem 0}
+
+/* ── Progress / TOC indicator ── */
+.toc-progress{height:2px;background:var(--blue);transition:width .3s;border-radius:1px;margin-bottom:1rem}
+
+/* ── Mobile ── */
+@media(max-width:768px){
+  .sidebar{display:none}
+  .content{padding:1.5rem}
+  .pattern-grid,.two-col{grid-template-columns:1fr}
+}
+
+/* ── Scrollbar ── */
+::-webkit-scrollbar{width:5px;height:5px}
+::-webkit-scrollbar-track{background:var(--bg2)}
+::-webkit-scrollbar-thumb{background:var(--border2);border-radius:3px}
+</style>
+</head>
+<body>
+<div class="shell">
+
+<!-- ── Sidebar ── -->
+<nav class="sidebar">
+  <div class="sidebar-logo">
+    <h1>Logging System</h1>
+    <p>LLD Interview Guide</p>
+    <div class="toc-progress" id="progress" style="width:0%"></div>
+  </div>
+  <div class="nav-group">
+    <div class="nav-label">Foundation</div>
+    <a class="nav-item" onclick="scrollTo('s0')">Overview & Requirements</a>
+    <a class="nav-item" onclick="scrollTo('s1')">Class Diagram (UML)</a>
+    <a class="nav-item" onclick="scrollTo('s2')">LogLevel Enum</a>
+    <a class="nav-item" onclick="scrollTo('s3')">LogRecord</a>
+  </div>
+  <div class="nav-group">
+    <div class="nav-label">Design Patterns</div>
+    <a class="nav-item" onclick="scrollTo('s4')">Singleton — Logger</a>
+    <a class="nav-item" onclick="scrollTo('s5')">Strategy — Formatters</a>
+    <a class="nav-item" onclick="scrollTo('s6')">Chain of Resp. — Filters</a>
+    <a class="nav-item" onclick="scrollTo('s7')">Observer — Handlers</a>
+    <a class="nav-item" onclick="scrollTo('s8')">Decorator — Rotating</a>
+    <a class="nav-item" onclick="scrollTo('s9')">Factory — LoggerFactory</a>
+  </div>
+  <div class="nav-group">
+    <div class="nav-label">Advanced</div>
+    <a class="nav-item" onclick="scrollTo('s10')">Thread Safety</a>
+    <a class="nav-item" onclick="scrollTo('s11')">Async Logging</a>
+    <a class="nav-item" onclick="scrollTo('s12')">Complete Runnable Code</a>
+  </div>
+  <div class="nav-group">
+    <div class="nav-label">Interview Prep</div>
+    <a class="nav-item" onclick="scrollTo('s13')">Full Q&A</a>
+    <a class="nav-item" onclick="scrollTo('s14')">Patterns Summary</a>
+    <a class="nav-item" onclick="scrollTo('s15')">Trade-offs</a>
+  </div>
+</nav>
+
+<!-- ── Main content ── -->
+<main class="content">
+
+<!-- ═══════════════════ 0. OVERVIEW ═══════════════════ -->
+<div class="section" id="s0">
+  <div class="section-badge badge-concept">Concept</div>
+  <h2>Logging System — Overview & Requirements</h2>
+  <p class="subtitle">What you need to know before writing a single line of code</p>
+
+  <p>A <strong>logging system</strong> is a cross-cutting concern that every production application needs. The goal is to record timestamped events (info, warnings, errors) and route them to the right destination — console, files, remote servers — with the right format and level of detail.</p>
+
+  <div class="callout callout-note">
+    <strong>Interview tip:</strong> Always start by clarifying requirements before jumping into code. This shows maturity and structured thinking.
+  </div>
+
+  <div class="two-col">
+    <div>
+      <h4 style="color:var(--text);margin-bottom:.5rem;font-size:14px;">Functional Requirements</h4>
+      <ul style="color:var(--text2);font-size:13.5px;padding-left:1.2rem;line-height:2">
+        <li>Support multiple log levels: DEBUG, INFO, WARNING, ERROR, CRITICAL</li>
+        <li>Multiple output destinations (console, file, remote)</li>
+        <li>Configurable message formatting</li>
+        <li>Filtering by level or content</li>
+        <li>Log rotation for file handlers</li>
+        <li>Timestamped entries with logger name</li>
+      </ul>
+    </div>
+    <div>
+      <h4 style="color:var(--text);margin-bottom:.5rem;font-size:14px;">Non-Functional Requirements</h4>
+      <ul style="color:var(--text2);font-size:13.5px;padding-left:1.2rem;line-height:2">
+        <li>Thread-safe (multiple threads log simultaneously)</li>
+        <li>High performance — logging must not slow app down</li>
+        <li>Extensible — add new handlers/formatters without changes</li>
+        <li>Singleton logger (single source of truth)</li>
+        <li>Fail-safe — logging errors must not crash the app</li>
+        <li>Minimal memory footprint</li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="flow">
+    <div class="flow-box hl">App code</div>
+    <div class="flow-arrow">→</div>
+    <div class="flow-box hl">Logger (Singleton)</div>
+    <div class="flow-arrow">→</div>
+    <div class="flow-box">LogRecord created</div>
+    <div class="flow-arrow">→</div>
+    <div class="flow-box">Filter chain</div>
+    <div class="flow-arrow">→</div>
+    <div class="flow-box">Formatter</div>
+    <div class="flow-arrow">→</div>
+    <div class="flow-box hl">Handler(s)</div>
+  </div>
+</div>
+
+<hr/>
+
+<!-- ═══════════════════ 1. UML ═══════════════════ -->
+<div class="section" id="s1">
+  <div class="section-badge badge-class">Class Diagram</div>
+  <h2>UML Class Diagram</h2>
+  <p class="subtitle">Full structure at a glance — memorize this for the whiteboard</p>
+
+  <div class="uml-wrap">
+    <svg width="100%" viewBox="0 0 800 600" style="min-width:700px">
+      <defs>
+        <marker id="arr" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse">
+          <path d="M1 1L9 5L1 9" fill="none" stroke="#4f9cf9" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+        </marker>
+        <marker id="inherit" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="10" markerHeight="10" orient="auto-start-reverse">
+          <path d="M1 1L9 5L1 9Z" fill="#13161e" stroke="#9ba3b8" stroke-width="1.2"/>
+        </marker>
+        <marker id="compose" viewBox="0 0 12 12" refX="1" refY="6" markerWidth="10" markerHeight="10" orient="auto">
+          <path d="M1 6L6 2L11 6L6 10Z" fill="#9ba3b8"/>
+        </marker>
+      </defs>
+
+      <!-- Logger class -->
+      <rect x="300" y="20" width="200" height="120" rx="6" fill="#13161e" stroke="#4f9cf9" stroke-width="1.5"/>
+      <rect x="300" y="20" width="200" height="28" rx="6" fill="#1e3a5f"/>
+      <rect x="300" y="42" width="200" height="6" fill="#1e3a5f"/>
+      <text x="400" y="39" text-anchor="middle" fill="#7ab8fd" font-size="12" font-weight="700">«Singleton» Logger</text>
+      <text x="310" y="64" fill="#9ba3b8" font-size="10">- _instance: Logger</text>
+      <text x="310" y="78" fill="#9ba3b8" font-size="10">- _handlers: List[Handler]</text>
+      <text x="310" y="92" fill="#9ba3b8" font-size="10">- _min_level: LogLevel</text>
+      <text x="310" y="106" fill="#82cfff" font-size="10">+ log(level, message)</text>
+      <text x="310" y="120" fill="#82cfff" font-size="10">+ add_handler(handler)</text>
+      <text x="310" y="134" fill="#82cfff" font-size="10">+ set_level(level)</text>
+
+      <!-- LogRecord -->
+      <rect x="10" y="20" width="185" height="95" rx="6" fill="#13161e" stroke="#3ecf8e" stroke-width="1.2"/>
+      <rect x="10" y="20" width="185" height="28" rx="6" fill="#0f3d26"/>
+      <rect x="10" y="42" width="185" height="6" fill="#0f3d26"/>
+      <text x="103" y="39" text-anchor="middle" fill="#5de8a8" font-size="11" font-weight="700">LogRecord</text>
+      <text x="20" y="64" fill="#9ba3b8" font-size="10">+ level: LogLevel</text>
+      <text x="20" y="78" fill="#9ba3b8" font-size="10">+ message: str</text>
+      <text x="20" y="92" fill="#9ba3b8" font-size="10">+ timestamp: datetime</text>
+      <text x="20" y="106" fill="#9ba3b8" font-size="10">+ logger_name: str</text>
+
+      <!-- LogLevel -->
+      <rect x="610" y="20" width="180" height="100" rx="6" fill="#13161e" stroke="#a78bfa" stroke-width="1.2"/>
+      <rect x="610" y="20" width="180" height="28" rx="6" fill="#2d1f5e"/>
+      <rect x="610" y="42" width="180" height="6" fill="#2d1f5e"/>
+      <text x="700" y="39" text-anchor="middle" fill="#c4b5fd" font-size="11" font-weight="700">«Enum» LogLevel</text>
+      <text x="620" y="62" fill="#9ba3b8" font-size="10">DEBUG = 1</text>
+      <text x="620" y="76" fill="#9ba3b8" font-size="10">INFO = 2</text>
+      <text x="620" y="90" fill="#9ba3b8" font-size="10">WARNING = 3</text>
+      <text x="620" y="104" fill="#9ba3b8" font-size="10">ERROR = 4 | CRITICAL = 5</text>
+
+      <!-- Logger → LogRecord arrow -->
+      <line x1="300" y1="60" x2="195" y2="60" stroke="#9ba3b8" stroke-width="0.8" stroke-dasharray="4 3" marker-end="url(#arr)"/>
+      <!-- Logger → LogLevel -->
+      <line x1="500" y1="60" x2="610" y2="60" stroke="#9ba3b8" stroke-width="0.8" stroke-dasharray="4 3" marker-end="url(#arr)"/>
+
+      <!-- ── Handler hierarchy ── -->
+      <!-- Abstract Handler -->
+      <rect x="265" y="210" width="270" height="110" rx="6" fill="#13161e" stroke="#f5a623" stroke-width="1.2"/>
+      <rect x="265" y="210" width="270" height="28" rx="6" fill="#3d2a0a"/>
+      <rect x="265" y="232" width="270" height="6" fill="#3d2a0a"/>
+      <text x="400" y="229" text-anchor="middle" fill="#f5c867" font-size="11" font-weight="700">«Abstract» Handler</text>
+      <text x="275" y="254" fill="#9ba3b8" font-size="10">- formatter: Formatter</text>
+      <text x="275" y="268" fill="#9ba3b8" font-size="10">- filter_chain: Filter</text>
+      <text x="275" y="284" fill="#82cfff" font-size="10">+ handle(record: LogRecord)</text>
+      <text x="275" y="298" fill="#546e7a" font-size="10" font-style="italic">~ _write(message: str) [abstract]</text>
+
+      <!-- Logger → Handler (1 to many) -->
+      <line x1="400" y1="140" x2="400" y2="210" stroke="#4f9cf9" stroke-width="1" marker-end="url(#arr)" marker-start="url(#compose)"/>
+      <text x="408" y="182" fill="#9ba3b8" font-size="10">1..*</text>
+
+      <!-- Concrete Handlers -->
+      <rect x="30" y="380" width="155" height="80" rx="6" fill="#13161e" stroke="#9ba3b8" stroke-width="1"/>
+      <rect x="30" y="380" width="155" height="26" rx="6" fill="#21263380"/>
+      <rect x="30" y="400" width="155" height="6" fill="#21263380"/>
+      <text x="108" y="397" text-anchor="middle" fill="#e8eaf0" font-size="11" font-weight="600">ConsoleHandler</text>
+      <text x="40" y="420" fill="#9ba3b8" font-size="10">_write() → stdout</text>
+      <text x="40" y="434" fill="#9ba3b8" font-size="10">supports color</text>
+      <text x="40" y="448" fill="#9ba3b8" font-size="10">no file/disk I/O</text>
+
+      <rect x="205" y="380" width="155" height="80" rx="6" fill="#13161e" stroke="#9ba3b8" stroke-width="1"/>
+      <rect x="205" y="380" width="155" height="26" rx="6" fill="#21263380"/>
+      <rect x="205" y="400" width="155" height="6" fill="#21263380"/>
+      <text x="283" y="397" text-anchor="middle" fill="#e8eaf0" font-size="11" font-weight="600">FileHandler</text>
+      <text x="215" y="420" fill="#9ba3b8" font-size="10">_write() → open(file,"a")</text>
+      <text x="215" y="434" fill="#9ba3b8" font-size="10">appends to disk</text>
+      <text x="215" y="448" fill="#9ba3b8" font-size="10">buffered I/O optional</text>
+
+      <rect x="380" y="380" width="175" height="80" rx="6" fill="#13161e" stroke="#9ba3b8" stroke-width="1"/>
+      <rect x="380" y="380" width="175" height="26" rx="6" fill="#21263380"/>
+      <rect x="380" y="400" width="175" height="6" fill="#21263380"/>
+      <text x="468" y="397" text-anchor="middle" fill="#e8eaf0" font-size="11" font-weight="600">RotatingFileHandler</text>
+      <text x="390" y="420" fill="#9ba3b8" font-size="10">extends FileHandler</text>
+      <text x="390" y="434" fill="#9ba3b8" font-size="10">rotates on size/time</text>
+      <text x="390" y="448" fill="#9ba3b8" font-size="10">backup_count copies</text>
+
+      <rect x="575" y="380" width="160" height="80" rx="6" fill="#13161e" stroke="#9ba3b8" stroke-width="1"/>
+      <rect x="575" y="380" width="160" height="26" rx="6" fill="#21263380"/>
+      <rect x="575" y="400" width="160" height="6" fill="#21263380"/>
+      <text x="655" y="397" text-anchor="middle" fill="#e8eaf0" font-size="11" font-weight="600">RemoteHandler</text>
+      <text x="585" y="420" fill="#9ba3b8" font-size="10">HTTP POST endpoint</text>
+      <text x="585" y="434" fill="#9ba3b8" font-size="10">fail-safe (try/except)</text>
+      <text x="585" y="448" fill="#9ba3b8" font-size="10">JSON body preferred</text>
+
+      <!-- Inheritance lines to Handler -->
+      <line x1="108" y1="380" x2="320" y2="320" stroke="#9ba3b8" stroke-width="0.8" marker-end="url(#inherit)"/>
+      <line x1="283" y1="380" x2="360" y2="320" stroke="#9ba3b8" stroke-width="0.8" marker-end="url(#inherit)"/>
+      <line x1="468" y1="380" x2="420" y2="320" stroke="#9ba3b8" stroke-width="0.8" marker-end="url(#inherit)"/>
+      <line x1="655" y1="380" x2="490" y2="320" stroke="#9ba3b8" stroke-width="0.8" marker-end="url(#inherit)"/>
+
+      <!-- ── Formatter ── -->
+      <rect x="30" y="500" width="200" height="80" rx="6" fill="#13161e" stroke="#2dd4bf" stroke-width="1.2"/>
+      <rect x="30" y="500" width="200" height="26" rx="6" fill="#0a3030"/>
+      <rect x="30" y="520" width="200" height="6" fill="#0a3030"/>
+      <text x="130" y="517" text-anchor="middle" fill="#5eead4" font-size="11" font-weight="700">«Abstract» Formatter</text>
+      <text x="40" y="540" fill="#546e7a" font-size="10" font-style="italic">+ format(record) → str [abstract]</text>
+      <text x="40" y="555" fill="#9ba3b8" font-size="10">PlainText / JSON / Colored</text>
+      <text x="40" y="570" fill="#9ba3b8" font-size="10">(concrete subclasses)</text>
+
+      <!-- Handler uses Formatter -->
+      <line x1="265" y1="290" x2="230" y2="500" stroke="#2dd4bf" stroke-width="0.8" stroke-dasharray="4 3" marker-end="url(#arr)"/>
+
+      <!-- ── Filter ── -->
+      <rect x="540" y="500" width="250" height="80" rx="6" fill="#13161e" stroke="#f06a6a" stroke-width="1.2"/>
+      <rect x="540" y="500" width="250" height="26" rx="6" fill="#3d1515"/>
+      <rect x="540" y="520" width="250" height="6" fill="#3d1515"/>
+      <text x="665" y="517" text-anchor="middle" fill="#f87171" font-size="11" font-weight="700">«Abstract» Filter</text>
+      <text x="550" y="540" fill="#546e7a" font-size="10" font-style="italic">+ passes(record) → bool</text>
+      <text x="550" y="555" fill="#9ba3b8" font-size="10">- _next: Filter (chained)</text>
+      <text x="550" y="570" fill="#9ba3b8" font-size="10">LevelFilter / KeywordFilter</text>
+
+      <!-- Handler uses Filter -->
+      <line x1="535" y1="290" x2="590" y2="500" stroke="#f06a6a" stroke-width="0.8" stroke-dasharray="4 3" marker-end="url(#arr)"/>
+    </svg>
+  </div>
+
+  <div class="chips">
+    <span class="chip chip-blue">Singleton: Logger</span>
+    <span class="chip chip-amber">Observer: Handlers</span>
+    <span class="chip chip-teal">Strategy: Formatter</span>
+    <span class="chip chip-coral">Chain: Filter</span>
+    <span class="chip chip-purple">Decorator: RotatingFileHandler</span>
+    <span class="chip chip-green">Factory: LoggerFactory</span>
+  </div>
+</div>
+
+<hr/>
+
+<!-- ═══════════════════ 2. LOG LEVEL ═══════════════════ -->
+<div class="section" id="s2">
+  <div class="section-badge badge-class">Class</div>
+  <h2>LogLevel — Enum</h2>
+  <p class="subtitle">Why an Enum? Because levels need strict ordering and identity comparison</p>
+
+  <div class="why-box">
+    <strong>Why Enum, not integer constants?</strong> Enums give you type safety, IDE autocompletion, and prevent invalid values like <code>logger.log(99, "msg")</code>. The integer <code>.value</code> gives ordering for comparisons.
+  </div>
+
+  <div class="code-wrap">
+    <div class="code-header"><span>loglevel.py</span><span class="lang">python</span></div>
+    <pre><code><span class="kw">from</span> enum <span class="kw">import</span> Enum, <span class="nb">IntEnum</span>
+
+<span class="cm"># Option 1: regular Enum — values for ordering</span>
+<span class="kw">class</span> <span class="cls">LogLevel</span>(Enum):
+    DEBUG    = <span class="nb">1</span>
+    INFO     = <span class="nb">2</span>
+    WARNING  = <span class="nb">3</span>
+    ERROR    = <span class="nb">4</span>
+    CRITICAL = <span class="nb">5</span>
+
+<span class="cm"># Option 2: IntEnum — allows direct &lt; &gt; comparisons without .value</span>
+<span class="kw">class</span> <span class="cls">LogLevel</span>(<span class="nb">IntEnum</span>):
+    DEBUG    = <span class="nb">1</span>
+    INFO     = <span class="nb">2</span>
+    WARNING  = <span class="nb">3</span>
+    ERROR    = <span class="nb">4</span>
+    CRITICAL = <span class="nb">5</span>
+
+<span class="cm"># With IntEnum you can do:</span>
+<span class="cm"># LogLevel.ERROR > LogLevel.INFO  →  True (direct comparison)</span>
+<span class="cm"># With plain Enum you need:       →  LogLevel.ERROR.value > LogLevel.INFO.value</span>
+
+<span class="cm"># Usage in interview: always explain the trade-off</span>
+<span class="cm"># IntEnum is more ergonomic; plain Enum is safer (harder to misuse)</span>
+</code></pre>
+  </div>
+</div>
+
+<hr/>
+
+<!-- ═══════════════════ 3. LOGRECORD ═══════════════════ -->
+<div class="section" id="s3">
+  <div class="section-badge badge-class">Class</div>
+  <h2>LogRecord — The Data Object</h2>
+  <p class="subtitle">A single log event, packaged as an immutable-ish object</p>
+
+  <p>A <code>LogRecord</code> captures everything about one log event: the level, the message, when it happened, and where it came from. Handlers and Formatters receive this object and decide what to do with it.</p>
+
+  <div class="code-wrap">
+    <div class="code-header"><span>logrecord.py</span><span class="lang">python</span></div>
+    <pre><code><span class="kw">from</span> dataclasses <span class="kw">import</span> dataclass, field
+<span class="kw">from</span> datetime <span class="kw">import</span> datetime
+<span class="kw">import</span> traceback
+
+<span class="dc">@dataclass</span>
+<span class="kw">class</span> <span class="cls">LogRecord</span>:
+    level:       <span class="cls">LogLevel</span>
+    message:     str
+    timestamp:   datetime = field(default_factory=datetime.now)
+    logger_name: str      = <span class="st">"root"</span>
+    module:      str      = <span class="st">""</span>           <span class="cm"># e.g. "user_service"</span>
+    line_no:     int      = <span class="nb">0</span>
+    exc_info:    str      = <span class="st">""</span>           <span class="cm"># stack trace if exception provided</span>
+
+    <span class="kw">def</span> <span class="fn">__post_init__</span>(self):
+        <span class="cm"># auto-capture stack trace if message is an Exception</span>
+        <span class="kw">if</span> isinstance(self.message, Exception):
+            self.exc_info = traceback.format_exc()
+            self.message  = str(self.message)
+
+    <span class="kw">def</span> <span class="fn">__str__</span>(self):
+        base = (
+            <span class="st">f"[{self.timestamp.strftime('%Y-%m-%d %H:%M:%S')}] "</span>
+            <span class="st">f"[{self.level.name:<8}] "</span>        <span class="cm"># left-aligned, 8 wide</span>
+            <span class="st">f"[{self.logger_name}] {self.message}"</span>
+        )
+        <span class="kw">if</span> self.exc_info:
+            base += <span class="st">f"\n{self.exc_info}"</span>
+        <span class="kw">return</span> base
+</code></pre>
+  </div>
+
+  <div class="callout callout-tip">
+    <strong>Interview tip:</strong> Interviewers often ask "what fields does LogRecord have?" — level, message, timestamp, and logger_name are the minimum. Bonus points for exc_info (stack trace capture), module, and line_no.
+  </div>
+</div>
+
+<hr/>
+
+<!-- ═══════════════════ 4. SINGLETON ═══════════════════ -->
+<div class="section" id="s4">
+  <div class="section-badge badge-pattern">Pattern: Singleton</div>
+  <h2>Logger — Singleton Pattern</h2>
+  <p class="subtitle">One logger to rule them all. Thread-safe via double-checked locking.</p>
+
+  <div class="why-box">
+    <strong>Why Singleton?</strong> If every class created its own logger, you'd have disconnected log streams with no central control over levels, handlers, or format. One Singleton means one consistent stream across the whole application.
+  </div>
+
+  <div class="code-wrap">
+    <div class="code-header"><span>logger.py</span><span class="lang">python</span></div>
+    <pre><code><span class="kw">import</span> threading
+<span class="kw">from</span> typing <span class="kw">import</span> List
+
+<span class="kw">class</span> <span class="cls">Logger</span>:
+    <span class="cm">"""Thread-safe Singleton Logger."""</span>
+
+    _instance: <span class="st">"Logger"</span>  = <span class="kw">None</span>
+    _lock:     threading.Lock = threading.Lock()
+
+    <span class="cm"># ── Singleton constructor ──────────────────────────────────</span>
+    <span class="kw">def</span> <span class="fn">__new__</span>(cls) -> <span class="st">"Logger"</span>:
+        <span class="kw">if</span> cls._instance <span class="kw">is None</span>:          <span class="cm"># first check (no lock, fast path)</span>
+            <span class="kw">with</span> cls._lock:               <span class="cm"># acquire lock</span>
+                <span class="kw">if</span> cls._instance <span class="kw">is None</span>: <span class="cm"># second check (inside lock)</span>
+                    cls._instance = <span class="nb">super</span>().__new__(cls)
+                    cls._instance._init()
+        <span class="kw">return</span> cls._instance
+
+    <span class="kw">def</span> <span class="fn">_init</span>(self):
+        <span class="cm">"""Called once, the first time the singleton is created."""</span>
+        self._handlers:  List[<span class="cls">Handler</span>] = []
+        self._min_level: <span class="cls">LogLevel</span>     = LogLevel.DEBUG
+        self._name:      str            = <span class="st">"root"</span>
+
+    <span class="cm"># ── Configuration ─────────────────────────────────────────</span>
+    <span class="kw">def</span> <span class="fn">set_level</span>(self, level: <span class="cls">LogLevel</span>):
+        <span class="cm">"""Set the minimum level. Anything below this is silently dropped.</span>
+<span class="cm">        e.g. set_level(WARNING) → DEBUG and INFO are ignored globally.</span>
+<span class="cm">        """</span>
+        self._min_level = level
+
+    <span class="kw">def</span> <span class="fn">add_handler</span>(self, handler: <span class="st">"Handler"</span>):
+        <span class="kw">if</span> handler <span class="kw">not in</span> self._handlers:  <span class="cm"># prevent duplicate handlers</span>
+            self._handlers.append(handler)
+
+    <span class="kw">def</span> <span class="fn">remove_handler</span>(self, handler: <span class="st">"Handler"</span>):
+        <span class="kw">if</span> handler <span class="kw">in</span> self._handlers:
+            self._handlers.remove(handler)
+
+    <span class="kw">def</span> <span class="fn">clear_handlers</span>(self):
+        <span class="cm">"""Useful for testing — reset to clean state."""</span>
+        self._handlers.clear()
+
+    <span class="cm"># ── Core log method ───────────────────────────────────────</span>
+    <span class="kw">def</span> <span class="fn">log</span>(self, level: <span class="cls">LogLevel</span>, message: str):
+        <span class="cm"># Step 1: global level gate</span>
+        <span class="kw">if</span> level.value < self._min_level.value:
+            <span class="kw">return</span>
+        <span class="cm"># Step 2: create the record</span>
+        record = LogRecord(
+            level       = level,
+            message     = message,
+            logger_name = self._name,
+        )
+        <span class="cm"># Step 3: notify all handlers (Observer pattern)</span>
+        <span class="kw">for</span> handler <span class="kw">in</span> self._handlers:
+            <span class="kw">try</span>:
+                handler.handle(record)
+            <span class="kw">except</span> Exception <span class="kw">as</span> e:
+                <span class="cm"># CRITICAL: logging must NEVER crash your app</span>
+                print(<span class="st">f"[Logger internal error] {e}"</span>, file=__import__(<span class="st">'sys'</span>).stderr)
+
+    <span class="cm"># ── Convenience methods ────────────────────────────────────</span>
+    <span class="kw">def</span> <span class="fn">debug</span>(self, msg: str):    self.log(LogLevel.DEBUG,    msg)
+    <span class="kw">def</span> <span class="fn">info</span>(self, msg: str):     self.log(LogLevel.INFO,     msg)
+    <span class="kw">def</span> <span class="fn">warning</span>(self, msg: str):  self.log(LogLevel.WARNING,  msg)
+    <span class="kw">def</span> <span class="fn">error</span>(self, msg: str):    self.log(LogLevel.ERROR,    msg)
+    <span class="kw">def</span> <span class="fn">critical</span>(self, msg: str): self.log(LogLevel.CRITICAL, msg)
+
+    <span class="kw">def</span> <span class="fn">exception</span>(self, msg: str):
+        <span class="cm">"""Log ERROR with current exception stack trace attached."""</span>
+        <span class="kw">import</span> traceback
+        self.log(LogLevel.ERROR, msg + <span class="st">"\n"</span> + traceback.format_exc())
+</code></pre>
+  </div>
+
+  <div class="callout callout-warn">
+    <strong>Double-Checked Locking Explained:</strong> Without the inner check, two threads could both pass the outer <code>if _instance is None</code>, then queue up at the lock. The first creates the instance. The second, now inside the lock, would create a SECOND instance without the inner check. The double-check prevents this. This is a classic concurrent programming interview topic.
+  </div>
+</div>
+
+<hr/>
+
+<!-- ═══════════════════ 5. STRATEGY — FORMATTER ═══════════════════ -->
+<div class="section" id="s5">
+  <div class="section-badge badge-pattern">Pattern: Strategy</div>
+  <h2>Formatters — Strategy Pattern</h2>
+  <p class="subtitle">Swap how logs look without changing how they're stored or delivered</p>
+
+  <div class="why-box">
+    <strong>Why Strategy?</strong> Different destinations need different formats. Your console might want readable colored text. Your remote log aggregator wants JSON. Your file might want CSV. By making Formatter swappable, each Handler gets its own formatting strategy without any if/else chains.
+  </div>
+
+  <div class="code-wrap">
+    <div class="code-header"><span>formatters.py</span><span class="lang">python</span></div>
+    <pre><code><span class="kw">from</span> abc <span class="kw">import</span> ABC, abstractmethod
+<span class="kw">import</span> json
+
+<span class="cm"># ────────────────────────────────────────────────────────
+# Abstract Strategy
+# ────────────────────────────────────────────────────────</span>
+<span class="kw">class</span> <span class="cls">Formatter</span>(ABC):
+    <span class="dc">@abstractmethod</span>
+    <span class="kw">def</span> <span class="fn">format</span>(self, record: <span class="cls">LogRecord</span>) -> str:
+        <span class="st">"""Convert a LogRecord into a string for output."""</span>
+        ...
+
+<span class="cm"># ────────────────────────────────────────────────────────
+# Concrete Strategy 1: Plain Text
+# ────────────────────────────────────────────────────────</span>
+<span class="kw">class</span> <span class="cls">PlainTextFormatter</span>(<span class="cls">Formatter</span>):
+    <span class="kw">def</span> <span class="fn">__init__</span>(self, datefmt: str = <span class="st">"%Y-%m-%d %H:%M:%S"</span>):
+        self.datefmt = datefmt
+
+    <span class="kw">def</span> <span class="fn">format</span>(self, record: <span class="cls">LogRecord</span>) -> str:
+        ts = record.timestamp.strftime(self.datefmt)
+        <span class="kw">return</span> <span class="st">f"[{ts}] [{record.level.name:<8}] [{record.logger_name}] {record.message}"</span>
+
+<span class="cm"># Output example:
+# [2024-01-15 14:32:10] [ERROR   ] [root] DB connection failed</span>
+
+<span class="cm"># ────────────────────────────────────────────────────────
+# Concrete Strategy 2: JSON (for log aggregators like ELK, Splunk)
+# ────────────────────────────────────────────────────────</span>
+<span class="kw">class</span> <span class="cls">JSONFormatter</span>(<span class="cls">Formatter</span>):
+    <span class="kw">def</span> <span class="fn">format</span>(self, record: <span class="cls">LogRecord</span>) -> str:
+        payload = {
+            <span class="st">"timestamp"</span>:   record.timestamp.isoformat(),
+            <span class="st">"level"</span>:       record.level.name,
+            <span class="st">"logger"</span>:      record.logger_name,
+            <span class="st">"message"</span>:     record.message,
+        }
+        <span class="kw">if</span> record.exc_info:
+            payload[<span class="st">"exception"</span>] = record.exc_info
+        <span class="kw">return</span> json.dumps(payload)
+
+<span class="cm"># Output example:
+# {"timestamp":"2024-01-15T14:32:10","level":"ERROR","logger":"root","message":"..."}</span>
+
+<span class="cm"># ────────────────────────────────────────────────────────
+# Concrete Strategy 3: Colored Console (ANSI escape codes)
+# ────────────────────────────────────────────────────────</span>
+ANSI = {
+    LogLevel.DEBUG:    <span class="st">"\033[36m"</span>,   <span class="cm"># Cyan</span>
+    LogLevel.INFO:     <span class="st">"\033[32m"</span>,   <span class="cm"># Green</span>
+    LogLevel.WARNING:  <span class="st">"\033[33m"</span>,   <span class="cm"># Yellow</span>
+    LogLevel.ERROR:    <span class="st">"\033[31m"</span>,   <span class="cm"># Red</span>
+    LogLevel.CRITICAL: <span class="st">"\033[35;1m"</span>, <span class="cm"># Bold Magenta</span>
+}
+RESET = <span class="st">"\033[0m"</span>
+
+<span class="kw">class</span> <span class="cls">ColoredFormatter</span>(<span class="cls">Formatter</span>):
+    <span class="kw">def</span> <span class="fn">format</span>(self, record: <span class="cls">LogRecord</span>) -> str:
+        color = ANSI.get(record.level, <span class="st">""</span>)
+        ts    = record.timestamp.strftime(<span class="st">"%H:%M:%S"</span>)  <span class="cm"># shorter for console</span>
+        <span class="kw">return</span> <span class="st">f"{color}[{ts}] [{record.level.name:<8}]{RESET} {record.message}"</span>
+
+<span class="cm"># ────────────────────────────────────────────────────────
+# Concrete Strategy 4: CSV (for data analysis)
+# ────────────────────────────────────────────────────────</span>
+<span class="kw">class</span> <span class="cls">CSVFormatter</span>(<span class="cls">Formatter</span>):
+    <span class="kw">def</span> <span class="fn">format</span>(self, record: <span class="cls">LogRecord</span>) -> str:
+        msg = record.message.replace(<span class="st">","</span>, <span class="st">";"</span>)  <span class="cm"># escape commas</span>
+        <span class="kw">return</span> <span class="st">f"{record.timestamp.isoformat()},{record.level.name},{record.logger_name},{msg}"</span>
+
+<span class="cm"># ────────────────────────────────────────────────────────
+# ★ Adding a new formatter = just create a new subclass.
+#   Zero changes to Logger, Handler, or any existing code.
+#   This is the Open/Closed Principle (OCP) in action.
+# ────────────────────────────────────────────────────────</span>
+</code></pre>
+  </div>
+</div>
+
+<hr/>
+
+<!-- ═══════════════════ 6. CHAIN OF RESPONSIBILITY ═══════════════════ -->
+<div class="section" id="s6">
+  <div class="section-badge badge-pattern">Pattern: Chain of Responsibility</div>
+  <h2>Filters — Chain of Responsibility</h2>
+  <p class="subtitle">Each filter checks one thing. Pass the record down the chain — or drop it.</p>
+
+  <div class="why-box">
+    <strong>Why Chain of Responsibility?</strong> A record must pass multiple independent checks before being logged. Chain of Responsibility lets you compose these checks without coupling them. You can add, remove, or reorder filters without touching existing filter code.
+  </div>
+
+  <div class="flow">
+    <div class="flow-box hl">LogRecord</div>
+    <div class="flow-arrow">→</div>
+    <div class="flow-box">LevelFilter ≥ WARNING?</div>
+    <div class="flow-arrow">→</div>
+    <div class="flow-box">KeywordFilter "healthcheck"?</div>
+    <div class="flow-arrow">→</div>
+    <div class="flow-box">RateFilter ≤ 100/min?</div>
+    <div class="flow-arrow">→</div>
+    <div class="flow-box hl">✓ Accepted</div>
+  </div>
+
+  <div class="code-wrap">
+    <div class="code-header"><span>filters.py</span><span class="lang">python</span></div>
+    <pre><code><span class="kw">from</span> abc <span class="kw">import</span> ABC, abstractmethod
+<span class="kw">from</span> collections <span class="kw">import</span> deque
+<span class="kw">from</span> datetime <span class="kw">import</span> datetime, timedelta
+
+<span class="cm"># ────────────────────────────────────────────────────────
+# Abstract base: defines the chain protocol
+# ────────────────────────────────────────────────────────</span>
+<span class="kw">class</span> <span class="cls">Filter</span>(ABC):
+    <span class="kw">def</span> <span class="fn">__init__</span>(self):
+        self._next: <span class="st">"Filter"</span> = <span class="kw">None</span>
+
+    <span class="kw">def</span> <span class="fn">set_next</span>(self, next_filter: <span class="st">"Filter"</span>) -> <span class="st">"Filter"</span>:
+        <span class="cm">"""Set next filter and return it (enables fluent chaining).</span>
+<span class="cm">        f1.set_next(f2).set_next(f3) → chain: f1 → f2 → f3</span>
+<span class="cm">        """</span>
+        self._next = next_filter
+        <span class="kw">return</span> next_filter  <span class="cm"># return next so we can chain .set_next() calls</span>
+
+    <span class="kw">def</span> <span class="fn">passes</span>(self, record: <span class="cls">LogRecord</span>) -> bool:
+        <span class="cm">"""Ask this filter, and if it passes, ask the next one."""</span>
+        <span class="kw">if</span> self._check(record):
+            <span class="kw">return</span> self._next.passes(record) <span class="kw">if</span> self._next <span class="kw">else</span> <span class="kw">True</span>
+        <span class="kw">return</span> <span class="kw">False</span>  <span class="cm"># short-circuit: reject immediately</span>
+
+    <span class="dc">@abstractmethod</span>
+    <span class="kw">def</span> <span class="fn">_check</span>(self, record: <span class="cls">LogRecord</span>) -> bool:
+        <span class="cm">"""Implement your specific filter logic here."""</span>
+        ...
+
+<span class="cm"># ────────────────────────────────────────────────────────
+# Concrete Filter 1: Level
+# ────────────────────────────────────────────────────────</span>
+<span class="kw">class</span> <span class="cls">LevelFilter</span>(<span class="cls">Filter</span>):
+    <span class="kw">def</span> <span class="fn">__init__</span>(self, min_level: <span class="cls">LogLevel</span>):
+        <span class="nb">super</span>().__init__()
+        self.min_level = min_level
+
+    <span class="kw">def</span> <span class="fn">_check</span>(self, record: <span class="cls">LogRecord</span>) -> bool:
+        <span class="kw">return</span> record.level.value >= self.min_level.value
+
+<span class="cm"># ────────────────────────────────────────────────────────
+# Concrete Filter 2: Keyword blocklist (e.g. suppress noisy health checks)
+# ────────────────────────────────────────────────────────</span>
+<span class="kw">class</span> <span class="cls">KeywordFilter</span>(<span class="cls">Filter</span>):
+    <span class="kw">def</span> <span class="fn">__init__</span>(self, blocked_keywords: list):
+        <span class="nb">super</span>().__init__()
+        self.blocked = [kw.lower() <span class="kw">for</span> kw <span class="kw">in</span> blocked_keywords]
+
+    <span class="kw">def</span> <span class="fn">_check</span>(self, record: <span class="cls">LogRecord</span>) -> bool:
+        msg = record.message.lower()
+        <span class="kw">return not</span> any(kw <span class="kw">in</span> msg <span class="kw">for</span> kw <span class="kw">in</span> self.blocked)
+
+<span class="cm"># ────────────────────────────────────────────────────────
+# Concrete Filter 3: Rate limiter (max N logs per minute)
+# ────────────────────────────────────────────────────────</span>
+<span class="kw">class</span> <span class="cls">RateLimitFilter</span>(<span class="cls">Filter</span>):
+    <span class="cm">"""Uses a sliding window (deque of timestamps) to enforce rate limit."""</span>
+    <span class="kw">def</span> <span class="fn">__init__</span>(self, max_per_minute: int = <span class="nb">100</span>):
+        <span class="nb">super</span>().__init__()
+        self.max_per_minute = max_per_minute
+        self._timestamps    = deque()  <span class="cm"># stores datetime of each recent log</span>
+
+    <span class="kw">def</span> <span class="fn">_check</span>(self, record: <span class="cls">LogRecord</span>) -> bool:
+        now      = datetime.now()
+        cutoff   = now - timedelta(minutes=<span class="nb">1</span>)
+        <span class="cm"># Remove old timestamps outside the 1-minute window</span>
+        <span class="kw">while</span> self._timestamps <span class="kw">and</span> self._timestamps[<span class="nb">0</span>] < cutoff:
+            self._timestamps.popleft()
+        <span class="kw">if</span> len(self._timestamps) >= self.max_per_minute:
+            <span class="kw">return</span> <span class="kw">False</span>  <span class="cm"># rate limit exceeded</span>
+        self._timestamps.append(now)
+        <span class="kw">return</span> <span class="kw">True</span>
+
+<span class="cm"># ────────────────────────────────────────────────────────
+# Concrete Filter 4: Module allow-list (only log from specific modules)
+# ────────────────────────────────────────────────────────</span>
+<span class="kw">class</span> <span class="cls">ModuleFilter</span>(<span class="cls">Filter</span>):
+    <span class="kw">def</span> <span class="fn">__init__</span>(self, allowed_modules: list):
+        <span class="nb">super</span>().__init__()
+        self.allowed = set(allowed_modules)
+
+    <span class="kw">def</span> <span class="fn">_check</span>(self, record: <span class="cls">LogRecord</span>) -> bool:
+        <span class="kw">return</span> record.logger_name <span class="kw">in</span> self.allowed
+
+<span class="cm"># ────────────────────────────────────────────────────────
+# Building a chain (example)
+# ────────────────────────────────────────────────────────</span>
+lf = LevelFilter(LogLevel.WARNING)
+kf = KeywordFilter([<span class="st">"healthcheck"</span>, <span class="st">"ping"</span>])
+rf = RateLimitFilter(max_per_minute=<span class="nb">50</span>)
+
+<span class="cm"># Fluent chaining:</span>
+lf.set_next(kf).set_next(rf)  <span class="cm"># record must pass lf → kf → rf</span>
+</code></pre>
+  </div>
+</div>
+
+<hr/>
+
+<!-- ═══════════════════ 7. OBSERVER — HANDLERS ═══════════════════ -->
+<div class="section" id="s7">
+  <div class="section-badge badge-pattern">Pattern: Observer</div>
+  <h2>Handlers — Observer Pattern</h2>
+  <p class="subtitle">Logger is the subject. Handlers are observers. Each decides independently what to do.</p>
+
+  <div class="why-box">
+    <strong>Why Observer?</strong> Logger should not know HOW logs are written. It just notifies all registered handlers. Each handler independently decides how to handle the record. Adding a new destination = add a new handler. Zero changes to Logger.
+  </div>
+
+  <div class="code-wrap">
+    <div class="code-header"><span>handlers.py</span><span class="lang">python</span></div>
+    <pre><code><span class="kw">from</span> abc <span class="kw">import</span> ABC, abstractmethod
+<span class="kw">import</span> os, sys, urllib.request, threading
+
+<span class="cm"># ────────────────────────────────────────────────────────
+# Abstract Handler (Observer interface)
+# ────────────────────────────────────────────────────────</span>
+<span class="kw">class</span> <span class="cls">Handler</span>(ABC):
+    <span class="kw">def</span> <span class="fn">__init__</span>(self,
+                 formatter:    <span class="st">"Formatter"</span> = <span class="kw">None</span>,
+                 filter_chain: <span class="st">"Filter"</span>    = <span class="kw">None</span>):
+        self.formatter    = formatter    <span class="kw">or</span> PlainTextFormatter()
+        self.filter_chain = filter_chain  <span class="cm"># None = accept everything</span>
+
+    <span class="kw">def</span> <span class="fn">handle</span>(self, record: <span class="cls">LogRecord</span>):
+        <span class="cm">"""Called by Logger for every log event.
+        1. Run filters  2. Format  3. Write"""</span>
+        <span class="kw">if</span> self.filter_chain <span class="kw">and not</span> self.filter_chain.passes(record):
+            <span class="kw">return</span>                      <span class="cm"># filtered out</span>
+        formatted = self.formatter.format(record)
+        self._write(formatted)
+
+    <span class="dc">@abstractmethod</span>
+    <span class="kw">def</span> <span class="fn">_write</span>(self, message: str):
+        <span class="cm">"""Subclasses implement this: where does the message go?"""</span>
+        ...
+
+    <span class="kw">def</span> <span class="fn">close</span>(self):
+        <span class="cm">"""Optional cleanup (e.g. flush + close file handles)."""</span>
+        <span class="kw">pass</span>
+
+<span class="cm"># ────────────────────────────────────────────────────────
+# Concrete Handler 1: Console
+# ────────────────────────────────────────────────────────</span>
+<span class="kw">class</span> <span class="cls">ConsoleHandler</span>(<span class="cls">Handler</span>):
+    <span class="kw">def</span> <span class="fn">__init__</span>(self, stream=<span class="kw">None</span>, **kwargs):
+        <span class="nb">super</span>().__init__(**kwargs)
+        <span class="cm"># Allow redirecting: stdout for info, stderr for errors</span>
+        self.stream = stream <span class="kw">or</span> sys.stdout
+
+    <span class="kw">def</span> <span class="fn">_write</span>(self, message: str):
+        print(message, file=self.stream, flush=<span class="kw">True</span>)
+
+<span class="cm"># ────────────────────────────────────────────────────────
+# Concrete Handler 2: File
+# ────────────────────────────────────────────────────────</span>
+<span class="kw">class</span> <span class="cls">FileHandler</span>(<span class="cls">Handler</span>):
+    <span class="kw">def</span> <span class="fn">__init__</span>(self, filepath: str, encoding: str = <span class="st">"utf-8"</span>, **kwargs):
+        <span class="nb">super</span>().__init__(**kwargs)
+        self.filepath = filepath
+        self.encoding = encoding
+        <span class="cm"># Create parent directory if it doesn't exist</span>
+        os.makedirs(os.path.dirname(os.path.abspath(filepath)), exist_ok=<span class="kw">True</span>)
+
+    <span class="kw">def</span> <span class="fn">_write</span>(self, message: str):
+        <span class="cm"># Open in append mode each time (simple, safe, no state)</span>
+        <span class="kw">with</span> open(self.filepath, <span class="st">"a"</span>, encoding=self.encoding) <span class="kw">as</span> f:
+            f.write(message + <span class="st">"\n"</span>)
+
+<span class="cm"># ────────────────────────────────────────────────────────
+# Concrete Handler 3: Remote HTTP endpoint
+# ────────────────────────────────────────────────────────</span>
+<span class="kw">class</span> <span class="cls">RemoteHandler</span>(<span class="cls">Handler</span>):
+    <span class="kw">def</span> <span class="fn">__init__</span>(self, endpoint: str, timeout: int = <span class="nb">2</span>, **kwargs):
+        <span class="nb">super</span>().__init__(**kwargs)
+        self.endpoint = endpoint
+        self.timeout  = timeout
+
+    <span class="kw">def</span> <span class="fn">_write</span>(self, message: str):
+        <span class="kw">try</span>:
+            data    = message.encode(<span class="st">"utf-8"</span>)
+            headers = {<span class="st">"Content-Type"</span>: <span class="st">"application/json"</span>}
+            req     = urllib.request.Request(
+                self.endpoint, data=data, headers=headers, method=<span class="st">"POST"</span>
+            )
+            urllib.request.urlopen(req, timeout=self.timeout)
+        <span class="kw">except</span> Exception <span class="kw">as</span> e:
+            <span class="cm"># NEVER let network failures crash the application</span>
+            print(<span class="st">f"[RemoteHandler failed] {e}"</span>, file=sys.stderr)
+
+<span class="cm"># ────────────────────────────────────────────────────────
+# Concrete Handler 4: Database (e.g. audit trail)
+# ────────────────────────────────────────────────────────</span>
+<span class="kw">class</span> <span class="cls">DatabaseHandler</span>(<span class="cls">Handler</span>):
+    <span class="cm">"""Stores logs in a database table — useful for audit logs."""</span>
+    <span class="kw">def</span> <span class="fn">__init__</span>(self, db_connection, **kwargs):
+        <span class="nb">super</span>().__init__(**kwargs)
+        self.conn = db_connection
+
+    <span class="kw">def</span> <span class="fn">_write</span>(self, message: str):
+        <span class="kw">try</span>:
+            cursor = self.conn.cursor()
+            cursor.execute(
+                <span class="st">"INSERT INTO logs (timestamp, message) VALUES (NOW(), ?)"</span>,
+                (message,)
+            )
+            self.conn.commit()
+        <span class="kw">except</span> Exception <span class="kw">as</span> e:
+            print(<span class="st">f"[DatabaseHandler failed] {e}"</span>, file=sys.stderr)
+</code></pre>
+  </div>
+</div>
+
+<hr/>
+
+<!-- ═══════════════════ 8. DECORATOR — ROTATING ═══════════════════ -->
+<div class="section" id="s8">
+  <div class="section-badge badge-pattern">Pattern: Decorator</div>
+  <h2>RotatingFileHandler — Decorator Pattern</h2>
+  <p class="subtitle">Wrap FileHandler behavior. Add rotation without modifying original class.</p>
+
+  <div class="why-box">
+    <strong>Why Decorator?</strong> We want to add file rotation to <code>FileHandler</code> without modifying it (Open/Closed Principle). Decorator wraps the original and adds new behavior — <code>RotatingFileHandler</code> IS a <code>Handler</code> but also knows how to rotate.
+  </div>
+
+  <div class="code-wrap">
+    <div class="code-header"><span>rotating_handler.py</span><span class="lang">python</span></div>
+    <pre><code><span class="kw">import</span> os, threading
+<span class="kw">from</span> datetime <span class="kw">import</span> datetime, timedelta
+
+<span class="cm"># ────────────────────────────────────────────────────────
+# Size-based rotating file handler
+# ────────────────────────────────────────────────────────</span>
+<span class="kw">class</span> <span class="cls">RotatingFileHandler</span>(<span class="cls">Handler</span>):
+    <span class="cm">"""Rotates log file when it exceeds max_bytes.
+    Keeps backup_count old copies: app.log, app.log.1, app.log.2, ...
+    """</span>
+    <span class="kw">def</span> <span class="fn">__init__</span>(self,
+                 filepath:     str,
+                 max_bytes:    int = <span class="nb">5_000_000</span>,   <span class="cm"># 5 MB default</span>
+                 backup_count: int = <span class="nb">5</span>,
+                 **kwargs):
+        <span class="nb">super</span>().__init__(**kwargs)
+        self.filepath     = filepath
+        self.max_bytes    = max_bytes
+        self.backup_count = backup_count
+        self._lock        = threading.Lock()  <span class="cm"># thread-safe rotation</span>
+        os.makedirs(os.path.dirname(os.path.abspath(filepath)), exist_ok=<span class="kw">True</span>)
+
+    <span class="kw">def</span> <span class="fn">_should_rotate</span>(self) -> bool:
+        <span class="kw">return</span> (
+            os.path.exists(self.filepath) <span class="kw">and</span>
+            os.path.getsize(self.filepath) >= self.max_bytes
+        )
+
+    <span class="kw">def</span> <span class="fn">_do_rotate</span>(self):
+        <span class="cm">"""Shift existing backups: .4→.5, .3→.4, ..., log→.1"""</span>
+        <span class="kw">for</span> i <span class="kw">in</span> range(self.backup_count - <span class="nb">1</span>, <span class="nb">0</span>, -<span class="nb">1</span>):
+            src = <span class="st">f"{self.filepath}.{i}"</span>
+            dst = <span class="st">f"{self.filepath}.{i+1}"</span>
+            <span class="kw">if</span> os.path.exists(src):
+                os.rename(src, dst)
+        <span class="kw">if</span> os.path.exists(self.filepath):
+            os.rename(self.filepath, <span class="st">f"{self.filepath}.1"</span>)
+
+    <span class="kw">def</span> <span class="fn">_write</span>(self, message: str):
+        <span class="kw">with</span> self._lock:                   <span class="cm"># lock so only one thread rotates</span>
+            <span class="kw">if</span> self._should_rotate():
+                self._do_rotate()
+            <span class="kw">with</span> open(self.filepath, <span class="st">"a"</span>, encoding=<span class="st">"utf-8"</span>) <span class="kw">as</span> f:
+                f.write(message + <span class="st">"\n"</span>)
+
+<span class="cm"># ────────────────────────────────────────────────────────
+# Time-based rotating file handler (daily rotation)
+# ────────────────────────────────────────────────────────</span>
+<span class="kw">class</span> <span class="cls">TimedRotatingFileHandler</span>(<span class="cls">Handler</span>):
+    <span class="cm">"""Rotates at midnight each day. Creates files like app.log.2024-01-15"""</span>
+    <span class="kw">def</span> <span class="fn">__init__</span>(self, filepath: str, backup_days: int = <span class="nb">30</span>, **kwargs):
+        <span class="nb">super</span>().__init__(**kwargs)
+        self.filepath    = filepath
+        self.backup_days = backup_days
+        self._today      = datetime.now().date()
+        self._lock       = threading.Lock()
+        os.makedirs(os.path.dirname(os.path.abspath(filepath)), exist_ok=<span class="kw">True</span>)
+
+    <span class="kw">def</span> <span class="fn">_current_filepath</span>(self) -> str:
+        <span class="cm"># e.g.  app.log.2024-01-15</span>
+        <span class="kw">return</span> <span class="st">f"{self.filepath}.{self._today}"</span>
+
+    <span class="kw">def</span> <span class="fn">_cleanup_old_logs</span>(self):
+        <span class="cm">"""Delete log files older than backup_days."""</span>
+        cutoff   = datetime.now().date() - timedelta(days=self.backup_days)
+        directory = os.path.dirname(os.path.abspath(self.filepath))
+        base      = os.path.basename(self.filepath)
+        <span class="kw">for</span> fname <span class="kw">in</span> os.listdir(directory):
+            <span class="kw">if</span> fname.startswith(base + <span class="st">"."</span>):
+                date_part = fname[len(base)+<span class="nb">1</span>:]
+                <span class="kw">try</span>:
+                    fdate = datetime.strptime(date_part, <span class="st">"%Y-%m-%d"</span>).date()
+                    <span class="kw">if</span> fdate < cutoff:
+                        os.remove(os.path.join(directory, fname))
+                <span class="kw">except</span> ValueError:
+                    <span class="kw">pass</span>
+
+    <span class="kw">def</span> <span class="fn">_write</span>(self, message: str):
+        <span class="kw">with</span> self._lock:
+            today = datetime.now().date()
+            <span class="kw">if</span> today != self._today:      <span class="cm"># new day detected</span>
+                self._today = today
+                self._cleanup_old_logs()   <span class="cm"># remove stale files</span>
+            <span class="kw">with</span> open(self._current_filepath(), <span class="st">"a"</span>, encoding=<span class="st">"utf-8"</span>) <span class="kw">as</span> f:
+                f.write(message + <span class="st">"\n"</span>)
+</code></pre>
+  </div>
+</div>
+
+<hr/>
+
+<!-- ═══════════════════ 9. FACTORY ═══════════════════ -->
+<div class="section" id="s9">
+  <div class="section-badge badge-pattern">Pattern: Factory</div>
+  <h2>LoggerFactory — Factory Pattern</h2>
+  <p class="subtitle">Hide wiring complexity. Callers just say what kind of logger they want.</p>
+
+  <div class="why-box">
+    <strong>Why Factory?</strong> Setting up a production logger requires wiring 3+ handlers, each with its own formatter and filter chain. That's 10–15 lines of boilerplate. A factory encapsulates this and gives callers a single clean method call.
+  </div>
+
+  <div class="code-wrap">
+    <div class="code-header"><span>logger_factory.py</span><span class="lang">python</span></div>
+    <pre><code><span class="kw">class</span> <span class="cls">LoggerFactory</span>:
+
+    <span class="dc">@staticmethod</span>
+    <span class="kw">def</span> <span class="fn">create_console_logger</span>(min_level: <span class="cls">LogLevel</span> = LogLevel.DEBUG) -> <span class="cls">Logger</span>:
+        <span class="cm">"""Colored console logger for local development."""</span>
+        logger = Logger()
+        logger.clear_handlers()
+        logger.set_level(min_level)
+        logger.add_handler(ConsoleHandler(formatter=ColoredFormatter()))
+        <span class="kw">return</span> logger
+
+    <span class="dc">@staticmethod</span>
+    <span class="kw">def</span> <span class="fn">create_file_logger</span>(filepath: str,
+                            min_level: <span class="cls">LogLevel</span> = LogLevel.DEBUG) -> <span class="cls">Logger</span>:
+        <span class="cm">"""Plain text file logger — good for audit trails."""</span>
+        logger = Logger()
+        logger.clear_handlers()
+        logger.add_handler(
+            FileHandler(filepath, formatter=PlainTextFormatter(),
+                        filter_chain=LevelFilter(min_level))
+        )
+        <span class="kw">return</span> logger
+
+    <span class="dc">@staticmethod</span>
+    <span class="kw">def</span> <span class="fn">create_production_logger</span>(log_dir: str = <span class="st">"logs"</span>) -> <span class="cls">Logger</span>:
+        <span class="cm">"""
+        Full production setup:
+          • Console   → all levels   → Colored text
+          • File      → WARNING+     → Plain text, size-rotating
+          • Remote    → ERROR+       → JSON, fail-safe
+        """</span>
+        logger = Logger()
+        logger.clear_handlers()
+        logger.set_level(LogLevel.DEBUG)
+
+        <span class="cm"># 1. Console: colored, all levels (no filter needed)</span>
+        logger.add_handler(ConsoleHandler(formatter=ColoredFormatter()))
+
+        <span class="cm"># 2. Rotating file: WARNING+, plain text</span>
+        rotating = RotatingFileHandler(
+            filepath     = os.path.join(log_dir, <span class="st">"app.log"</span>),
+            max_bytes    = <span class="nb">10_000_000</span>,   <span class="cm"># 10 MB per file</span>
+            backup_count = <span class="nb">5</span>,
+            formatter    = PlainTextFormatter(),
+            filter_chain = LevelFilter(LogLevel.WARNING),
+        )
+        logger.add_handler(rotating)
+
+        <span class="cm"># 3. Remote error sink: ERROR+, JSON, rate-limited</span>
+        rate_then_level = RateLimitFilter(max_per_minute=<span class="nb">200</span>)
+        rate_then_level.set_next(LevelFilter(LogLevel.ERROR))
+        remote = RemoteHandler(
+            endpoint     = <span class="st">"https://logs.example.com/ingest"</span>,
+            formatter    = JSONFormatter(),
+            filter_chain = rate_then_level,
+        )
+        logger.add_handler(remote)
+
+        <span class="kw">return</span> logger
+
+    <span class="dc">@staticmethod</span>
+    <span class="kw">def</span> <span class="fn">create_test_logger</span>() -> <span class="cls">Logger</span>:
+        <span class="cm">"""Logger for unit tests: captures logs in memory, not disk/console.
+        Useful to assert that certain log messages were produced."""</span>
+        logger = Logger()
+        logger.clear_handlers()
+        logger.add_handler(InMemoryHandler())  <span class="cm"># see advanced section</span>
+        <span class="kw">return</span> logger
+</code></pre>
+  </div>
+</div>
+
+<hr/>
+
+<!-- ═══════════════════ 10. THREAD SAFETY ═══════════════════ -->
+<div class="section" id="s10">
+  <div class="section-badge badge-advanced">Advanced</div>
+  <h2>Thread Safety</h2>
+  <p class="subtitle">Logging from multiple threads is the default case in production — handle it correctly</p>
+
+  <div class="callout callout-warn">
+    <strong>Common interview question:</strong> "What happens if two threads call <code>logger.log()</code> simultaneously?" — you need to know exactly where race conditions can occur.
+  </div>
+
+  <div class="code-wrap">
+    <div class="code-header"><span>thread_safe_handlers.py</span><span class="lang">python</span></div>
+    <pre><code><span class="kw">import</span> threading
+
+<span class="cm"># ── Race condition 1: Singleton creation ────────────────
+# Solved by double-checked locking in Logger.__new__() already shown above.
+
+# ── Race condition 2: File handler (two threads write simultaneously) ────</span>
+<span class="kw">class</span> <span class="cls">ThreadSafeFileHandler</span>(<span class="cls">Handler</span>):
+    <span class="kw">def</span> <span class="fn">__init__</span>(self, filepath: str, **kwargs):
+        <span class="nb">super</span>().__init__(**kwargs)
+        self.filepath  = filepath
+        self._lock     = threading.Lock()  <span class="cm"># one write at a time</span>
+
+    <span class="kw">def</span> <span class="fn">_write</span>(self, message: str):
+        <span class="kw">with</span> self._lock:
+            <span class="kw">with</span> open(self.filepath, <span class="st">"a"</span>) <span class="kw">as</span> f:
+                f.write(message + <span class="st">"\n"</span>)
+
+<span class="cm"># ── Race condition 3: Handler list modification while iterating ─────────
+# In Logger.log() we iterate self._handlers.
+# If another thread calls add_handler() simultaneously → RuntimeError
+# Fix: use a threading.RLock (reentrant) around handler list access</span>
+
+<span class="kw">class</span> <span class="cls">Logger</span>:   <span class="cm"># extended version</span>
+    <span class="kw">def</span> <span class="fn">_init</span>(self):
+        self._handlers  = []
+        self._lock      = threading.RLock()  <span class="cm"># RLock = reentrant</span>
+        self._min_level = LogLevel.DEBUG
+
+    <span class="kw">def</span> <span class="fn">add_handler</span>(self, handler):
+        <span class="kw">with</span> self._lock:
+            <span class="kw">if</span> handler <span class="kw">not in</span> self._handlers:
+                self._handlers.append(handler)
+
+    <span class="kw">def</span> <span class="fn">log</span>(self, level, message):
+        <span class="kw">if</span> level.value < self._min_level.value:
+            <span class="kw">return</span>
+        record = LogRecord(level, message)
+        <span class="kw">with</span> self._lock:
+            handlers_snapshot = list(self._handlers)  <span class="cm"># copy to release lock fast</span>
+        <span class="kw">for</span> handler <span class="kw">in</span> handlers_snapshot:
+            <span class="kw">try</span>:
+                handler.handle(record)
+            <span class="kw">except</span> Exception <span class="kw">as</span> e:
+                print(<span class="st">f"[Logger error] {e}"</span>, file=sys.stderr)
+
+<span class="cm"># ── Why snapshot the handler list? ─────────────────────────────────────
+# We copy self._handlers while holding the lock, then release it before
+# calling handle(). This avoids holding the lock during I/O (which could
+# be slow), preventing other threads from blocking unnecessarily.</span>
+</code></pre>
+  </div>
+</div>
+
+<hr/>
+
+<!-- ═══════════════════ 11. ASYNC ═══════════════════ -->
+<div class="section" id="s11">
+  <div class="section-badge badge-advanced">Advanced</div>
+  <h2>Async-Safe Logging — Queue Handler</h2>
+  <p class="subtitle">Never block your main thread on disk I/O or network calls</p>
+
+  <div class="why-box">
+    <strong>Why async logging?</strong> Writing to disk or sending HTTP takes milliseconds. If the main thread blocks on every log call, a high-throughput service slows to a crawl. Solution: log calls just enqueue a record in memory (microseconds), and a background worker thread drains the queue.
+  </div>
+
+  <div class="code-wrap">
+    <div class="code-header"><span>async_handler.py</span><span class="lang">python</span></div>
+    <pre><code><span class="kw">import</span> queue, threading, sys
+
+<span class="cm"># ────────────────────────────────────────────────────────
+# QueueHandler: enqueues records (non-blocking, O(1))
+# ────────────────────────────────────────────────────────</span>
+<span class="kw">class</span> <span class="cls">QueueHandler</span>(<span class="cls">Handler</span>):
+    <span class="cm">"""Wraps any handler. log() returns instantly; background thread writes."""</span>
+
+    <span class="kw">def</span> <span class="fn">__init__</span>(self, target_handler: <span class="cls">Handler</span>, maxsize: int = <span class="nb">10_000</span>):
+        <span class="nb">super</span>().__init__()
+        self.target  = target_handler
+        self._queue  = queue.Queue(maxsize=maxsize)
+        self._stop   = threading.Event()
+        self._worker = threading.Thread(
+            target=self._drain, daemon=<span class="kw">True</span>, name=<span class="st">"log-worker"</span>
+        )
+        self._worker.start()
+
+    <span class="kw">def</span> <span class="fn">_write</span>(self, message: str):
+        <span class="kw">try</span>:
+            self._queue.put_nowait(message)  <span class="cm"># non-blocking put</span>
+        <span class="kw">except</span> queue.Full:
+            <span class="cm"># Queue is full — drop the log rather than block the app</span>
+            print(<span class="st">"[QueueHandler] queue full, log dropped"</span>, file=sys.stderr)
+
+    <span class="kw">def</span> <span class="fn">_drain</span>(self):
+        <span class="cm">"""Background worker: pulls from queue, passes to real handler."""</span>
+        <span class="kw">while not</span> self._stop.is_set():
+            <span class="kw">try</span>:
+                message = self._queue.get(timeout=<span class="nb">0.1</span>)
+                self.target._write(message)
+                self._queue.task_done()
+            <span class="kw">except</span> queue.Empty:
+                <span class="kw">continue</span>
+
+    <span class="kw">def</span> <span class="fn">close</span>(self):
+        <span class="cm">"""Graceful shutdown: flush remaining logs, then stop."""</span>
+        self._queue.join()           <span class="cm"># wait for queue to empty</span>
+        self._stop.set()
+        self._worker.join()
+        self.target.close()
+
+<span class="cm"># ── Usage ───────────────────────────────────────────────
+# Wrap any slow handler with QueueHandler:</span>
+file_handler  = FileHandler(<span class="st">"app.log"</span>, formatter=PlainTextFormatter())
+async_handler = QueueHandler(file_handler)
+logger        = Logger()
+logger.add_handler(async_handler)
+
+<span class="cm"># logger.error("...") returns instantly — disk write happens in background</span>
+
+<span class="cm"># ────────────────────────────────────────────────────────
+# InMemoryHandler: for unit testing
+# ────────────────────────────────────────────────────────</span>
+<span class="kw">class</span> <span class="cls">InMemoryHandler</span>(<span class="cls">Handler</span>):
+    <span class="cm">"""Stores all log messages in a list — great for assertions in tests."""</span>
+    <span class="kw">def</span> <span class="fn">__init__</span>(self, **kwargs):
+        <span class="nb">super</span>().__init__(**kwargs)
+        self.records: list = []
+
+    <span class="kw">def</span> <span class="fn">_write</span>(self, message: str):
+        self.records.append(message)
+
+    <span class="kw">def</span> <span class="fn">clear</span>(self):
+        self.records.clear()
+
+    <span class="kw">def</span> <span class="fn">contains</span>(self, substr: str) -> bool:
+        <span class="kw">return</span> any(substr <span class="kw">in</span> r <span class="kw">for</span> r <span class="kw">in</span> self.records)
+</code></pre>
+  </div>
+</div>
+
+<hr/>
+
+<!-- ═══════════════════ 12. COMPLETE CODE ═══════════════════ -->
+<div class="section" id="s12">
+  <div class="section-badge badge-advanced">Complete Code</div>
+  <h2>Full Runnable Implementation</h2>
+  <p class="subtitle">Copy-paste ready. Every class, correctly ordered, with a demo at the bottom.</p>
+
+  <div class="code-wrap">
+    <div class="code-header"><span>logging_system.py — complete</span><span class="lang">python</span></div>
+    <pre><code><span class="cm">"""
+Logging System — Complete LLD Implementation
+Patterns: Singleton, Strategy, Chain of Responsibility, Observer,
+          Decorator, Factory
+"""</span>
+
+<span class="kw">from</span> __future__ <span class="kw">import</span> annotations
+<span class="kw">from</span> abc         <span class="kw">import</span> ABC, abstractmethod
+<span class="kw">from</span> collections <span class="kw">import</span> deque
+<span class="kw">from</span> dataclasses <span class="kw">import</span> dataclass, field
+<span class="kw">from</span> datetime    <span class="kw">import</span> datetime, timedelta
+<span class="kw">from</span> enum        <span class="kw">import</span> IntEnum
+<span class="kw">import</span> json, os, queue, sys, threading, traceback, urllib.request
+
+<span class="cm"># ═══════════════════════════════════════════════════════════
+# 1. LogLevel
+# ═══════════════════════════════════════════════════════════</span>
+<span class="kw">class</span> <span class="cls">LogLevel</span>(IntEnum):
+    DEBUG    = <span class="nb">1</span>
+    INFO     = <span class="nb">2</span>
+    WARNING  = <span class="nb">3</span>
+    ERROR    = <span class="nb">4</span>
+    CRITICAL = <span class="nb">5</span>
+
+<span class="cm"># ═══════════════════════════════════════════════════════════
+# 2. LogRecord
+# ═══════════════════════════════════════════════════════════</span>
+<span class="dc">@dataclass</span>
+<span class="kw">class</span> <span class="cls">LogRecord</span>:
+    level:       LogLevel
+    message:     str
+    timestamp:   datetime = field(default_factory=datetime.now)
+    logger_name: str      = <span class="st">"root"</span>
+    exc_info:    str      = <span class="st">""</span>
+
+    <span class="kw">def</span> <span class="fn">__post_init__</span>(self):
+        <span class="kw">if</span> isinstance(self.message, Exception):
+            self.exc_info = traceback.format_exc()
+            self.message  = str(self.message)
+
+<span class="cm"># ═══════════════════════════════════════════════════════════
+# 3. Formatters (Strategy Pattern)
+# ═══════════════════════════════════════════════════════════</span>
+<span class="kw">class</span> <span class="cls">Formatter</span>(ABC):
+    <span class="dc">@abstractmethod</span>
+    <span class="kw">def</span> <span class="fn">format</span>(self, record: LogRecord) -> str: ...
+
+<span class="kw">class</span> <span class="cls">PlainTextFormatter</span>(Formatter):
+    <span class="kw">def</span> <span class="fn">format</span>(self, record: LogRecord) -> str:
+        ts = record.timestamp.strftime(<span class="st">"%Y-%m-%d %H:%M:%S"</span>)
+        <span class="kw">return</span> <span class="st">f"[{ts}] [{record.level.name:<8}] [{record.logger_name}] {record.message}"</span>
+
+<span class="kw">class</span> <span class="cls">JSONFormatter</span>(Formatter):
+    <span class="kw">def</span> <span class="fn">format</span>(self, record: LogRecord) -> str:
+        d = {<span class="st">"timestamp"</span>: record.timestamp.isoformat(),
+             <span class="st">"level"</span>: record.level.name, <span class="st">"message"</span>: record.message}
+        <span class="kw">if</span> record.exc_info: d[<span class="st">"exception"</span>] = record.exc_info
+        <span class="kw">return</span> json.dumps(d)
+
+ANSI_COLORS = {
+    LogLevel.DEBUG:    <span class="st">"\033[36m"</span>, LogLevel.INFO:     <span class="st">"\033[32m"</span>,
+    LogLevel.WARNING:  <span class="st">"\033[33m"</span>, LogLevel.ERROR:    <span class="st">"\033[31m"</span>,
+    LogLevel.CRITICAL: <span class="st">"\033[35;1m"</span>,
+}
+RESET = <span class="st">"\033[0m"</span>
+
+<span class="kw">class</span> <span class="cls">ColoredFormatter</span>(Formatter):
+    <span class="kw">def</span> <span class="fn">format</span>(self, record: LogRecord) -> str:
+        c  = ANSI_COLORS.get(record.level, <span class="st">""</span>)
+        ts = record.timestamp.strftime(<span class="st">"%H:%M:%S"</span>)
+        <span class="kw">return</span> <span class="st">f"{c}[{ts}][{record.level.name:<8}]{RESET} {record.message}"</span>
+
+<span class="cm"># ═══════════════════════════════════════════════════════════
+# 4. Filters (Chain of Responsibility)
+# ═══════════════════════════════════════════════════════════</span>
+<span class="kw">class</span> <span class="cls">Filter</span>(ABC):
+    <span class="kw">def</span> <span class="fn">__init__</span>(self): self._next: Filter = <span class="kw">None</span>
+    <span class="kw">def</span> <span class="fn">set_next</span>(self, nxt: Filter) -> Filter:
+        self._next = nxt; <span class="kw">return</span> nxt
+    <span class="kw">def</span> <span class="fn">passes</span>(self, r: LogRecord) -> bool:
+        <span class="kw">return</span> (self._next.passes(r) <span class="kw">if</span> self._next <span class="kw">else</span> <span class="kw">True</span>) <span class="kw">if</span> self._check(r) <span class="kw">else</span> <span class="kw">False</span>
+    <span class="dc">@abstractmethod</span>
+    <span class="kw">def</span> <span class="fn">_check</span>(self, r: LogRecord) -> bool: ...
+
+<span class="kw">class</span> <span class="cls">LevelFilter</span>(Filter):
+    <span class="kw">def</span> <span class="fn">__init__</span>(self, min_level: LogLevel):
+        <span class="nb">super</span>().__init__(); self.min_level = min_level
+    <span class="kw">def</span> <span class="fn">_check</span>(self, r: LogRecord) -> bool:
+        <span class="kw">return</span> r.level >= self.min_level
+
+<span class="kw">class</span> <span class="cls">KeywordFilter</span>(Filter):
+    <span class="kw">def</span> <span class="fn">__init__</span>(self, blocked: list):
+        <span class="nb">super</span>().__init__(); self.blocked = [k.lower() <span class="kw">for</span> k <span class="kw">in</span> blocked]
+    <span class="kw">def</span> <span class="fn">_check</span>(self, r: LogRecord) -> bool:
+        <span class="kw">return not</span> any(k <span class="kw">in</span> r.message.lower() <span class="kw">for</span> k <span class="kw">in</span> self.blocked)
+
+<span class="kw">class</span> <span class="cls">RateLimitFilter</span>(Filter):
+    <span class="kw">def</span> <span class="fn">__init__</span>(self, max_per_min: int = <span class="nb">100</span>):
+        <span class="nb">super</span>().__init__(); self.max = max_per_min; self._ts = deque()
+    <span class="kw">def</span> <span class="fn">_check</span>(self, r: LogRecord) -> bool:
+        now = datetime.now(); cutoff = now - timedelta(minutes=<span class="nb">1</span>)
+        <span class="kw">while</span> self._ts <span class="kw">and</span> self._ts[<span class="nb">0</span>] < cutoff: self._ts.popleft()
+        <span class="kw">if</span> len(self._ts) >= self.max: <span class="kw">return</span> <span class="kw">False</span>
+        self._ts.append(now); <span class="kw">return</span> <span class="kw">True</span>
+
+<span class="cm"># ═══════════════════════════════════════════════════════════
+# 5. Handlers (Observer Pattern)
+# ═══════════════════════════════════════════════════════════</span>
+<span class="kw">class</span> <span class="cls">Handler</span>(ABC):
+    <span class="kw">def</span> <span class="fn">__init__</span>(self, formatter: Formatter = <span class="kw">None</span>, filter_chain: Filter = <span class="kw">None</span>):
+        self.formatter    = formatter <span class="kw">or</span> PlainTextFormatter()
+        self.filter_chain = filter_chain
+    <span class="kw">def</span> <span class="fn">handle</span>(self, record: LogRecord):
+        <span class="kw">if</span> self.filter_chain <span class="kw">and not</span> self.filter_chain.passes(record): <span class="kw">return</span>
+        self._write(self.formatter.format(record))
+    <span class="dc">@abstractmethod</span>
+    <span class="kw">def</span> <span class="fn">_write</span>(self, msg: str): ...
+    <span class="kw">def</span> <span class="fn">close</span>(self): <span class="kw">pass</span>
+
+<span class="kw">class</span> <span class="cls">ConsoleHandler</span>(Handler):
+    <span class="kw">def</span> <span class="fn">_write</span>(self, msg: str): print(msg, flush=<span class="kw">True</span>)
+
+<span class="kw">class</span> <span class="cls">FileHandler</span>(Handler):
+    <span class="kw">def</span> <span class="fn">__init__</span>(self, filepath: str, **kw):
+        <span class="nb">super</span>().__init__(**kw); self.filepath = filepath
+        os.makedirs(os.path.dirname(os.path.abspath(filepath)), exist_ok=<span class="kw">True</span>)
+    <span class="kw">def</span> <span class="fn">_write</span>(self, msg: str):
+        <span class="kw">with</span> open(self.filepath, <span class="st">"a"</span>) <span class="kw">as</span> f: f.write(msg + <span class="st">"\n"</span>)
+
+<span class="kw">class</span> <span class="cls">RotatingFileHandler</span>(Handler):
+    <span class="kw">def</span> <span class="fn">__init__</span>(self, filepath, max_bytes=<span class="nb">5_000_000</span>, backup_count=<span class="nb">5</span>, **kw):
+        <span class="nb">super</span>().__init__(**kw)
+        self.filepath = filepath; self.max_bytes = max_bytes
+        self.backup_count = backup_count; self._lock = threading.Lock()
+        os.makedirs(os.path.dirname(os.path.abspath(filepath)), exist_ok=<span class="kw">True</span>)
+    <span class="kw">def</span> <span class="fn">_should_rotate</span>(self):
+        <span class="kw">return</span> os.path.exists(self.filepath) <span class="kw">and</span> os.path.getsize(self.filepath) >= self.max_bytes
+    <span class="kw">def</span> <span class="fn">_do_rotate</span>(self):
+        <span class="kw">for</span> i <span class="kw">in</span> range(self.backup_count-<span class="nb">1</span>, <span class="nb">0</span>, -<span class="nb">1</span>):
+            s, d = <span class="st">f"{self.filepath}.{i}"</span>, <span class="st">f"{self.filepath}.{i+1}"</span>
+            <span class="kw">if</span> os.path.exists(s): os.rename(s, d)
+        <span class="kw">if</span> os.path.exists(self.filepath): os.rename(self.filepath, <span class="st">f"{self.filepath}.1"</span>)
+    <span class="kw">def</span> <span class="fn">_write</span>(self, msg: str):
+        <span class="kw">with</span> self._lock:
+            <span class="kw">if</span> self._should_rotate(): self._do_rotate()
+            <span class="kw">with</span> open(self.filepath, <span class="st">"a"</span>) <span class="kw">as</span> f: f.write(msg + <span class="st">"\n"</span>)
+
+<span class="kw">class</span> <span class="cls">InMemoryHandler</span>(Handler):
+    <span class="kw">def</span> <span class="fn">__init__</span>(self, **kw): <span class="nb">super</span>().__init__(**kw); self.records = []
+    <span class="kw">def</span> <span class="fn">_write</span>(self, msg): self.records.append(msg)
+    <span class="kw">def</span> <span class="fn">contains</span>(self, s): <span class="kw">return</span> any(s <span class="kw">in</span> r <span class="kw">for</span> r <span class="kw">in</span> self.records)
+
+<span class="kw">class</span> <span class="cls">QueueHandler</span>(Handler):
+    <span class="kw">def</span> <span class="fn">__init__</span>(self, target: Handler, maxsize=<span class="nb">10_000</span>):
+        <span class="nb">super</span>().__init__(); self.target = target; self._q = queue.Queue(maxsize)
+        self._stop = threading.Event()
+        self._t = threading.Thread(target=self._drain, daemon=<span class="kw">True</span>); self._t.start()
+    <span class="kw">def</span> <span class="fn">_write</span>(self, msg):
+        <span class="kw">try</span>: self._q.put_nowait(msg)
+        <span class="kw">except</span> queue.Full: print(<span class="st">"[QueueHandler] dropped"</span>, file=sys.stderr)
+    <span class="kw">def</span> <span class="fn">_drain</span>(self):
+        <span class="kw">while not</span> self._stop.is_set():
+            <span class="kw">try</span>: msg = self._q.get(timeout=<span class="nb">0.1</span>); self.target._write(msg); self._q.task_done()
+            <span class="kw">except</span> queue.Empty: <span class="kw">continue</span>
+    <span class="kw">def</span> <span class="fn">close</span>(self): self._q.join(); self._stop.set(); self._t.join(); self.target.close()
+
+<span class="cm"># ═══════════════════════════════════════════════════════════
+# 6. Logger (Singleton + Observer subject)
+# ═══════════════════════════════════════════════════════════</span>
+<span class="kw">class</span> <span class="cls">Logger</span>:
+    _instance = <span class="kw">None</span>; _class_lock = threading.Lock()
+
+    <span class="kw">def</span> <span class="fn">__new__</span>(cls):
+        <span class="kw">if</span> cls._instance <span class="kw">is None</span>:
+            <span class="kw">with</span> cls._class_lock:
+                <span class="kw">if</span> cls._instance <span class="kw">is None</span>:
+                    cls._instance = <span class="nb">super</span>().__new__(cls); cls._instance._init()
+        <span class="kw">return</span> cls._instance
+
+    <span class="kw">def</span> <span class="fn">_init</span>(self):
+        self._handlers = []; self._lock = threading.RLock()
+        self._min_level = LogLevel.DEBUG; self._name = <span class="st">"root"</span>
+
+    <span class="kw">def</span> <span class="fn">set_level</span>(self, l): self._min_level = l
+    <span class="kw">def</span> <span class="fn">add_handler</span>(self, h):
+        <span class="kw">with</span> self._lock:
+            <span class="kw">if</span> h <span class="kw">not in</span> self._handlers: self._handlers.append(h)
+    <span class="kw">def</span> <span class="fn">remove_handler</span>(self, h):
+        <span class="kw">with</span> self._lock:
+            <span class="kw">if</span> h <span class="kw">in</span> self._handlers: self._handlers.remove(h)
+    <span class="kw">def</span> <span class="fn">clear_handlers</span>(self):
+        <span class="kw">with</span> self._lock: self._handlers.clear()
+
+    <span class="kw">def</span> <span class="fn">log</span>(self, level: LogLevel, message: str):
+        <span class="kw">if</span> level < self._min_level: <span class="kw">return</span>
+        record = LogRecord(level=level, message=message, logger_name=self._name)
+        <span class="kw">with</span> self._lock: snapshot = list(self._handlers)
+        <span class="kw">for</span> h <span class="kw">in</span> snapshot:
+            <span class="kw">try</span>: h.handle(record)
+            <span class="kw">except</span> Exception <span class="kw">as</span> e: print(<span class="st">f"[Logger err] {e}"</span>, file=sys.stderr)
+
+    <span class="kw">def</span> <span class="fn">debug</span>(self, m):    self.log(LogLevel.DEBUG, m)
+    <span class="kw">def</span> <span class="fn">info</span>(self, m):     self.log(LogLevel.INFO, m)
+    <span class="kw">def</span> <span class="fn">warning</span>(self, m):  self.log(LogLevel.WARNING, m)
+    <span class="kw">def</span> <span class="fn">error</span>(self, m):    self.log(LogLevel.ERROR, m)
+    <span class="kw">def</span> <span class="fn">critical</span>(self, m): self.log(LogLevel.CRITICAL, m)
+    <span class="kw">def</span> <span class="fn">exception</span>(self, m):
+        self.log(LogLevel.ERROR, m + <span class="st">"\n"</span> + traceback.format_exc())
+
+<span class="cm"># ═══════════════════════════════════════════════════════════
+# 7. LoggerFactory (Factory Pattern)
+# ═══════════════════════════════════════════════════════════</span>
+<span class="kw">class</span> <span class="cls">LoggerFactory</span>:
+    <span class="dc">@staticmethod</span>
+    <span class="kw">def</span> <span class="fn">create_console_logger</span>(level=LogLevel.DEBUG):
+        l = Logger(); l.clear_handlers(); l.set_level(level)
+        l.add_handler(ConsoleHandler(formatter=ColoredFormatter())); <span class="kw">return</span> l
+
+    <span class="dc">@staticmethod</span>
+    <span class="kw">def</span> <span class="fn">create_production_logger</span>(log_dir=<span class="st">"logs"</span>):
+        l = Logger(); l.clear_handlers(); l.set_level(LogLevel.DEBUG)
+        l.add_handler(ConsoleHandler(formatter=ColoredFormatter()))
+        l.add_handler(RotatingFileHandler(
+            os.path.join(log_dir, <span class="st">"app.log"</span>),
+            max_bytes=<span class="nb">10_000_000</span>, backup_count=<span class="nb">5</span>,
+            formatter=PlainTextFormatter(),
+            filter_chain=LevelFilter(LogLevel.WARNING)
+        ))
+        <span class="kw">return</span> l
+
+    <span class="dc">@staticmethod</span>
+    <span class="kw">def</span> <span class="fn">create_test_logger</span>():
+        l = Logger(); l.clear_handlers()
+        h = InMemoryHandler(); l.add_handler(h); <span class="kw">return</span> l, h
+
+<span class="cm"># ═══════════════════════════════════════════════════════════
+# 8. Demo
+# ═══════════════════════════════════════════════════════════</span>
+<span class="kw">if</span> __name__ == <span class="st">"__main__"</span>:
+    logger = LoggerFactory.create_console_logger()
+    logger.debug(<span class="st">"App starting up"</span>)
+    logger.info(<span class="st">"Server listening on :8080"</span>)
+    logger.warning(<span class="st">"Memory usage above 75%"</span>)
+    logger.error(<span class="st">"Failed to connect to DB"</span>)
+    logger.critical(<span class="st">"Service is completely down!"</span>)
+
+    <span class="cm"># Singleton proof</span>
+    a, b = Logger(), Logger()
+    print(<span class="st">f"\nSingleton check: {a is b}"</span>)  <span class="cm"># True</span>
+
+    <span class="cm"># Test handler</span>
+    _, mem_handler = LoggerFactory.create_test_logger()
+    Logger().error(<span class="st">"disk full"</span>)
+    print(<span class="st">f"Test captured: {mem_handler.contains('disk full')}"</span>)  <span class="cm"># True</span>
+</code></pre>
+  </div>
+</div>
+
+<hr/>
+
+<!-- ═══════════════════ 13. Q&A ═══════════════════ -->
+<div class="section" id="s13">
+  <div class="section-badge badge-interview">Interview Q&A</div>
+  <h2>Full Interview Q&A</h2>
+  <p class="subtitle">Click each question to reveal the model answer</p>
+
+  <div class="qa-list">
+
+    <div class="qa-item">
+      <div class="qa-q" onclick="toggle(this)">
+        <span class="qa-q-text">Why use Singleton for Logger? What's the risk?</span>
+        <span class="qa-chevron">›</span>
+      </div>
+      <div class="qa-a">
+        <p><strong>Why:</strong> A single Logger instance gives a centralized, consistent log stream across the entire app. Multiple logger instances would produce disconnected streams, making it impossible to enforce global level filters or see logs in chronological order.</p>
+        <p><strong>Risk:</strong> Singletons make unit testing harder — the same instance persists between tests. Mitigate this by providing a <code>clear_handlers()</code> method and using <code>InMemoryHandler</code> in tests so you can assert what was logged without touching the real singleton.</p>
+        <p><strong>Also mention:</strong> Global state introduces coupling. If you're building a library (not an application), expose a Logger factory instead of a hardcoded Singleton so library users can inject their own logger.</p>
+      </div>
+    </div>
+
+    <div class="qa-item">
+      <div class="qa-q" onclick="toggle(this)">
+        <span class="qa-q-text">Explain double-checked locking. Why is it needed?</span>
+        <span class="qa-chevron">›</span>
+      </div>
+      <div class="qa-a">
+        <p>Without double-checked locking, a naive Singleton would either: (1) check <code>if _instance is None</code> without a lock — two threads can both see <code>None</code> and both create an instance (race condition), or (2) acquire a lock on every single call — expensive even after the instance exists.</p>
+        <p>Double-checked locking solves both: the outer <code>if</code> is a fast path that avoids the lock entirely once the instance exists. The inner <code>if</code> inside the lock catches the race where two threads both passed the outer check. This way the lock is only acquired when the instance might not yet exist.</p>
+        <p>In Python specifically, the GIL gives some protection, but you should still use the lock to be safe across implementations (PyPy, Jython, etc.).</p>
+      </div>
+    </div>
+
+    <div class="qa-item">
+      <div class="qa-q" onclick="toggle(this)">
+        <span class="qa-q-text">What is the difference between the logger-level filter and per-handler filters?</span>
+        <span class="qa-chevron">›</span>
+      </div>
+      <div class="qa-a">
+        <p>The <strong>logger-level</strong> (<code>set_level()</code>) is a global gate. Any record below this level is dropped immediately, before a <code>LogRecord</code> is even created. This is for performance — no point creating objects for DEBUG messages in production.</p>
+        <p><strong>Per-handler filters</strong> are finer-grained, applied after the record is created. They let each handler accept different subsets. Example: logger level is DEBUG (pass everything through), but the file handler only accepts WARNING+, and the remote handler only accepts ERROR+.</p>
+        <p>Think of it as: logger level = global pre-filter; handler filters = per-destination filters.</p>
+      </div>
+    </div>
+
+    <div class="qa-item">
+      <div class="qa-q" onclick="toggle(this)">
+        <span class="qa-q-text">Why Chain of Responsibility for filters instead of a simple list?</span>
+        <span class="qa-chevron">›</span>
+      </div>
+      <div class="qa-a">
+        <p>A simple list works fine, but Chain of Responsibility gives you <strong>short-circuit evaluation</strong> (the chain stops as soon as one filter rejects the record) and <strong>composability</strong> (each filter only knows about its own check and who's next).</p>
+        <p>More importantly, it follows the Open/Closed Principle — adding a new filter doesn't change existing filter code at all. You just create a new <code>Filter</code> subclass and insert it into the chain.</p>
+        <p>In a simple list approach, you'd need to know and modify the list structure. In the chain, each filter is self-contained.</p>
+      </div>
+    </div>
+
+    <div class="qa-item">
+      <div class="qa-q" onclick="toggle(this)">
+        <span class="qa-q-text">How would you make logging non-blocking? Why does it matter?</span>
+        <span class="qa-chevron">›</span>
+      </div>
+      <div class="qa-a">
+        <p>Use a <code>QueueHandler</code>: when <code>logger.error()</code> is called, it only puts a message string into an in-memory <code>queue.Queue</code> (microseconds). A background daemon thread drains the queue and does the actual I/O.</p>
+        <p><strong>Why it matters:</strong> File I/O takes ~1–5ms. Network I/O takes 10–100ms. If your app logs 1000 events/second, blocking on each one would consume 5–100 seconds of I/O time per second — clearly a bottleneck. Non-blocking logging keeps the hot path at ~1µs.</p>
+        <p><strong>Trade-off:</strong> If the app crashes, in-flight logs in the queue may be lost. Mitigate with <code>queue.join()</code> in the shutdown sequence (wait for the queue to drain before exiting).</p>
+      </div>
+    </div>
+
+    <div class="qa-item">
+      <div class="qa-q" onclick="toggle(this)">
+        <span class="qa-q-text">How do you test a logging system? How do you assert logs were written?</span>
+        <span class="qa-chevron">›</span>
+      </div>
+      <div class="qa-a">
+        <p>Use an <code>InMemoryHandler</code> — a handler that stores formatted log strings in a list instead of writing to disk or console. In your test, inject this handler, call the code under test, then assert on <code>handler.contains("expected message")</code>.</p>
+        <p>Pattern:</p>
+        <p><code>logger, handler = LoggerFactory.create_test_logger()</code><br/>
+           <code>my_service.do_something()  # code that logs</code><br/>
+           <code>assert handler.contains("connection failed")  # assertion</code></p>
+        <p>This approach keeps tests fast (no disk I/O), deterministic, and isolated — clearing the in-memory handler between tests prevents state leakage.</p>
+      </div>
+    </div>
+
+    <div class="qa-item">
+      <div class="qa-q" onclick="toggle(this)">
+        <span class="qa-q-text">How does the Decorator pattern apply to RotatingFileHandler?</span>
+        <span class="qa-chevron">›</span>
+      </div>
+      <div class="qa-a">
+        <p><code>RotatingFileHandler</code> extends <code>Handler</code> (same interface as <code>FileHandler</code>) and wraps the file-writing behavior with additional rotation logic. Before each write, it checks if the file size exceeds the threshold. If so, it renames old files and starts a new one — then delegates the actual write to the same open/write/close pattern as <code>FileHandler</code>.</p>
+        <p>The key Decorator property: it <strong>adds behavior transparently</strong> — callers just see a <code>Handler</code> and call <code>handle()</code>. The rotation is completely invisible to them.</p>
+        <p>This follows OCP: we didn't modify <code>FileHandler</code> at all. We just created a new class that adds new behavior.</p>
+      </div>
+    </div>
+
+    <div class="qa-item">
+      <div class="qa-q" onclick="toggle(this)">
+        <span class="qa-q-text">What happens if a handler throws an exception? Should it crash the app?</span>
+        <span class="qa-chevron">›</span>
+      </div>
+      <div class="qa-a">
+        <p><strong>Never.</strong> Logging is a support concern — it must never affect application correctness. If the remote log server is down, or the disk is full, the app should continue running normally. Only the logging for that handler fails.</p>
+        <p>Implementation: wrap each <code>handler.handle(record)</code> call in a try/except in <code>Logger.log()</code>. Catch all exceptions and print to stderr (the last resort that doesn't depend on the logging system). Never re-raise.</p>
+        <p>Similarly, in <code>RemoteHandler._write()</code>, wrap the HTTP call in try/except and fail silently (or print to stderr).</p>
+      </div>
+    </div>
+
+    <div class="qa-item">
+      <div class="qa-q" onclick="toggle(this)">
+        <span class="qa-q-text">How would you extend this system to support named loggers (like Python's logging module)?</span>
+        <span class="qa-chevron">›</span>
+      </div>
+      <div class="qa-a">
+        <p>Instead of a single Singleton, maintain a <strong>registry</strong> (a dict) mapping logger names to <code>Logger</code> instances. <code>Logger.get_logger("user.service")</code> checks the registry; if not found, creates a new one with the appropriate parent based on the dot-separated hierarchy.</p>
+        <p>Hierarchical propagation: a log from <code>"user.service"</code> also propagates to <code>"user"</code> and then the root logger, unless <code>propagate=False</code> is set. This lets you configure handlers at the root that catch everything, and add specific handlers for particular modules.</p>
+        <p>This is exactly how Python's built-in <code>logging</code> module works: <code>logging.getLogger("myapp.db")</code> creates or retrieves a named logger.</p>
+      </div>
+    </div>
+
+    <div class="qa-item">
+      <div class="qa-q" onclick="toggle(this)">
+        <span class="qa-q-text">What SOLID principles does this design follow?</span>
+        <span class="qa-chevron">›</span>
+      </div>
+      <div class="qa-a">
+        <p><strong>S — Single Responsibility:</strong> Logger logs. Formatter formats. Handler writes. Filter filters. Each class has exactly one reason to change.</p>
+        <p><strong>O — Open/Closed:</strong> Add a new handler, formatter, or filter by creating a new subclass — zero changes to existing code.</p>
+        <p><strong>L — Liskov Substitution:</strong> Any <code>Handler</code> subclass can replace any other. Any <code>Formatter</code> subclass can replace any other. Logger only calls <code>handle()</code> and <code>format()</code>.</p>
+        <p><strong>I — Interface Segregation:</strong> Formatter has one method (<code>format</code>). Filter has one method (<code>passes</code>). Handler has one public method (<code>handle</code>). No fat interfaces.</p>
+        <p><strong>D — Dependency Inversion:</strong> Logger depends on the abstract <code>Handler</code>, not concrete <code>ConsoleHandler</code>. Handler depends on abstract <code>Formatter</code>, not <code>PlainTextFormatter</code>.</p>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<hr/>
+
+<!-- ═══════════════════ 14. SUMMARY TABLE ═══════════════════ -->
+<div class="section" id="s14">
+  <div class="section-badge badge-interview">Patterns Summary</div>
+  <h2>Design Patterns — Quick Reference</h2>
+  <p class="subtitle">Memorize this table. Interviewers will ask "which pattern did you use and why?"</p>
+
+  <table>
+    <tr>
+      <th>Pattern</th>
+      <th>Applied To</th>
+      <th>Why This Pattern?</th>
+      <th>Key Benefit</th>
+    </tr>
+    <tr>
+      <td><strong>Singleton</strong></td>
+      <td><code>Logger</code></td>
+      <td>Only one logger per app; all code shares the same stream</td>
+      <td>Central control of levels, handlers, format</td>
+    </tr>
+    <tr>
+      <td><strong>Strategy</strong></td>
+      <td><code>Formatter</code></td>
+      <td>Swap format behavior at runtime without changing handlers</td>
+      <td>OCP — add new format = new class only</td>
+    </tr>
+    <tr>
+      <td><strong>Chain of Responsibility</strong></td>
+      <td><code>Filter</code></td>
+      <td>Chain independent checks; short-circuit on first failure</td>
+      <td>Composable, decoupled filtering logic</td>
+    </tr>
+    <tr>
+      <td><strong>Observer</strong></td>
+      <td><code>Handler</code></td>
+      <td>Logger notifies all handlers; each independently handles records</td>
+      <td>Add destinations without touching Logger</td>
+    </tr>
+    <tr>
+      <td><strong>Decorator</strong></td>
+      <td><code>RotatingFileHandler</code></td>
+      <td>Add rotation to file handler without modifying FileHandler</td>
+      <td>OCP — behavior extension without modification</td>
+    </tr>
+    <tr>
+      <td><strong>Factory</strong></td>
+      <td><code>LoggerFactory</code></td>
+      <td>Encapsulate complex logger setup; give callers a simple API</td>
+      <td>One-liner logger creation, testable configurations</td>
+    </tr>
+  </table>
+</div>
+
+<hr/>
+
+<!-- ═══════════════════ 15. TRADE-OFFS ═══════════════════ -->
+<div class="section" id="s15">
+  <div class="section-badge badge-interview">Trade-offs</div>
+  <h2>Design Trade-offs to Discuss</h2>
+  <p class="subtitle">Mention these proactively — it shows senior-level thinking</p>
+
+  <div class="two-col">
+    <div>
+      <div class="callout callout-note">
+        <strong>Sync vs Async logging</strong><br/>
+        Sync: simpler, guaranteed delivery, but blocks on I/O.<br/>
+        Async (QueueHandler): near-zero overhead, but may lose logs on crash.
+        <em>Production choice: async for high-throughput, sync for audit logs.</em>
+      </div>
+      <div class="callout callout-note">
+        <strong>Singleton vs Dependency Injection</strong><br/>
+        Singleton is convenient but couples code to global state. DI (pass logger as parameter) makes code easier to test. For libraries, always prefer DI. For applications, Singleton is acceptable.
+      </div>
+      <div class="callout callout-note">
+        <strong>Log levels as Enum vs int constants</strong><br/>
+        <code>IntEnum</code> is ergonomic (<code>level > LogLevel.INFO</code>). Plain <code>Enum</code> is safer (no accidental arithmetic). In interviews, mention both and choose IntEnum for readability.
+      </div>
+    </div>
+    <div>
+      <div class="callout callout-note">
+        <strong>File open per-write vs persistent file handle</strong><br/>
+        Opening per write: simple, safe across rotation and crashes. Persistent handle: faster (no open/close overhead). In production, use a buffered persistent handle with explicit <code>flush()</code>.
+      </div>
+      <div class="callout callout-note">
+        <strong>Size-based vs time-based rotation</strong><br/>
+        Size-based: predictable file sizes, good for disk management. Time-based: easy to correlate logs with incidents by date. Many production systems use both: rotate at midnight OR when file hits 100MB, whichever comes first.
+      </div>
+      <div class="callout callout-note">
+        <strong>Queue full: drop vs block</strong><br/>
+        <code>put_nowait()</code> drops logs when queue is full (prefer this — never slow the app). <code>put()</code> blocks (bad for performance). Always drop with a stderr warning, and size the queue generously (10k–100k items).
+      </div>
+    </div>
+  </div>
+
+  <div class="callout callout-tip" style="margin-top:1.5rem">
+    <strong>Final tip for your interview:</strong> After presenting the design, proactively say "I chose X over Y because Z — the trade-off is..." This single habit separates strong candidates from average ones. Interviewers are evaluating your <em>reasoning</em>, not just your code.
+  </div>
+</div>
+
+<div style="height:3rem"></div>
+
+</main>
+</div>
+
+<script>
+function scrollTo(id) {
+  document.getElementById(id).scrollIntoView({behavior:'smooth'});
+  document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+  event.target.classList.add('active');
+}
+function toggle(el) {
+  el.parentElement.classList.toggle('open');
+}
+// Progress bar
+window.addEventListener('scroll', () => {
+  const el = document.querySelector('.content');
+  const scrolled = window.scrollY;
+  const total = document.body.scrollHeight - window.innerHeight;
+  const pct = Math.round((scrolled / total) * 100);
+  document.getElementById('progress').style.width = pct + '%';
+});
+</script>
+</body>
+</html>

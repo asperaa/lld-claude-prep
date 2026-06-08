@@ -1,0 +1,1342 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Splitwise LLD — Extensive Why Edition</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Serif:ital,wght@0,400;0,600;1,400&family=JetBrains+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+:root {
+  --orange: #d4500f; --orange2: #f26522; --orange-bg: #fff7f0; --orange-border: #fbd0b3;
+  --bg: #faf9f7; --surface: #ffffff; --surface2: #f4f3ef; --surface3: #eceae4;
+  --border: #e3e0d8; --text: #1c1a17; --text2: #54514a; --text3: #9c9891;
+  --green: #2d6a4f; --green-bg: #edf7f2; --green-border: #b7dfc8;
+  --red: #9b1c1c; --red-bg: #fef2f2; --red-border: #fcc;
+  --blue: #1a4480; --blue-bg: #eff6ff; --blue-border: #bfdbfe;
+  --amber: #92400e; --amber-bg: #fffbeb; --amber-border: #fde68a;
+  --purple: #5b21b6; --purple-bg: #f5f3ff; --purple-border: #ddd6fe;
+  --mono: 'JetBrains Mono', monospace;
+  --sans: 'IBM Plex Sans', sans-serif;
+  --serif: 'IBM Plex Serif', serif;
+  --sidebar-w: 250px;
+  --r: 8px;
+}
+body { font-family: var(--sans); background: var(--bg); color: var(--text); display: flex; min-height: 100vh; }
+
+/* ---- SIDEBAR ---- */
+.sidebar {
+  width: var(--sidebar-w); position: fixed; top: 0; left: 0; bottom: 0;
+  background: var(--surface); border-right: 2px solid var(--border);
+  overflow-y: auto; z-index: 100; display: flex; flex-direction: column;
+}
+.logo-wrap { padding: 22px 18px 18px; border-bottom: 1px solid var(--border); }
+.logo { display: flex; align-items: center; gap: 10px; }
+.logo-icon { width: 36px; height: 36px; border-radius: 8px; background: var(--orange2); display: flex; align-items: center; justify-content: center; font-size: 18px; }
+.logo-name { font-size: 16px; font-weight: 600; font-family: var(--serif); }
+.logo-tag { font-size: 11px; color: var(--text3); margin-top: 3px; letter-spacing: 0.03em; }
+.nav-group { padding: 14px 18px 4px; font-size: 9px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.1em; color: var(--text3); }
+.nav-item { display: flex; align-items: center; gap: 9px; padding: 9px 18px; font-size: 13px; color: var(--text2); cursor: pointer; border-left: 3px solid transparent; transition: all 0.12s; }
+.nav-item:hover { background: var(--surface2); color: var(--text); }
+.nav-item.active { border-left-color: var(--orange2); background: var(--orange-bg); color: var(--orange); font-weight: 500; }
+.nav-item i { width: 15px; text-align: center; font-size: 12px; }
+.nav-item .step-num { font-size: 9px; font-weight: 700; background: var(--surface3); border-radius: 3px; padding: 1px 5px; margin-left: auto; color: var(--text3); }
+.nav-item.active .step-num { background: var(--orange-border); color: var(--orange); }
+
+/* ---- MAIN ---- */
+.main { margin-left: var(--sidebar-w); padding: 52px 60px; max-width: 920px; width: 100%; }
+.section { display: none; }
+.section.active { display: block; }
+
+/* ---- SECTION HEADER ---- */
+.sec-eyebrow { font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.1em; color: var(--orange2); margin-bottom: 10px; }
+.sec-title { font-family: var(--serif); font-size: 30px; font-weight: 600; line-height: 1.2; margin-bottom: 10px; }
+.sec-intro { font-size: 15px; color: var(--text2); line-height: 1.8; margin-bottom: 36px; border-left: 3px solid var(--border); padding-left: 16px; }
+
+/* ---- DIVIDERS / HEADINGS ---- */
+h3 { font-family: var(--serif); font-size: 19px; font-weight: 600; margin: 40px 0 14px; padding-top: 16px; border-top: 1px solid var(--border); color: var(--text); }
+h4 { font-size: 13px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.06em; margin: 18px 0 8px; color: var(--text3); }
+p { font-size: 14px; color: var(--text2); line-height: 1.8; margin: 10px 0; }
+
+/* ---- CALLOUT ---- */
+.prompt-box { background: var(--surface2); border: 1px solid var(--border); border-radius: var(--r); padding: 16px 20px; margin: 20px 0; }
+.prompt-box .plabel { font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.08em; color: var(--text3); margin-bottom: 7px; }
+.prompt-box .ptext { font-family: var(--serif); font-size: 16px; font-style: italic; color: var(--text); line-height: 1.6; }
+
+/* ---- DIALOGUE ---- */
+.dialogue { border: 1px solid var(--border); border-radius: var(--r); overflow: hidden; margin: 20px 0; }
+.d-row { padding: 14px 18px; border-bottom: 1px solid var(--border); font-size: 14px; line-height: 1.7; }
+.d-row:last-child { border-bottom: none; }
+.d-row.you { background: var(--surface); }
+.d-row.iv { background: var(--surface2); }
+.d-speaker { font-size: 9px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.09em; margin-bottom: 5px; }
+.d-row.you .d-speaker { color: var(--orange2); }
+.d-row.iv .d-speaker { color: var(--text3); }
+.why-inline {
+  margin-top: 12px; padding: 12px 14px;
+  background: var(--amber-bg); border-left: 3px solid #f59e0b;
+  border-radius: 0 6px 6px 0; font-size: 13px; color: var(--amber); line-height: 1.7;
+}
+.why-inline b { font-weight: 600; }
+.why-inline code { font-family: var(--mono); font-size: 11px; background: rgba(0,0,0,0.06); padding: 1px 5px; border-radius: 3px; }
+
+/* ---- ANNOTATED CODE ---- */
+.ann-wrap { margin: 22px 0; border: 1px solid var(--border); border-radius: var(--r); overflow: hidden; }
+.ann-header { background: #181825; padding: 10px 18px; display: flex; align-items: center; gap: 10px; border-bottom: 1px solid #2a2a3e; }
+.ann-header span { font-family: var(--mono); font-size: 12px; color: #6c7086; }
+.ann-row { display: grid; grid-template-columns: 46% 54%; border-bottom: 1px solid #2a2a3e; }
+.ann-row:last-child { border-bottom: none; }
+.ann-code { background: #1e1e2e; padding: 14px 18px; font-family: var(--mono); font-size: 12.5px; line-height: 1.75; color: #cdd6f4; overflow-x: auto; white-space: pre; }
+.ann-why { background: var(--surface2); padding: 14px 16px; border-left: 1px solid var(--border); font-size: 13px; line-height: 1.7; color: var(--text2); display: flex; flex-direction: column; gap: 6px; }
+.ann-why .wlabel { font-size: 9px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.09em; color: var(--orange2); }
+.ann-why .wmain { color: var(--text2); }
+.ann-why .wfail { background: var(--red-bg); border: 1px solid var(--red-border); border-radius: 5px; padding: 8px 10px; font-size: 12px; color: var(--red); }
+.ann-why .wfail b { font-weight: 600; }
+.ann-why .wfix { background: var(--green-bg); border: 1px solid var(--green-border); border-radius: 5px; padding: 8px 10px; font-size: 12px; color: var(--green); }
+.ann-why .wfix b { font-weight: 600; }
+
+/* ---- SYNTAX HIGHLIGHT ---- */
+.kw { color: #cba6f7; } .cls { color: #a6e3a1; font-weight: 500; }
+.cm { color: #585b70; font-style: italic; } .st { color: #f38ba8; }
+.nm { color: #89b4fa; } .dn { color: #fab387; }
+
+/* ---- PLAIN CODE ---- */
+.code-block { background: #1e1e2e; border-radius: var(--r); padding: 18px 20px; font-family: var(--mono); font-size: 13px; line-height: 1.8; overflow-x: auto; margin: 14px 0; color: #cdd6f4; white-space: pre; }
+
+/* ---- WHY BOX ---- */
+.why-box { background: var(--surface); border: 1px solid var(--border); border-radius: var(--r); padding: 18px 20px; margin: 18px 0; }
+.why-box .wl { display: flex; align-items: center; gap: 8px; font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.09em; color: var(--orange2); margin-bottom: 10px; }
+.why-box p { margin: 6px 0; }
+
+/* ---- ENTITY TABLE ---- */
+.etable { width: 100%; border-collapse: collapse; margin: 18px 0; font-size: 13.5px; }
+.etable th { text-align: left; padding: 10px 14px; background: var(--surface2); font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.07em; color: var(--text3); border-bottom: 2px solid var(--border); }
+.etable td { padding: 14px 14px; border-bottom: 1px solid var(--border); vertical-align: top; line-height: 1.7; color: var(--text2); }
+.etable td:first-child { font-weight: 500; color: var(--text); white-space: nowrap; }
+.etable tr:last-child td { border-bottom: none; }
+.etable tr:hover td { background: var(--surface2); }
+.badge { display: inline-block; font-size: 9px; font-weight: 700; padding: 2px 7px; border-radius: 20px; margin-right: 6px; text-transform: uppercase; letter-spacing: 0.05em; }
+.bk { background: var(--green-bg); color: var(--green); }
+.bs { background: var(--red-bg); color: var(--red); }
+
+/* ---- REQ LISTS ---- */
+.req-box { background: var(--surface2); border: 1px solid var(--border); border-radius: var(--r); padding: 18px 20px; margin: 14px 0; }
+.req-list { list-style: none; }
+.req-list li { font-size: 14px; color: var(--text2); padding: 6px 0; display: flex; gap: 10px; align-items: flex-start; line-height: 1.7; }
+.req-list li::before { font-weight: 700; flex-shrink: 0; margin-top: 1px; }
+.req-list li::before { content: "✓"; color: var(--green); }
+.req-list.out li::before { content: "✗"; color: var(--red); }
+
+/* ---- COMPARE ---- */
+.compare-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin: 14px 0; }
+.cb { background: var(--red-bg); border: 1px solid var(--red-border); border-radius: var(--r); padding: 14px 16px; }
+.cg { background: var(--green-bg); border: 1px solid var(--green-border); border-radius: var(--r); padding: 14px 16px; }
+.clabel { font-size: 9px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 9px; }
+.cb .clabel { color: var(--red); } .cg .clabel { color: var(--green); }
+.cb pre, .cg pre { font-family: var(--mono); font-size: 12px; line-height: 1.7; white-space: pre-wrap; }
+.cb pre { color: #7f1d1d; } .cg pre { color: #1a4731; }
+.cexplain { font-size: 13px; color: var(--text2); margin-top: 10px; line-height: 1.65; }
+
+/* ---- TIER (bad/good/great) ---- */
+.tier { border: 1px solid var(--border); border-radius: var(--r); overflow: hidden; margin: 20px 0; }
+.tier-head { display: flex; align-items: center; gap: 10px; padding: 12px 18px; border-bottom: 1px solid var(--border); }
+.tier-body { padding: 18px 20px; }
+.tier-badge { font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.06em; padding: 2px 9px; border-radius: 20px; }
+.tier-title { font-size: 14px; font-weight: 600; color: var(--text); }
+.tier.bad  .tier-head { background: var(--red-bg); border-bottom-color: var(--red-border); }
+.tier.good .tier-head { background: var(--amber-bg); border-bottom-color: var(--amber-border); }
+.tier.great .tier-head { background: var(--green-bg); border-bottom-color: var(--green-border); }
+.tier.bad  .tier-badge { background: white; border: 1px solid var(--red-border);   color: var(--red);   }
+.tier.good .tier-badge { background: white; border: 1px solid var(--amber-border); color: var(--amber); }
+.tier.great .tier-badge { background: white; border: 1px solid var(--green-border); color: var(--green); }
+
+/* ---- PATTERN CARD ---- */
+.pcard { border: 1px solid var(--border); border-radius: var(--r); padding: 20px 22px; margin: 16px 0; background: var(--surface); }
+.ptitle { font-family: var(--serif); font-size: 17px; font-weight: 600; margin-bottom: 4px; display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+.ptag { font-size: 10px; background: var(--surface2); border-radius: 20px; padding: 2px 9px; font-weight: 500; color: var(--text3); font-family: var(--sans); }
+.pcard p { margin: 8px 0; }
+.pcard b { font-weight: 600; color: var(--text); }
+
+/* ---- SOLID ---- */
+.solid-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin: 14px 0; }
+.solid-card { border: 1px solid var(--border); border-radius: var(--r); padding: 18px 20px; background: var(--surface); }
+.solid-letter { font-family: var(--serif); font-size: 32px; font-weight: 600; color: var(--orange2); line-height: 1; margin-bottom: 4px; }
+.solid-name { font-size: 13px; font-weight: 600; margin-bottom: 10px; }
+.solid-def { font-size: 13px; color: var(--text3); margin-bottom: 10px; font-style: italic; line-height: 1.6; }
+.solid-full { grid-column: 1 / -1; }
+.vbox { background: var(--red-bg); border: 1px solid var(--red-border); border-radius: 6px; padding: 11px 13px; margin: 8px 0; font-size: 12.5px; color: var(--red); line-height: 1.65; }
+.fbox { background: var(--green-bg); border: 1px solid var(--green-border); border-radius: 6px; padding: 11px 13px; margin: 8px 0; font-size: 12.5px; color: var(--green); line-height: 1.65; }
+.vbox b, .fbox b { font-weight: 600; }
+
+/* ---- TRADEOFF ---- */
+.tsec { margin: 24px 0; border: 1px solid var(--border); border-radius: var(--r); overflow: hidden; }
+.thead { padding: 13px 18px; background: var(--surface2); border-bottom: 1px solid var(--border); font-size: 15px; font-weight: 600; font-family: var(--serif); }
+.tbody { padding: 16px 18px; }
+.scenario { background: var(--amber-bg); border-left: 3px solid #f59e0b; border-radius: 0 6px 6px 0; padding: 12px 15px; margin: 10px 0; font-size: 13px; color: var(--amber); line-height: 1.7; }
+.scenario b { font-weight: 600; }
+.td-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin: 12px 0; }
+.tpro { background: var(--green-bg); border: 1px solid var(--green-border); border-radius: 6px; padding: 13px 15px; font-size: 13px; color: var(--green); line-height: 1.65; }
+.tcon { background: var(--amber-bg); border: 1px solid var(--amber-border); border-radius: 6px; padding: 13px 15px; font-size: 13px; color: var(--amber); line-height: 1.65; }
+.tlabel { font-size: 9px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 7px; display: block; }
+
+/* ---- Q&A ---- */
+.qa { border: 1px solid var(--border); border-radius: var(--r); overflow: hidden; margin: 12px 0; }
+.qa-q { padding: 15px 18px; cursor: pointer; font-size: 14px; font-weight: 500; display: flex; justify-content: space-between; align-items: center; background: var(--surface); user-select: none; gap: 12px; }
+.qa-q:hover { background: var(--surface2); }
+.qa-q i { color: var(--text3); transition: transform 0.2s; font-size: 11px; flex-shrink: 0; }
+.qa-q.open i { transform: rotate(180deg); }
+.qa-a { display: none; padding: 18px 20px; font-size: 14px; line-height: 1.85; color: var(--text2); background: var(--surface2); border-top: 1px solid var(--border); }
+.qa-a.show { display: block; }
+.qa-a h4 { margin-top: 16px; }
+.qa-a code { font-family: var(--mono); font-size: 12px; background: var(--surface3); padding: 1px 6px; border-radius: 4px; color: var(--text); }
+.qa-a .code-block { margin: 12px 0; font-size: 12px; }
+
+code { font-family: var(--mono); font-size: 12px; background: var(--surface2); padding: 1px 5px; border-radius: 4px; color: var(--orange); border: 1px solid var(--border); }
+::-webkit-scrollbar { width: 5px; height: 5px; }
+::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+</style>
+</head>
+<body>
+
+<nav class="sidebar">
+  <div class="logo-wrap">
+    <div class="logo">
+      <div class="logo-icon">💸</div>
+      <div><div class="logo-name">Splitwise LLD</div><div class="logo-tag">Extensive Whys Edition</div></div>
+    </div>
+  </div>
+  <div class="nav-group">Foundations</div>
+  <div class="nav-item active" onclick="show('req',this)"><i class="fa-solid fa-list-check"></i> Requirements <span class="step-num">01</span></div>
+  <div class="nav-item" onclick="show('ent',this)"><i class="fa-solid fa-diagram-project"></i> Core Entities <span class="step-num">02</span></div>
+  <div class="nav-group">Implementation</div>
+  <div class="nav-item" onclick="show('cls',this)"><i class="fa-solid fa-code"></i> Class Design <span class="step-num">03</span></div>
+  <div class="nav-group">Deep Dives</div>
+  <div class="nav-item" onclick="show('splits',this)"><i class="fa-solid fa-scissors"></i> Split Strategies <span class="step-num">04</span></div>
+  <div class="nav-item" onclick="show('balance',this)"><i class="fa-solid fa-scale-balanced"></i> Balance Tracking <span class="step-num">05</span></div>
+  <div class="nav-item" onclick="show('settle',this)"><i class="fa-solid fa-arrows-left-right"></i> Settlement Algorithm <span class="step-num">06</span></div>
+  <div class="nav-item" onclick="show('pat',this)"><i class="fa-solid fa-puzzle-piece"></i> Design Patterns <span class="step-num">07</span></div>
+  <div class="nav-item" onclick="show('sol',this)"><i class="fa-solid fa-layer-group"></i> SOLID Principles <span class="step-num">08</span></div>
+  <div class="nav-item" onclick="show('trd',this)"><i class="fa-solid fa-code-branch"></i> Trade-offs <span class="step-num">09</span></div>
+  <div class="nav-item" onclick="show('qa',this)"><i class="fa-solid fa-circle-question"></i> Interview Q&amp;A <span class="step-num">10</span></div>
+</nav>
+
+<main class="main">
+
+<!-- ======== SECTION 1: REQUIREMENTS ======== -->
+<div class="section active" id="s-req">
+  <div class="sec-eyebrow">Step 1 · ~5 minutes</div>
+  <div class="sec-title">Requirements &amp; Clarifications</div>
+  <div class="sec-intro">The interviewer gives you a vague sentence. Your first job is <em>not</em> to design — it is to interrogate. Every question you ask is a bug you're preventing before you write a single class. Notice how little the prompt below actually specifies.</div>
+
+  <div class="prompt-box">
+    <div class="plabel">The prompt you'll receive</div>
+    <div class="ptext">"Design a system like Splitwise that allows users to split expenses in a group and settle debts."</div>
+  </div>
+
+  <p>That sentence leaves almost everything ambiguous. What split types must be supported — just equal, or also exact amounts and percentages? How should debts be settled — naively or optimally? Who creates groups? These aren't details — each answer changes a class you must write or eliminates one you shouldn't.</p>
+
+  <h3>Clarifying Questions — with deep reasoning</h3>
+  <div class="dialogue">
+
+    <div class="d-row you">
+      <div class="d-speaker">You</div>
+      "What split types do we need to support? I'm thinking equal at minimum, but real Splitwise also has exact amounts and percentages. Should I design for all three?"
+      <div class="why-inline">
+        <b>Why this is the most important question to ask first:</b> The answer determines whether your <code>Split</code> class is a simple float wrapper or an extensible hierarchy. "Just equal" means one class, hardcoded logic. "All three" means you need a Strategy pattern — an abstract base with three concrete implementations. If you assume equal-only and the interviewer meant all three, you'll rebuild half your design. If you assume all three and they wanted one, you've over-engineered. One question, asked now, saves twenty minutes later.
+      </div>
+    </div>
+    <div class="d-row iv"><div class="d-speaker">Interviewer</div>"Yes — support all three. Equal split, exact amounts, and percentage split."</div>
+
+    <div class="d-row you">
+      <div class="d-speaker">You</div>
+      "When someone adds an expense, does every group member participate, or can it be a subset of members?"
+      <div class="why-inline">
+        <b>Why "subset" changes your data model:</b> If all members always participate, the split logic is simple — take the full list. But if a subset can be chosen, <code>add_expense()</code> must accept a <code>participants</code> argument, and your split objects must record <em>which</em> user each belongs to — not just an amount. This is actually the correct design regardless (you need to know who owes what), but clarifying it forces you to think about it explicitly instead of discovering it mid-implementation.
+      </div>
+    </div>
+    <div class="d-row iv"><div class="d-speaker">Interviewer</div>"Either — an expense can involve all members or just a subset."</div>
+
+    <div class="d-row you">
+      <div class="d-speaker">You</div>
+      "For the settlement — should the system just show raw balances per pair, or should it compute an optimized plan that minimizes the number of transactions?"
+      <div class="why-inline">
+        <b>Why "minimize transactions" is the hard problem:</b> Showing raw balances is trivial — iterate the balance dict. Minimizing transactions requires a real algorithm. If Alice owes Bob ₹300 and Bob owes Carol ₹300, the optimal plan is Alice pays Carol directly — one transaction instead of two. At scale with 10 people and 30 expenses, the naive approach produces O(n²) transactions while the optimal produces at most n−1. This is the algorithmically interesting part of the problem — it tells you whether you need a greedy heap or just a for loop.
+      </div>
+    </div>
+    <div class="d-row iv"><div class="d-speaker">Interviewer</div>"Minimize transactions — that's the interesting part."</div>
+
+    <div class="d-row you">
+      <div class="d-speaker">You</div>
+      "For percentage splits, should I validate that percentages sum to exactly 100? For exact splits, that amounts sum to the total?"
+      <div class="why-inline">
+        <b>Why validation belongs in the question, not in an afterthought:</b> If you add validation mid-design, you have to decide retroactively where it lives — in the Split subclass? In the factory? In <code>add_expense()</code>? Each answer has different implications. Asking now means you design with validation in mind from the start, so it lands in the right place (the factory, as we'll see) rather than being scattered. It also signals to the interviewer that you think about data integrity, not just happy paths.
+      </div>
+    </div>
+    <div class="d-row iv"><div class="d-speaker">Interviewer</div>"Yes — reject invalid splits with a clear error. Percentages must sum to 100, exact amounts must sum to the total."</div>
+
+    <div class="d-row you">
+      <div class="d-speaker">You</div>
+      "Do we need to handle recording that a payment was actually made — i.e., marking a debt as settled — or just computing what's owed?"
+      <div class="why-inline">
+        <b>Why recording payments is a separate concern from computing them:</b> Computing what's owed is read-only — it derives from existing expenses. Recording a payment is a write operation that changes the balance state. Without it, the system can tell you "Bob owes Alice ₹500" but can never update that when Bob actually pays. The balance sheet becomes permanently out of sync with reality. This question determines whether <code>record_payment()</code> is in scope and whether your balance data structure must support bi-directional updates.
+      </div>
+    </div>
+    <div class="d-row iv"><div class="d-speaker">Interviewer</div>"Yes — include recording payments so the balance updates when someone settles up."</div>
+
+    <div class="d-row you">
+      <div class="d-speaker">You</div>
+      "Should I worry about persistent storage, a REST API, authentication, or currency conversion?"
+      <div class="why-inline">
+        <b>Why calling out what's NOT in scope is as valuable as what is:</b> In a 35-minute interview, spending 10 minutes on currency conversion or JWT auth means you never get to the settlement algorithm — the interesting part. Stating out-of-scope items explicitly does three things: (1) proves you thought about them and made a deliberate choice, not an accidental omission; (2) protects you from scope creep mid-design; (3) makes the design look intentionally bounded rather than incomplete. Always end requirements with explicit exclusions.
+      </div>
+    </div>
+    <div class="d-row iv"><div class="d-speaker">Interviewer</div>"No — in-memory is fine. Focus on the object model and algorithms."</div>
+
+  </div>
+
+  <h3>Final Requirements</h3>
+  <div class="req-box">
+    <h4>In scope</h4>
+    <ul class="req-list">
+      <li>Register users, create groups, add members to groups.</li>
+      <li>Add an expense: who paid, how much, split type, and which participants.</li>
+      <li>Three split types: <strong>Equal</strong> (amount ÷ n), <strong>Exact</strong> (caller specifies each share), <strong>Percentage</strong> (caller specifies %).</li>
+      <li>Validate splits: percentages must sum to 100, exact amounts must sum to the total.</li>
+      <li>View current balance for any user in a group (who owes whom, how much).</li>
+      <li>Generate an optimized settlement plan that <strong>minimizes the number of transactions</strong>.</li>
+      <li>Record that a payment was made — balance updates accordingly.</li>
+    </ul>
+    <h4 style="margin-top:16px;">Out of scope</h4>
+    <ul class="req-list out">
+      <li>Persistent storage or database.</li>
+      <li>REST API or HTTP layer.</li>
+      <li>Authentication and authorization.</li>
+      <li>Currency conversion.</li>
+      <li>Expense editing or deletion.</li>
+      <li>Notifications of any kind.</li>
+    </ul>
+  </div>
+
+  <div class="why-box">
+    <div class="wl"><i class="fa-solid fa-lightbulb"></i> The three sub-problems hidden inside "split expenses"</div>
+    <p>Before designing any class, recognize that this prompt contains three distinct algorithmic problems: <strong>(1) How do you divide a payment?</strong> — the split strategies. <strong>(2) How do you track what everyone owes over time?</strong> — the balance data structure. <strong>(3) How do you produce the minimum transactions to settle all debts?</strong> — the settlement algorithm. These three problems map to three separate design decisions. Getting any one wrong produces a specific, concrete failure. Recognizing this structure before writing a single class is a senior-level signal.</p>
+  </div>
+</div>
+
+<!-- ======== SECTION 2: ENTITIES ======== -->
+<div class="section" id="s-ent">
+  <div class="sec-eyebrow">Step 2 · ~5 minutes</div>
+  <div class="sec-title">Core Entities &amp; Relationships</div>
+  <div class="sec-intro">Read the requirements and circle every noun. That is your candidate list. Now apply a ruthless filter: does this noun have <em>state that changes over time</em> AND <em>behavior that enforces rules on that state</em>? If yes → class. If only data → dataclass. If neither → a field on something else.</div>
+
+  <h3>Noun-by-noun evaluation</h3>
+  <table class="etable">
+    <thead><tr><th style="width:16%">Noun</th><th style="width:13%">Decision</th><th>Deep reasoning — including what breaks if you get it wrong</th></tr></thead>
+    <tbody>
+      <tr>
+        <td><span class="badge bk">Keep</span>User</td>
+        <td>Full class</td>
+        <td>Has identity (unique ID), a name, and email. Appears in every operation — as the payer of an expense, as a participant in a split, as a creditor or debtor in settlement. If User were just a string name, you'd have no way to handle two users with the same name ("There are two Priyhas in this group"). The <code>user_id</code> as the stable identity key is critical for the balance dict keying, which we'll see in the balance tracking section.</td>
+      </tr>
+      <tr>
+        <td><span class="badge bk">Keep</span>Group</td>
+        <td>Full class</td>
+        <td>Has mutable state (member list, expense list, running balance sheet) and behavior (add member, add expense, compute net balances). Critically, Group is the aggregate — it is the boundary within which balances are computed. Debts exist within a group, not globally. Without Group as a proper class with its own balance state, you have no clear owner for "who owes whom in this trip." The state would scatter into a global dict or into ExpenseManager, both of which make multi-group support impossible.</td>
+      </tr>
+      <tr>
+        <td><span class="badge bk">Keep</span>Expense</td>
+        <td>Full class</td>
+        <td>Records what happened: who paid, how much, the description, and the resulting splits. It is an immutable fact — once added, it should not change (changing it retroactively corrupts historical balances). Has an ID, a timestamp (for auditing), and owns a list of Splits. Without Expense as a class, there is no clean place to record the payer and description alongside the splits.</td>
+      </tr>
+      <tr>
+        <td><span class="badge bk">Keep</span>Split</td>
+        <td>Abstract class + subclasses</td>
+        <td><strong>This is the most design-sensitive entity.</strong> A Split represents one user's share of one expense. The key question is whether it just stores a pre-computed float or whether it stores the original inputs (percentage, exact amount) and computes on demand. A flat float loses information — you can no longer tell if "₹33.34" came from an equal split or an exact split, which matters for validation and display. The abstract base class with three concrete subclasses (EqualSplit, ExactSplit, PercentSplit) is the right design — explored fully in Section 04.</td>
+      </tr>
+      <tr>
+        <td><span class="badge bk">Keep</span>Transaction</td>
+        <td>Simple dataclass</td>
+        <td>The output of the settlement algorithm. "Alice pays Bob ₹500." It has three fields: payer, payee, amount. No behavior, no mutable state — it is pure read-only output. Using a <code>@dataclass</code> is correct here: lightweight, structured, named fields. Do not make it a full class — it has nothing to enforce.</td>
+      </tr>
+      <tr>
+        <td><span class="badge bs">Skip</span>Balance</td>
+        <td>Not a class — it's a dict</td>
+        <td>Tempting to create a <code>Balance</code> class. Resist it. A balance is a derived value — it is computed from expenses, not something you directly set. The "balance sheet" is a nested dict: <code>dict[user_id, dict[user_id, float]]</code>. Making it a class adds boilerplate with no benefit. The dict is sufficient, and its invariants are enforced by the methods that update it, not by a wrapper class.</td>
+      </tr>
+      <tr>
+        <td><span class="badge bs">Skip</span>SplitType</td>
+        <td>Enum</td>
+        <td>EQUAL, EXACT, PERCENT are labels, not objects. They have no state and no behavior. An <code>Enum</code> gives you type safety (no typos), autocomplete, and exhaustive checking in match statements. A string like <code>"equal"</code> gives you a silent bug when someone types <code>"Equal"</code>.</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <div class="why-box">
+    <div class="wl"><i class="fa-solid fa-lightbulb"></i> Split vs Transaction — the confusion that breaks interviews</div>
+    <p>The single most common mistake in Splitwise interviews is conflating these two. A <strong>Split</strong> is one person's share of one specific expense — it is created when the expense is added, and it lives inside the Expense object. A <strong>Transaction</strong> is a settlement instruction produced at the end — "to clear all debts, Alice should pay Carol ₹700." One group trip might have 20 expenses with 60 Splits, but the settlement algorithm produces only 3 Transactions. They operate at completely different levels. If you name them interchangeably during your interview, the interviewer will flag it.</p>
+  </div>
+
+  <div class="why-box">
+    <div class="wl"><i class="fa-solid fa-lightbulb"></i> Why Group owns the balance sheet, not ExpenseManager</div>
+    <p>It might seem natural to let <code>ExpenseManager</code> hold all balances centrally. But consider: a user belongs to multiple groups. Their debt to someone in a "Thailand Trip" group is completely separate from their debt in a "Flatmates" group. If <code>ExpenseManager</code> holds one global balance dict, you cannot cleanly separate balances by group — you'd need to key by <code>(group_id, user_id, user_id)</code>, a three-level dict that is awkward and error-prone. Putting the balance sheet inside <code>Group</code> means each group's debts are naturally isolated. It also means that if you delete a group, all its balances are deleted with it — no orphaned state.</p>
+  </div>
+</div>
+
+<!-- ======== SECTION 3: CLASS DESIGN ======== -->
+<div class="section" id="s-cls">
+  <div class="sec-eyebrow">Step 3 · ~15 minutes</div>
+  <div class="sec-title">Class Design — Every Line Justified</div>
+  <div class="sec-intro">Design top-down: start with the orchestrator (the single entry point), then the most complex domain object (Group and its balance sheet), then the supporting entities. For every field ask: "what happens if this field doesn't exist?" For every method: "who else would own this if I removed it from here?"</div>
+
+  <h3>ExpenseManager — the Single Entry Point</h3>
+  <p>In every well-structured LLD there is one orchestrator. For Swiggy it is <code>SwiggySystem</code>. For Splitwise it is <code>ExpenseManager</code>. External code touches only this class. It owns all registries, validates inputs, coordinates entities, and delegates work. It does not implement business rules — it orchestrates them.</p>
+
+  <div class="ann-wrap">
+    <div class="ann-header"><span>ExpenseManager — fields and methods</span></div>
+
+    <div class="ann-row">
+      <div class="ann-code"><span class="kw">class</span> <span class="cls">ExpenseManager</span>:
+    users:  <span class="cls">dict</span>[str, <span class="cls">User</span>]
+    groups: <span class="cls">dict</span>[str, <span class="cls">Group</span>]
+    engine: <span class="cls">SettlementEngine</span></div>
+      <div class="ann-why">
+        <span class="wlabel">Why dict, not list, for both registries?</span>
+        <span class="wmain">Every operation begins with a lookup: "give me the group with this ID." With a list, that's O(n) — scan all groups until you find the right one. With a dict it's O(1). Since <code>add_expense()</code>, <code>settle_up()</code>, and <code>record_payment()</code> all start with a group lookup, using a list would make every operation O(n) in the number of groups — a silent performance regression that gets worse as groups accumulate.</span>
+        <div class="wfail"><b>If you used a list:</b> Each of the 5+ methods that look up a group would scan the entire list. With 10,000 groups, every operation is 10,000 comparisons. The dict lookup is a constant-time key access.</div>
+      </div>
+    </div>
+
+    <div class="ann-row">
+      <div class="ann-code">    engine: <span class="cls">SettlementEngine</span></div>
+      <div class="ann-why">
+        <span class="wlabel">Why does the engine live on ExpenseManager, not on Group?</span>
+        <span class="wmain">Settlement is an algorithm that <em>operates on</em> a group's balance data — it doesn't belong to the group's own lifecycle. Group's job is to maintain correct balances. ExpenseManager's job is to expose operations — including running the settlement algorithm. Putting it on Group would mean Group knows about settlement strategy, which is a cross-cutting concern. Putting it on ExpenseManager means you can swap strategies (greedy heap vs. graph-based) without touching Group.</span>
+      </div>
+    </div>
+
+    <div class="ann-row">
+      <div class="ann-code">def add_expense(
+    self, group, paid_by,
+    amount, split_type,
+    participants, **kwargs
+) -> <span class="cls">Expense</span></div>
+      <div class="ann-why">
+        <span class="wlabel">Why does ExpenseManager create the splits, not the caller?</span>
+        <span class="wmain">If the caller constructed Split objects and passed them in, validation would scatter to every call site. One caller forgets to check that percentages sum to 100. Another passes an empty participants list. By centralising creation in <code>add_expense()</code> (via <code>SplitFactory</code>), there is exactly one place where splits are built and validated. Every caller gets the same guarantees automatically. This is the principle: push validation to the boundary where data enters the system, not to the interior where it's assumed clean.</span>
+      </div>
+    </div>
+
+    <div class="ann-row">
+      <div class="ann-code">def settle_up(
+    self, group
+) -> list[<span class="cls">Transaction</span>]</div>
+      <div class="ann-why">
+        <span class="wlabel">Why return Transactions instead of printing them?</span>
+        <span class="wmain">Returning a list of <code>Transaction</code> objects makes the method testable and composable. A test can call <code>settle_up()</code>, inspect the list, and assert exactly which transactions were produced — without capturing stdout. A UI layer can receive the list and render it however it wants. Printing is a side effect that makes both impossible. Never bake presentation into a domain method.</span>
+      </div>
+    </div>
+
+    <div class="ann-row">
+      <div class="ann-code">def record_payment(
+    self, group,
+    txn: <span class="cls">Transaction</span>
+) -> <span class="cls">None</span></div>
+      <div class="ann-why">
+        <span class="wlabel">Why accept a Transaction object instead of (payer_id, payee_id, amount)?</span>
+        <span class="wmain">The natural workflow is: call <code>settle_up()</code>, get a list of <code>Transaction</code> objects, let the user pay them one by one, then call <code>record_payment(txn)</code> for each. If you accept primitives instead of a Transaction, the caller must unpack and repack. Accepting the Transaction object makes the API mirror the workflow — the output of <code>settle_up()</code> is directly the input of <code>record_payment()</code>. This reduces cognitive overhead and prevents mismatched parameter ordering bugs (is it payer first or payee first?).</span>
+      </div>
+    </div>
+  </div>
+
+  <h3>Group — the Central Aggregate</h3>
+  <p>Group is where the most complex state lives. The balance sheet is a nested dict that must be updated atomically with every expense. Every field exists because removing it would break something specific.</p>
+
+  <div class="ann-wrap">
+    <div class="ann-header"><span>Group — fields, balance sheet, methods</span></div>
+
+    <div class="ann-row">
+      <div class="ann-code">  group_id: str  <span class="cm"># UUID</span>
+  name: str
+  members: list[<span class="cls">User</span>]
+  expenses: list[<span class="cls">Expense</span>]
+  balances: <span class="cls">dict</span>[str,
+              <span class="cls">dict</span>[str, float]]</div>
+      <div class="ann-why">
+        <span class="wlabel">Why keep both expenses and balances? Isn't balances redundant?</span>
+        <span class="wmain">They serve different purposes. <code>expenses</code> is the immutable audit trail — the historical record of what happened. <code>balances</code> is the derived running total — the current state. Recomputing balances from expenses on every query is O(expenses × members) per query — a problem that grows unboundedly. The balance dict is an incremental cache updated on every <code>add_expense()</code> call, making every balance query O(1). The tradeoff: you must maintain the invariant that balances are always consistent with expenses — discussed in Section 05.</span>
+      </div>
+    </div>
+
+    <div class="ann-row">
+      <div class="ann-code">  balances: dict[str,
+              dict[str, float]]
+  <span class="cm"># balances[A][B] = amount B owes A
+  # Positive = A is owed by B
+  # Negative = A owes B</span></div>
+      <div class="ann-why">
+        <span class="wlabel">Why this specific sign convention?</span>
+        <span class="wmain"><code>balances[A][B]</code> answers: "from A's perspective, what is B's debt to A?" A positive value means B owes A money — A is a creditor. A negative value means A owes B money — A is a debtor. This convention makes the settlement algorithm natural: users with a positive net balance are creditors, negative are debtors. The invariant is: <code>balances[A][B] == -balances[B][A]</code> always. Both sides must be updated atomically — if you update only one direction, the invariant breaks and your settlement produces wrong results. This is the most critical correctness constraint in the system.</span>
+        <div class="wfail"><b>If you update only one direction:</b> Alice pays ₹900 for dinner. You record <code>balances["alice"]["bob"] += 300</code> but forget <code>balances["bob"]["alice"] -= 300</code>. Now the settlement sees Alice as owed ₹300 but Bob as owing ₹0. The settlement produces "nobody owes Alice anything." The ₹300 debt has been silently erased. This is undetectable until someone checks the numbers.</div>
+      </div>
+    </div>
+
+    <div class="ann-row">
+      <div class="ann-code">def add_expense(
+    self, expense: <span class="cls">Expense</span>
+) -> <span class="cls">None</span>:
+    self.expenses.append(expense)
+    self._update_balances(expense)</div>
+      <div class="ann-why">
+        <span class="wlabel">Why is add_expense() on Group, not on ExpenseManager?</span>
+        <span class="wmain">Balance update is Group's own internal state change — it is not a cross-entity coordination task. Group owns <code>balances</code>, so it must own the logic that updates <code>balances</code>. If <code>ExpenseManager</code> updated balances directly, it would be reachng into Group's internals — a violation of encapsulation. The rule: behavior that mutates an object's state should live on that object. ExpenseManager creates the Expense and delegates <code>group.add_expense(expense)</code>. Group handles its own state update.</span>
+      </div>
+    </div>
+
+    <div class="ann-row">
+      <div class="ann-code">def _update_balances(
+    self, expense
+) -> <span class="cls">None</span>:
+    payer_id = expense.paid_by
+                      .get_id()
+    <span class="kw">for</span> split <span class="kw">in</span> expense.splits:
+        pid = split.user.get_id()
+        <span class="kw">if</span> pid == payer_id:
+            <span class="kw">continue</span>
+        amt = split.get_amount()
+        self._credit(payer_id,
+                     pid, amt)</div>
+      <div class="ann-why">
+        <span class="wlabel">Why skip the payer's own split?</span>
+        <span class="wmain">The payer paid the full expense on behalf of everyone, including themselves. Their share is already paid — they don't owe themselves. If you don't skip the payer, you'd record <code>balances[payer][payer] += X</code>, which is nonsensical and breaks the settlement algorithm (it produces a self-referential transaction: "Alice pays Alice ₹30"). The <code>if pid == payer_id: continue</code> is not a micro-optimisation — it is a correctness requirement.</span>
+      </div>
+    </div>
+
+    <div class="ann-row">
+      <div class="ann-code">def get_net_balances(
+    self
+) -> dict[str, float]:
+    <span class="kw">return</span> {
+        uid: round(
+            sum(d.values()), <span class="dn">2</span>)
+        <span class="kw">for</span> uid, d <span class="kw">in</span>
+        self.balances.items()
+    }</div>
+      <div class="ann-why">
+        <span class="wlabel">Why collapse the pairwise dict into a flat net balance?</span>
+        <span class="wmain">The settlement algorithm doesn't need to know "Alice owes Bob ₹300 and Carol ₹200." It only needs "Alice owes ₹500 in total." The pairwise dict is for display ("show me exactly what I owe each person"). The net balance is for settlement ("compute the minimum transactions to clear all debts"). <code>get_net_balances()</code> collapses the matrix into one number per user — the input the settlement engine needs. The rounding to 2 decimal places is not cosmetic; floating-point arithmetic on many small splits can accumulate errors like ₹0.0000000001 that confuse the algorithm.</span>
+        <div class="wfix"><b>Sanity check:</b> The sum of all net balances must always equal zero. If Alice nets +₹500 and Bob nets -₹300 and Carol nets -₹200, that's +500 - 300 - 200 = 0. Any non-zero sum indicates a bug in your balance update logic. Add this as an assertion in your tests.</div>
+      </div>
+    </div>
+  </div>
+
+  <h3>Expense and Split — immutability by design</h3>
+
+  <div class="ann-wrap">
+    <div class="ann-header"><span>Expense — the immutable record</span></div>
+
+    <div class="ann-row">
+      <div class="ann-code"><span class="kw">class</span> <span class="cls">Expense</span>:
+    expense_id: str  <span class="cm"># UUID</span>
+    paid_by: <span class="cls">User</span>
+    amount: float
+    splits: list[<span class="cls">Split</span>]
+    description: str
+    created_at: <span class="cls">datetime</span></div>
+      <div class="ann-why">
+        <span class="wlabel">Why store paid_by as a User object, not a user_id string?</span>
+        <span class="wmain">Storing the User object means that when you display "Alice paid ₹900 for dinner," you can call <code>expense.paid_by.get_name()</code> directly. No second lookup required. If you stored only the user_id, you'd need to pass the user registry everywhere to display expenses. The User object is the complete snapshot — name, email, ID — at zero extra cost. This is the principle: store the richest representation you have when it's cheap to do so.</span>
+        <div class="wfail"><b>If you stored user_id strings:</b> <code>display_expense(expense, user_registry)</code> — now every method that touches Expense must also accept the registry. The method signature grows. The coupling grows. The test setup grows.</div>
+      </div>
+    </div>
+
+    <div class="ann-row">
+      <div class="ann-code">    created_at: <span class="cls">datetime</span></div>
+      <div class="ann-why">
+        <span class="wlabel">Why is created_at important — it seems like a minor addition?</span>
+        <span class="wmain">It is never minor. Real needs: (1) ordering expenses chronologically in the group's feed; (2) dispute resolution — "I added this expense on March 3rd"; (3) auditing — "show me all expenses from last week"; (4) if you ever add expense editing, you need to know the original timestamp versus the edit timestamp. Without <code>created_at</code>, every one of these either becomes impossible or requires a painful migration. Cost: one field. Benefit: permanent historical accuracy.</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="ann-wrap">
+    <div class="ann-header"><span>Split — abstract base (see Section 04 for subclasses)</span></div>
+
+    <div class="ann-row">
+      <div class="ann-code"><span class="kw">class</span> <span class="cls">Split</span>(ABC):
+    user: <span class="cls">User</span>
+
+    @abstractmethod
+    <span class="kw">def</span> <span class="nm">get_amount</span>(self) -> float:
+        ...
+
+    @abstractmethod
+    <span class="kw">def</span> <span class="nm">validate</span>(self) -> bool:
+        ...</div>
+      <div class="ann-why">
+        <span class="wlabel">Why two abstract methods instead of just get_amount()?</span>
+        <span class="wmain"><code>get_amount()</code> returns how much this user owes — the computation. <code>validate()</code> checks whether the split's own inputs are internally valid — the guard. They are separate concerns. An <code>EqualSplit</code> always validates (amount ≥ 0 is the only check). A <code>PercentSplit</code> validates that its percentage is between 0 and 100. An <code>ExactSplit</code> validates that its amount is non-negative. Cross-split validation (do all percentages sum to 100?) is not the individual split's job — it's the factory's job. Each split only validates itself.</span>
+      </div>
+    </div>
+
+    <div class="ann-row">
+      <div class="ann-code">    user: <span class="cls">User</span>  <span class="cm"># not user_id</span></div>
+      <div class="ann-why">
+        <span class="wlabel">Why store the full User object in Split, not just the user_id?</span>
+        <span class="wmain">When <code>Group._update_balances()</code> iterates splits, it needs to call <code>split.user.get_id()</code> to update the balance dict. If Split stored only a string ID, <code>_update_balances()</code> would need access to the user registry to look up the User — an unnecessary dependency injection into a method that has nothing to do with user management. The User object carries its own ID: <code>split.user.get_id()</code> is always available with no extra lookups.</span>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ======== SECTION 4: SPLIT STRATEGIES ======== -->
+<div class="section" id="s-splits">
+  <div class="sec-eyebrow">Step 4 · Deep Dive</div>
+  <div class="sec-title">Split Strategies — Bad to Great</div>
+  <div class="sec-intro">The way you model Split determines whether your design is extensible or brittle. There are three levels of thinking here. Each solves a concrete failure the previous level introduces.</div>
+
+  <!-- BAD -->
+  <div class="tier bad">
+    <div class="tier-head">
+      <span class="tier-badge">Bad</span>
+      <span class="tier-title">One class, one field — store a pre-computed float everywhere</span>
+    </div>
+    <div class="tier-body">
+      <h4>Approach</h4>
+      <p>The "obvious" implementation: before creating any Split, compute each user's amount in <code>add_expense()</code>, then pass the result to a single flat <code>Split</code> class.</p>
+      <div class="code-block"><span class="kw">class</span> <span class="cls">Split</span>:
+    <span class="kw">def</span> <span class="nm">__init__</span>(self, user, amount: float):
+        self.user = user
+        self.amount = amount  <span class="cm"># always pre-computed</span>
+
+<span class="cm"># In add_expense():</span>
+<span class="kw">if</span> split_type == <span class="st">"EQUAL"</span>:
+    share = total / len(participants)
+    splits = [Split(u, share) <span class="kw">for</span> u <span class="kw">in</span> participants]
+<span class="kw">elif</span> split_type == <span class="st">"PERCENT"</span>:
+    splits = [Split(u, (pct/<span class="dn">100</span>)*total)
+              <span class="kw">for</span> u, pct <span class="kw">in</span> percents.items()]
+<span class="kw">elif</span> split_type == <span class="st">"EXACT"</span>:
+    splits = [Split(u, amt)
+              <span class="kw">for</span> u, amt <span class="kw">in</span> exact_amounts.items()]</div>
+
+      <h4>Why this fails — three separate problems</h4>
+      <p><b>Problem 1 — Logic scattered into add_expense():</b> <code>add_expense()</code> now has two responsibilities — coordinating the expense creation AND knowing how to compute each split type. When a fourth split type is needed (say, "Adjustment Split"), a developer opens <code>add_expense()</code> — the most critical method — and adds another elif branch. Every such edit is a risk to existing logic. This is the Open/Closed violation: the class must be modified for every extension.</p>
+      <p><b>Problem 2 — No validation home:</b> For a percentage split, you need to verify all percentages sum to 100. For exact amounts, they must sum to the total. With the flat approach, where does this validation live? Inside the elif? That's still inside <code>add_expense()</code>. Now <code>add_expense()</code> has a third responsibility: validating inputs per split type. The method grows unboundedly.</p>
+      <p><b>Problem 3 — Lost information:</b> Once you store a flat float, you cannot tell whether "₹33.34" came from an equal split of ₹100 ÷ 3, an exact split, or a 33.34% split. This matters for display ("Alice pays 33%"), for re-validation, and for audit trails. You've thrown away the inputs that produced the number.</p>
+      <div class="vbox"><b>The concrete extensibility failure:</b> Your manager asks you to add an "Adjustment Split" type (equal base + per-person adjustment). You open <code>add_expense()</code>. It already has 50 lines. You add another elif block. The PR touches the core orchestrator method. Code review flags it. Tests break on unrelated paths because you changed a shared method. This is what "closed for modification" protects against.</div>
+    </div>
+  </div>
+
+  <!-- GOOD -->
+  <div class="tier good">
+    <div class="tier-head">
+      <span class="tier-badge">Good</span>
+      <span class="tier-title">Subclass per split type — Strategy Pattern</span>
+    </div>
+    <div class="tier-body">
+      <h4>The insight</h4>
+      <p>Each split type is a different <em>algorithm</em> for computing a user's share. Three algorithms, same interface — that is exactly what the Strategy Pattern is for. Make <code>Split</code> abstract, create a concrete subclass per type. Each subclass owns its own computation logic and its own validation rules.</p>
+      <div class="code-block"><span class="kw">class</span> <span class="cls">EqualSplit</span>(<span class="cls">Split</span>):
+    <span class="kw">def</span> <span class="nm">__init__</span>(self, user, amount: float):
+        self._user = user
+        self._amount = amount  <span class="cm"># pre-computed equal share</span>
+
+    <span class="kw">def</span> <span class="nm">get_amount</span>(self) -> float:
+        <span class="kw">return</span> self._amount
+
+    <span class="kw">def</span> <span class="nm">validate</span>(self) -> bool:
+        <span class="kw">return</span> self._amount >= <span class="dn">0</span>
+
+
+<span class="kw">class</span> <span class="cls">PercentSplit</span>(<span class="cls">Split</span>):
+    <span class="kw">def</span> <span class="nm">__init__</span>(self, user, percent: float, total: float):
+        self._user = user
+        self._percent = percent
+        self._amount = round((percent / <span class="dn">100</span>) * total, <span class="dn">2</span>)
+
+    <span class="kw">def</span> <span class="nm">get_amount</span>(self) -> float:
+        <span class="kw">return</span> self._amount
+
+    <span class="kw">def</span> <span class="nm">get_percent</span>(self) -> float:
+        <span class="kw">return</span> self._percent  <span class="cm"># original input preserved</span>
+
+    <span class="kw">def</span> <span class="nm">validate</span>(self) -> bool:
+        <span class="kw">return</span> <span class="dn">0</span> < self._percent <= <span class="dn">100</span>
+
+
+<span class="kw">class</span> <span class="cls">ExactSplit</span>(<span class="cls">Split</span>):
+    <span class="kw">def</span> <span class="nm">__init__</span>(self, user, amount: float):
+        self._user = user
+        self._amount = amount
+
+    <span class="kw">def</span> <span class="nm">get_amount</span>(self) -> float:
+        <span class="kw">return</span> self._amount
+
+    <span class="kw">def</span> <span class="nm">validate</span>(self) -> bool:
+        <span class="kw">return</span> self._amount >= <span class="dn">0</span></div>
+
+      <h4>Why this is much better</h4>
+      <p>Each split type owns its own logic. Adding an <code>AdjustmentSplit</code> is a new file with a new class — <code>add_expense()</code> never changes. The original percentage is preserved in <code>PercentSplit._percent</code> — no information is lost. Each subclass's <code>validate()</code> enforces its own per-instance rules.</p>
+      <h4>The remaining problem</h4>
+      <p><code>add_expense()</code> still has the if/elif block that decides <em>which subclass to instantiate</em>. It has to import all three concrete classes. When you add <code>AdjustmentSplit</code>, you add a new elif to <code>add_expense()</code>. You've moved the problem, but it's still in the orchestrator.</p>
+      <p>Worse: cross-split validation (do all percentages sum to 100?) has no clean home. You could put it in <code>add_expense()</code>, but now <code>add_expense()</code> is back to having split-type-specific logic. You could add a class method to each subclass like <code>PercentSplit.validate_group(splits)</code>, but that's awkward — why would one split validate a list of its siblings?</p>
+    </div>
+  </div>
+
+  <!-- GREAT -->
+  <div class="tier great">
+    <div class="tier-head">
+      <span class="tier-badge">Great</span>
+      <span class="tier-title">Strategy Pattern + Factory — creation and validation centralised</span>
+    </div>
+    <div class="tier-body">
+      <h4>The insight</h4>
+      <p>Add a <code>SplitFactory</code>. Its job: given a split type and the raw inputs, build and validate the list of Split objects. <code>add_expense()</code> calls the factory and never imports a concrete Split class. The factory has separate methods per type, so each method is small, focused, and independently testable.</p>
+      <div class="code-block"><span class="kw">class</span> <span class="cls">SplitFactory</span>:
+
+    @staticmethod
+    <span class="kw">def</span> <span class="nm">create_equal</span>(
+        users: list[<span class="cls">User</span>],
+        total: float
+    ) -> list[<span class="cls">EqualSplit</span>]:
+        n = len(users)
+        share = round(total / n, <span class="dn">2</span>)
+        splits = [<span class="cls">EqualSplit</span>(u, share) <span class="kw">for</span> u <span class="kw">in</span> users]
+        <span class="cm"># Rounding fix: ₹100 / 3 = ₹33.33 × 3 = ₹99.99, not ₹100</span>
+        <span class="cm"># Give the leftover penny to the last person.</span>
+        remainder = round(total - share * n, <span class="dn">2</span>)
+        <span class="kw">if</span> remainder:
+            splits[-<span class="dn">1</span>]._amount = round(
+                splits[-<span class="dn">1</span>]._amount + remainder, <span class="dn">2</span>)
+        <span class="kw">return</span> splits
+
+    @staticmethod
+    <span class="kw">def</span> <span class="nm">create_exact</span>(
+        user_amounts: dict[<span class="cls">User</span>, float],
+        total: float
+    ) -> list[<span class="cls">ExactSplit</span>]:
+        <span class="cm"># Cross-split validation: all amounts must sum to total</span>
+        actual_sum = sum(user_amounts.values())
+        <span class="kw">if</span> abs(actual_sum - total) > <span class="dn">0.01</span>:
+            <span class="kw">raise</span> <span class="cls">ValueError</span>(
+                <span class="st">f"Exact amounts {actual_sum:.2f} must equal total {total:.2f}"</span>)
+        <span class="kw">return</span> [<span class="cls">ExactSplit</span>(u, amt)
+                <span class="kw">for</span> u, amt <span class="kw">in</span> user_amounts.items()]
+
+    @staticmethod
+    <span class="kw">def</span> <span class="nm">create_percent</span>(
+        user_percents: dict[<span class="cls">User</span>, float],
+        total: float
+    ) -> list[<span class="cls">PercentSplit</span>]:
+        <span class="cm"># Cross-split validation: all percentages must sum to 100</span>
+        pct_sum = sum(user_percents.values())
+        <span class="kw">if</span> abs(pct_sum - <span class="dn">100</span>) > <span class="dn">0.01</span>:
+            <span class="kw">raise</span> <span class="cls">ValueError</span>(
+                <span class="st">f"Percentages sum to {pct_sum}, must be 100"</span>)
+        <span class="kw">return</span> [<span class="cls">PercentSplit</span>(u, pct, total)
+                <span class="kw">for</span> u, pct <span class="kw">in</span> user_percents.items()]</div>
+
+      <h4>The rounding fix deserves its own explanation</h4>
+      <p>₹100 ÷ 3 = ₹33.333... Rounded to 2 decimal places: ₹33.33 each. Three people × ₹33.33 = ₹99.99 — a penny short of the actual expense. The penny disappears from the system, and the payer is now ₹0.01 under-compensated. Over thousands of expenses, these rounding errors accumulate.</p>
+      <p>The fix: compute one share, give everyone that share, then add the difference (₹0.01) to the last person. The total is now exact. This is the same technique banks use for currency rounding in batch payments. It is not a detail — it is a correctness requirement for any system that handles money.</p>
+      <div class="fbox"><b>Why > 0.01 tolerance instead of strict equality for validation?</b> Floating-point arithmetic means 33.33 + 33.33 + 33.34 might compute as 99.99999999999998 rather than exactly 100. Strict equality would reject valid inputs due to machine precision errors. The 0.01 tolerance absorbs floating-point noise while still catching genuine user errors (like 40% + 40% + 40% = 120%).</div>
+      <div class="why-inline">
+        <b>What to say in the interview:</b> "I use a Factory for split creation because it centralises both instantiation and cross-split validation. Each split type's factory method is responsible for one type of input — small, focused, independently testable. <code>add_expense()</code> never imports a concrete Split class. Adding a new split type is one new factory method and one new elif in <code>add_expense()</code> — zero changes to existing logic."
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ======== SECTION 5: BALANCE TRACKING ======== -->
+<div class="section" id="s-balance">
+  <div class="sec-eyebrow">Step 5 · Deep Dive</div>
+  <div class="sec-title">Balance Tracking — Bad to Great</div>
+  <div class="sec-intro">Every time an expense is added, you need to update the record of who owes whom. The question is: when do you compute it, and how do you store it? These seem like implementation details — they are not. They determine correctness, performance, and the complexity of the settlement algorithm.</div>
+
+  <!-- BAD -->
+  <div class="tier bad">
+    <div class="tier-head">
+      <span class="tier-badge">Bad</span>
+      <span class="tier-title">Recompute from scratch on every query</span>
+    </div>
+    <div class="tier-body">
+      <h4>Approach</h4>
+      <p>Don't store any balance state. When someone asks "what does Alice owe?", scan every expense, look at every split, sum up the result.</p>
+      <div class="code-block"><span class="kw">def</span> <span class="nm">get_balance</span>(self, group, user):
+    total = <span class="dn">0.0</span>
+    <span class="kw">for</span> expense <span class="kw">in</span> group.expenses:
+        <span class="kw">if</span> expense.paid_by == user:
+            <span class="cm"># others owe you</span>
+            <span class="kw">for</span> split <span class="kw">in</span> expense.splits:
+                <span class="kw">if</span> split.user != user:
+                    total += split.get_amount()
+        <span class="kw">else</span>:
+            <span class="cm"># check if user is a participant</span>
+            <span class="kw">for</span> split <span class="kw">in</span> expense.splits:
+                <span class="kw">if</span> split.user == user:
+                    total -= split.get_amount()
+    <span class="kw">return</span> total</div>
+
+      <h4>Why this fails</h4>
+      <p>The code itself is already tricky — notice how easy it is to double-count or miss a case. But the real problem is performance. With E expenses and M members per group, every balance query is O(E × M). In a group with 500 expenses and 20 members, every "what do I owe?" call scans 10,000 split objects.</p>
+      <p>The settlement algorithm calls <code>get_balance()</code> for every member, making settlement O(M × E × M) = O(M²E). A group trip with 20 people and 200 expenses: 20 × 200 × 20 = 80,000 operations per settlement call. And this gets <em>worse</em> over time — the longer a group runs, the slower every query gets.</p>
+      <div class="vbox"><b>The hidden correctness risk:</b> "Recompute from scratch" sounds safe — no stale state. But the logic above is easy to get wrong. What if someone is both the payer and a participant in the same expense? What if an expense has no splits? The more conditional branches in the recomputation, the more edge cases to handle every time someone queries a balance. With incremental update, the logic runs once at add-time and is correct from that point forward.</div>
+    </div>
+  </div>
+
+  <!-- GOOD -->
+  <div class="tier good">
+    <div class="tier-head">
+      <span class="tier-badge">Good</span>
+      <span class="tier-title">Incremental pairwise balance dict — update on every add_expense()</span>
+    </div>
+    <div class="tier-body">
+      <h4>The insight</h4>
+      <p>Maintain a running balance sheet that you update at write time, not read time. When an expense is added, immediately update the balances. Queries become O(1). The cost moves from "every read" to "every write" — and writes (adding expenses) are far less frequent than reads (checking balances).</p>
+      <div class="code-block"><span class="kw">def</span> <span class="nm">_update_balances</span>(self, expense: <span class="cls">Expense</span>) -> <span class="cls">None</span>:
+    payer_id = expense.paid_by.get_id()
+
+    <span class="kw">for</span> split <span class="kw">in</span> expense.splits:
+        pid = split.user.get_id()
+        <span class="kw">if</span> pid == payer_id:
+            <span class="kw">continue</span>  <span class="cm"># payer doesn't owe themselves</span>
+
+        amt = split.get_amount()
+
+        <span class="cm"># payer is owed `amt` by participant — update both directions</span>
+        self.balances.setdefault(payer_id, {})
+        self.balances.setdefault(pid, {})
+
+        self.balances[payer_id][pid] = (
+            self.balances[payer_id].get(pid, <span class="dn">0</span>) + amt)
+
+        self.balances[pid][payer_id] = (
+            self.balances[pid].get(payer_id, <span class="dn">0</span>) - amt)</div>
+
+      <p>The invariant: <code>balances[A][B] == -balances[B][A]</code> must always hold. Both directions are updated in the same method call — there is no window where one side is updated and the other isn't.</p>
+      <h4>The remaining problem</h4>
+      <p>This structure works for O(1) pairwise lookups. But the settlement algorithm doesn't need pairwise data — it needs each user's <em>net</em> balance. Computing the net requires summing all of a user's pairwise entries: O(M) per user, O(M²) for the whole group. Also, the pairwise dict can accumulate many small entries across many expenses. It tells you exactly what Alice owes Bob and what Alice owes Carol — but not Alice's total position.</p>
+    </div>
+  </div>
+
+  <!-- GREAT -->
+  <div class="tier great">
+    <div class="tier-head">
+      <span class="tier-badge">Great</span>
+      <span class="tier-title">Pairwise dict + net collapse — two views for two purposes</span>
+    </div>
+    <div class="tier-body">
+      <h4>The insight</h4>
+      <p>Keep the pairwise dict for detailed queries ("exactly how much does Alice owe Bob?") — it's the UI-facing view. Add a <code>get_net_balances()</code> method that collapses it into a flat <code>dict[user_id, float]</code> — the algorithm-facing view. Each view is derived from the same source of truth (the pairwise dict) and serves a different consumer.</p>
+      <div class="code-block"><span class="kw">def</span> <span class="nm">get_net_balances</span>(self) -> dict[str, float]:
+    <span class="cm">"""
+    Collapse the pairwise matrix into one net number per user.
+    Positive = this user is owed money overall (creditor).
+    Negative = this user owes money overall (debtor).
+    The sum of all net balances always equals zero.
+    """</span>
+    <span class="kw">return</span> {
+        uid: round(sum(d.values()), <span class="dn">2</span>)
+        <span class="kw">for</span> uid, d <span class="kw">in</span> self.balances.items()
+    }
+
+<span class="cm"># Example trace — Alice pays ₹900 for dinner, equal 3-way split:</span>
+<span class="cm">#</span>
+<span class="cm"># After _update_balances():</span>
+<span class="cm"># balances["alice"]["bob"]   = +300  (bob owes alice ₹300)</span>
+<span class="cm"># balances["alice"]["carol"] = +300  (carol owes alice ₹300)</span>
+<span class="cm"># balances["bob"]["alice"]   = -300  (bob owes alice ₹300)</span>
+<span class="cm"># balances["carol"]["alice"] = -300  (carol owes alice ₹300)</span>
+<span class="cm">#</span>
+<span class="cm"># get_net_balances():</span>
+<span class="cm"># alice: +300 + +300 = +600  ← owed ₹600 total</span>
+<span class="cm"># bob:   -300         = -300  ← owes ₹300</span>
+<span class="cm"># carol: -300         = -300  ← owes ₹300</span>
+<span class="cm"># Sum: 600 - 300 - 300 = 0 ✓</span></div>
+
+      <h4>Why the two-view design is correct</h4>
+      <p>The settlement algorithm gets exactly what it needs — one number per person — without needing to understand the pairwise structure. The UI gets the pairwise detail it needs to show "you owe Bob ₹300 and Carol ₹0" — without any additional computation. The pairwise dict is the single source of truth that both views derive from.</p>
+      <div class="why-inline">
+        <b>The zero-sum invariant as a test:</b> In your test suite, after every add_expense() call, add: <code>assert abs(sum(group.get_net_balances().values())) &lt; 0.01</code>. If this ever fails, you have a bug in your balance update logic — either you updated only one direction, or you double-counted a split. This single assertion catches an entire class of balance corruption bugs.
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ======== SECTION 6: SETTLEMENT ======== -->
+<div class="section" id="s-settle">
+  <div class="sec-eyebrow">Step 6 · Deep Dive</div>
+  <div class="sec-title">Settlement Algorithm — Bad to Great</div>
+  <div class="sec-intro">Given a set of net balances — some positive (creditors), some negative (debtors) — produce a list of payment instructions that settles all debts. The goal: minimize the total number of transactions. This is the algorithmically interesting part of the problem.</div>
+
+  <h3>The problem statement, precisely</h3>
+  <p>After a group trip: Alice nets +₹500 (owed ₹500 overall), Bob nets -₹200 (owes ₹200), Carol nets -₹300 (owes ₹300). We need transactions that bring everyone to zero, using as few payments as possible. The naive answer is Bob pays Alice ₹200 and Carol pays Alice ₹300 — two transactions. But what if Alice nets +₹200, Bob nets -₹200, Carol nets +₹100, Dave nets -₹100? The optimal solution here is two transactions, but a naive approach might produce three.</p>
+
+  <!-- BAD -->
+  <div class="tier bad">
+    <div class="tier-head">
+      <span class="tier-badge">Bad</span>
+      <span class="tier-title">Pairwise settlement — settle each existing pair directly</span>
+    </div>
+    <div class="tier-body">
+      <h4>Approach</h4>
+      <p>For every pair (A, B) where the balance dict says A owes B, create a transaction directly.</p>
+      <div class="code-block"><span class="kw">def</span> <span class="nm">settle</span>(self, balances: dict) -> list[<span class="cls">Transaction</span>]:
+    transactions = []
+    <span class="kw">for</span> uid_a, owed_dict <span class="kw">in</span> balances.items():
+        <span class="kw">for</span> uid_b, amount <span class="kw">in</span> owed_dict.items():
+            <span class="kw">if</span> amount < -<span class="dn">0.01</span>:  <span class="cm"># uid_a owes uid_b</span>
+                transactions.append(
+                    <span class="cls">Transaction</span>(uid_a, uid_b, abs(amount)))
+    <span class="kw">return</span> transactions</div>
+
+      <h4>Why this fails</h4>
+      <p>It massively over-counts. Concrete example: Alice owes Bob ₹300, and Bob owes Carol ₹300. Bob nets to zero. The optimal solution is one transaction: Alice pays Carol ₹300 directly. Bob is a pass-through — his money comes in from Alice and goes straight out to Carol. The pairwise approach produces two transactions: Alice → Bob ₹300, then Bob → Carol ₹300.</p>
+      <p>More generally: with n people, pairwise settlement can produce O(n²) transactions, while the optimal is at most n−1. For 10 people: up to 90 pairwise transactions vs. at most 9 optimal ones. That's a 10× difference in how many payments group members have to make.</p>
+      <div class="vbox"><b>Why does the pairwise approach overshoot?</b> Because it looks at bilateral relationships. Alice owes Bob ₹300 AND Bob owes Carol ₹300 are treated as two separate facts. The algorithm never notices that Bob is a neutral party whose debt and credit cancel perfectly. Optimal settlement requires collapsing to net balances first — only then can you route payments efficiently.</div>
+    </div>
+  </div>
+
+  <!-- GOOD -->
+  <div class="tier good">
+    <div class="tier-head">
+      <span class="tier-badge">Good</span>
+      <span class="tier-title">Net balance + two-list matching</span>
+    </div>
+    <div class="tier-body">
+      <h4>The insight</h4>
+      <p>Pairwise relationships are irrelevant for settlement. What matters is each person's <em>net</em>: positive means they need to receive money (creditor), negative means they need to pay (debtor). Separate into two lists and match them: for each debtor, have them pay the first creditor in the list until one of them reaches zero.</p>
+      <div class="code-block"><span class="kw">def</span> <span class="nm">settle</span>(self, net: dict[str, float]) -> list[<span class="cls">Transaction</span>]:
+    creditors = sorted(
+        [(uid, bal) <span class="kw">for</span> uid, bal <span class="kw">in</span> net.items() <span class="kw">if</span> bal > <span class="dn">0.001</span>],
+        key=<span class="kw">lambda</span> x: x[<span class="dn">1</span>]  <span class="cm"># ascending by amount owed</span>
+    )
+    debtors = sorted(
+        [(uid, -bal) <span class="kw">for</span> uid, bal <span class="kw">in</span> net.items() <span class="kw">if</span> bal < -<span class="dn">0.001</span>],
+        key=<span class="kw">lambda</span> x: x[<span class="dn">1</span>]  <span class="cm"># ascending by amount owed</span>
+    )
+    txns = []
+    i, j = <span class="dn">0</span>, <span class="dn">0</span>
+    <span class="kw">while</span> i < len(creditors) <span class="kw">and</span> j < len(debtors):
+        c_id, c_amt = creditors[i]
+        d_id, d_amt = debtors[j]
+        settled = min(c_amt, d_amt)
+        txns.append(<span class="cls">Transaction</span>(d_id, c_id, round(settled, <span class="dn">2</span>)))
+        creditors[i] = (c_id, c_amt - settled)
+        debtors[j]   = (d_id, d_amt - settled)
+        <span class="kw">if</span> creditors[i][<span class="dn">1</span>] < <span class="dn">0.001</span>: i += <span class="dn">1</span>
+        <span class="kw">if</span> debtors[j][<span class="dn">1</span>]   < <span class="dn">0.001</span>: j += <span class="dn">1</span>
+    <span class="kw">return</span> txns</div>
+
+      <h4>Why this is much better</h4>
+      <p>This correctly handles the pass-through case. Bob nets to zero, so he doesn't appear in either list. Alice pays Carol directly. One transaction. Correct and efficient.</p>
+      <h4>The remaining problem</h4>
+      <p>The sorted lists are processed in ascending order — smallest amounts first. This is not optimal for minimizing transaction count. Consider: creditors [₹10, ₹50], debtors [₹10, ₹50]. Ascending matching pairs ₹10 debtor with ₹10 creditor (1 transaction, both done), then ₹50 debtor with ₹50 creditor (1 transaction, both done) — 2 transactions total. But if we matched the largest debtor with the largest creditor first, we'd also get 2 transactions. In this case it doesn't matter. But in cases where amounts don't match perfectly, matching largest-with-largest eliminates parties faster — producing fewer total transactions. The sorted-ascending approach can miss this optimization.</p>
+    </div>
+  </div>
+
+  <!-- GREAT -->
+  <div class="tier great">
+    <div class="tier-head">
+      <span class="tier-badge">Great</span>
+      <span class="tier-title">Greedy two-heap — always match largest creditor with largest debtor</span>
+    </div>
+    <div class="tier-body">
+      <h4>The insight</h4>
+      <p>To always eliminate the most debt per transaction, always pair the <em>largest</em> creditor with the <em>largest</em> debtor. Use two max-heaps — one for creditors, one for debtors. Each iteration pops the largest of each, settles as much as possible, and pushes remainders back. This is O(n log n) and produces at most n−1 transactions.</p>
+      <div class="code-block"><span class="kw">import</span> heapq
+<span class="kw">from</span> dataclasses <span class="kw">import</span> dataclass
+
+@dataclass
+<span class="kw">class</span> <span class="cls">Transaction</span>:
+    payer_id:  str
+    payee_id:  str
+    amount:    float
+
+    <span class="kw">def</span> <span class="nm">describe</span>(self, users) -> str:
+        payer = users[self.payer_id].get_name()
+        payee = users[self.payee_id].get_name()
+        <span class="kw">return</span> <span class="st">f"{payer} → {payee}  ₹{self.amount:.2f}"</span>
+
+
+<span class="kw">class</span> <span class="cls">SettlementEngine</span>:
+    <span class="kw">def</span> <span class="nm">minimize_transactions</span>(
+        self,
+        net_balances: dict[str, float]
+    ) -> list[<span class="cls">Transaction</span>]:
+        <span class="cm"># Python's heapq is a min-heap.</span>
+        <span class="cm"># To get max-heap behaviour, negate all values.</span>
+        creditors = []  <span class="cm"># (-amount, uid) — most owed comes first</span>
+        debtors   = []  <span class="cm"># (-amount, uid) — largest debt comes first</span>
+
+        <span class="kw">for</span> uid, bal <span class="kw">in</span> net_balances.items():
+            <span class="kw">if</span> bal > <span class="dn">0.001</span>:
+                heapq.heappush(creditors, (-bal, uid))
+            <span class="kw">elif</span> bal < -<span class="dn">0.001</span>:
+                heapq.heappush(debtors, (bal, uid))
+                <span class="cm"># bal is already negative; heapq pops the most negative</span>
+                <span class="cm"># first, which is the largest debt. No negation needed.</span>
+
+        txns = []
+        <span class="kw">while</span> creditors <span class="kw">and</span> debtors:
+            neg_c, c_id = heapq.heappop(creditors)
+            credit = -neg_c
+
+            neg_d, d_id = heapq.heappop(debtors)
+            debt = -neg_d  <span class="cm"># convert back to positive magnitude</span>
+
+            settled = min(credit, debt)
+            txns.append(<span class="cls">Transaction</span>(d_id, c_id, round(settled, <span class="dn">2</span>)))
+
+            <span class="kw">if</span> credit - settled > <span class="dn">0.001</span>:
+                heapq.heappush(creditors, (-(credit - settled), c_id))
+            <span class="kw">if</span> debt - settled > <span class="dn">0.001</span>:
+                heapq.heappush(debtors, (-(debt - settled), d_id))
+
+        <span class="kw">return</span> txns</div>
+
+      <h4>Why greedy works here — and why it's provably optimal</h4>
+      <p>The greedy choice is safe because money is fungible. "Alice pays Carol ₹300" is equivalent to "Alice pays Bob ₹300 and Bob pays Carol ₹300" — the end state is identical. There is no ordering constraint, no dependency between transactions. Because there are no constraints that could be violated by the greedy choice, always eliminating the largest party first is optimal. This is different from, say, a scheduling problem where order of operations creates dependencies.</p>
+      <p><b>Why the heap negation trick for debtors?</b> Balance values for debtors are already negative (e.g. -₹500). Python's min-heap pops the smallest value first. The smallest (most negative) value is -₹500, which is the largest debt. So for the debtor heap, we push the raw negative value — no negation needed — and the heap naturally gives us the largest debtor first. For creditors, values are positive, so we negate them to make the most-owed creditor appear smallest to the min-heap.</p>
+
+      <h4>Complexity</h4>
+      <p><b>Time:</b> O(n log n) — each person is pushed and popped at most twice. <b>Space:</b> O(n) — two heaps each of at most n entries. <b>Transaction count:</b> at most n−1, which is provably optimal (you need at least one transaction to clear each debtor, and there are at most n−1 debtors).</p>
+
+      <h4>Trace through a concrete example</h4>
+      <div class="code-block"><span class="cm"># Three friends — one trip, three expenses</span>
+<span class="cm"># Alice nets: +₹500 (creditor)</span>
+<span class="cm"># Bob nets:   -₹200 (debtor)</span>
+<span class="cm"># Carol nets: -₹300 (debtor)</span>
+<span class="cm">#</span>
+<span class="cm"># Initial heaps:</span>
+<span class="cm"># creditors: [(-500, "alice")]</span>
+<span class="cm"># debtors:   [(-300, "carol"), (-200, "bob")]</span>
+<span class="cm">#  → most negative = -300, so carol pops first</span>
+<span class="cm">#</span>
+<span class="cm"># Iteration 1:</span>
+<span class="cm">#   Pop largest creditor: alice  owes +500</span>
+<span class="cm">#   Pop largest debtor:   carol  owes  300</span>
+<span class="cm">#   settled = min(500, 300) = 300</span>
+<span class="cm">#   → Transaction: Carol pays Alice ₹300.00</span>
+<span class="cm">#   Remaining credit: 500 - 300 = 200 → push alice back</span>
+<span class="cm">#   Remaining debt:   300 - 300 = 0   → carol is done</span>
+<span class="cm">#</span>
+<span class="cm"># Iteration 2:</span>
+<span class="cm">#   Pop largest creditor: alice  owes +200</span>
+<span class="cm">#   Pop largest debtor:   bob    owes  200</span>
+<span class="cm">#   settled = min(200, 200) = 200</span>
+<span class="cm">#   → Transaction: Bob pays Alice ₹200.00</span>
+<span class="cm">#   No remainders — both done.</span>
+<span class="cm">#</span>
+<span class="cm"># Result: 2 transactions. Optimal for 3 people. Sum check: 500-200-300=0 ✓</span></div>
+
+      <div class="why-inline">
+        <b>What to say in the interview:</b> "I compute net balances — collapsing the pairwise dict into one number per person — then run a greedy two-heap algorithm. Always matching the largest creditor with the largest debtor eliminates parties as fast as possible, producing at most n−1 transactions. Time is O(n log n). The greedy choice is provably optimal because money is fungible — there are no ordering constraints that could make a different matching produce fewer transactions."
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ======== SECTION 7: DESIGN PATTERNS ======== -->
+<div class="section" id="s-pat">
+  <div class="sec-eyebrow">Step 7 · Deep Dive</div>
+  <div class="sec-title">Design Patterns — Justified, Not Just Named</div>
+  <div class="sec-intro">Name a pattern only when you can say: "Without this pattern, here is the specific problem I would face." Each pattern below includes the concrete problem it solves and code showing the before-vs-after.</div>
+
+  <div class="pcard">
+    <div class="ptitle">1. Strategy Pattern <span class="ptag">for Split types</span></div>
+    <p><b>The specific problem without it:</b> Three split types need three different algorithms for computing a user's share. Without Strategy, all three algorithms live as if/elif branches inside <code>add_expense()</code>. Adding a fourth type means opening the core orchestrator method. Every edit risks breaking existing split logic. Tests must cover all branches together.</p>
+    <div class="compare-grid">
+      <div class="cb">
+        <div class="clabel">✗ Without Strategy</div>
+        <pre>def add_expense(self, ..., split_type):
+    if split_type == "EQUAL":
+        share = total / len(users)
+        splits = [Split(u, share)
+                  for u in users]
+    elif split_type == "PERCENT":
+        splits = [Split(u, pct*total/100)
+                  for u, pct in pcts.items()]
+    elif split_type == "EXACT":
+        splits = [Split(u, amt)
+                  for u, amt in amts.items()]
+    # New type? Open this method again.</pre>
+        <div class="cexplain">Adding AdjustmentSplit = editing add_expense(). Four elif branches. Testing requires exercising all paths together. One change breaks unrelated paths.</div>
+      </div>
+      <div class="cg">
+        <div class="clabel">✓ With Strategy + Factory</div>
+        <pre>class Split(ABC):
+    @abstractmethod
+    def get_amount(self) -> float: ...
+
+class EqualSplit(Split): ...
+class ExactSplit(Split): ...
+class PercentSplit(Split): ...
+
+# add_expense() calls the factory:
+splits = SplitFactory.create_equal(
+    users, total)
+
+# New type? New class + factory method.
+# add_expense() never changes.</pre>
+        <div class="cexplain">New split type = new class + new factory method. add_expense() is closed for modification. Each split type tested in isolation. Zero risk of cross-contamination.</div>
+      </div>
+    </div>
+    <p><b>The key insight:</b> The abstract base class is the contract. Every caller (Group._update_balances, settlement engine) calls <code>split.get_amount()</code>. They don't know if they're talking to an EqualSplit or a PercentSplit. This is polymorphism doing its job — the caller is insulated from the implementation.</p>
+  </div>
+
+  <div class="pcard">
+    <div class="ptitle">2. Factory Pattern <span class="ptag">for Split creation and validation</span></div>
+    <p><b>The specific problem without it:</b> Each split type has different constructor parameters. EqualSplit needs (user, amount). PercentSplit needs (user, percent, total). ExactSplit needs (user, amount). If callers construct these directly, each call site must know the constructor signature — and must remember to run validation before constructing. One call site forgets to validate. ₹40 + ₹40 + ₹40 = ₹120 gets accepted as an exact split for a ₹100 expense. The balance sheet silently overcounts.</p>
+    <p><b>The Factory solution:</b> <code>SplitFactory.create_percent(user_percents, total)</code> validates that percentages sum to 100 before constructing anything. If validation fails, an exception is raised before any Split is created. No caller can bypass this — you can't construct a PercentSplit without going through the factory (by convention and code review, since Python doesn't enforce private constructors). The invariant: if a Split object exists, its inputs were valid.</p>
+    <div class="why-box">
+      <div class="wl"><i class="fa-solid fa-lightbulb"></i> Why validation lives in the Factory, not in the Split constructor</div>
+      <p>Individual split constructors can only validate themselves (<code>0 &lt; percent &lt;= 100</code>). Cross-split validation — do all percentages sum to 100? — requires seeing the whole list at once. A constructor receives one split's inputs, not all of them. The factory receives all splits at once, making it the only place where cross-split rules can be enforced. This is the right separation: constructors validate self, factories validate the whole.</p>
+    </div>
+  </div>
+
+  <div class="pcard">
+    <div class="ptitle">3. Facade Pattern <span class="ptag">ExpenseManager as single entry point</span></div>
+    <p><b>The specific problem without it:</b> Without a facade, a caller who wants to add an expense must know about Group (to call add_expense), SplitFactory (to create splits), and the balance update contract. A caller who wants settlement must know about Group (to get net balances) and SettlementEngine (to run the algorithm). The internal complexity is fully exposed. Changing any internal class — say, refactoring how SplitFactory works — forces changes in every caller.</p>
+    <p><b>The Facade solution:</b> <code>ExpenseManager</code> is the only public interface. Callers call <code>manager.add_expense(group, paid_by, amount, split_type, ...)</code>. ExpenseManager calls SplitFactory, creates the Expense, calls group.add_expense(). The caller never knows SplitFactory exists. If SplitFactory's API changes tomorrow, only ExpenseManager changes — no callers are affected.</p>
+    <div class="why-box">
+      <div class="wl"><i class="fa-solid fa-lightbulb"></i> The Facade vs. God Class distinction</div>
+      <p>A common interview follow-up: "Isn't ExpenseManager just a God class?" The answer: No — a Facade is thin. It delegates to the right entity for each operation. It doesn't implement business rules itself. If ExpenseManager starts accumulating logic (computing splits directly, updating balances directly), it becomes a God class. The test: every method in ExpenseManager should be one or two lines that validate inputs and delegate. If any method is 30 lines, the logic has leaked from the domain objects into the facade.</p>
+    </div>
+  </div>
+
+  <div class="pcard">
+    <div class="ptitle">4. Observer Pattern <span class="ptag">for notifications on expense added</span></div>
+    <p><b>The specific problem without it:</b> When an expense is added, multiple systems might care: send a push notification, log to an audit trail, update an analytics dashboard. Without Observer, all of this lives inside <code>Group.add_expense()</code>. Group now depends on NotificationService, AuditLogger, and AnalyticsService. Adding WhatsApp notifications means opening Group. Testing Group requires mocking all notification infrastructure. Group has four reasons to change instead of one.</p>
+    <div class="compare-grid">
+      <div class="cb">
+        <div class="clabel">✗ Without Observer</div>
+        <pre>def add_expense(self, expense):
+    self.expenses.append(expense)
+    self._update_balances(expense)
+    # Group does everything:
+    push_service.notify(
+        f"₹{expense.amount} added")
+    audit_log.record(expense)
+    analytics.track(expense)</pre>
+        <div class="cexplain">Group depends on 3 services. Adding email = editing Group. Testing Group requires mocking all 3. Group changes when any notification service changes.</div>
+      </div>
+      <div class="cg">
+        <div class="clabel">✓ With Observer</div>
+        <pre>class ExpenseObserver(ABC):
+    def on_expense_added(
+        self, group, expense): ...
+
+class PushObserver(ExpenseObserver): ...
+class AuditObserver(ExpenseObserver): ...
+
+# In Group:
+def add_expense(self, expense):
+    self.expenses.append(expense)
+    self._update_balances(expense)
+    for obs in self._observers:
+        obs.on_expense_added(self, expense)</pre>
+        <div class="cexplain">Group knows nothing about push/audit/analytics. New observer = new class, zero edits to Group. Test Group with MockObserver().</div>
+      </div>
+    </div>
+    <p><b>Note:</b> In a pure LLD interview without explicit notification requirements, you can mention Observer as an extension point rather than implementing it fully. "If we needed notifications, I'd add an observer interface here — Group would fire an event, and any subscriber could react." This shows awareness without over-engineering the core design.</p>
+  </div>
+</div>
+
+<!-- ======== SECTION 8: SOLID ======== -->
+<div class="section" id="s-sol">
+  <div class="sec-eyebrow">Step 8 · Deep Dive</div>
+  <div class="sec-title">SOLID Principles — Each With a Real Violation Scenario</div>
+  <div class="sec-intro">SOLID is not a checklist to recite. Each principle prevents a specific category of real bug. For each: the formal definition, what a violation looks like in this Splitwise design, and the specific decision that upholds it.</div>
+
+  <div class="solid-grid">
+    <div class="solid-card">
+      <div class="solid-letter">S</div>
+      <div class="solid-name">Single Responsibility Principle</div>
+      <div class="solid-def">"A class should have one, and only one, reason to change."</div>
+      <div class="vbox"><b>Violation in Splitwise:</b> Imagine <code>Group</code> has: <code>add_expense()</code>, <code>compute_equal_split()</code>, <code>compute_percent_split()</code>, <code>minimize_transactions()</code>, <code>send_push_notification()</code>. Now Group changes when: split algorithms change, settlement changes, notification infrastructure changes. Three teams edit the same class. One team's change breaks another's test suite. PR review becomes: "why are you touching settlement logic in a PR about push notifications?"</div>
+      <div class="fbox"><b>How this design upholds it:</b> Group has one reason to change — group membership and balance sheet maintenance. SplitFactory changes when split creation logic changes. SettlementEngine changes when the settlement algorithm changes. Each class is edited by one concern, tested in isolation, deployed independently.</div>
+    </div>
+
+    <div class="solid-card">
+      <div class="solid-letter">O</div>
+      <div class="solid-name">Open / Closed Principle</div>
+      <div class="solid-def">"Open for extension, closed for modification."</div>
+      <div class="vbox"><b>Violation in Splitwise:</b> A new "Adjustment Split" type is needed. Without OCP, you open <code>add_expense()</code>, add an elif, add validation logic, update tests. The most-tested, most-relied-upon method in the system is modified. Any mistake in the new branch can silently break the existing three split types — they share the same method.</div>
+      <div class="fbox"><b>How this design upholds it:</b> Add <code>AdjustmentSplit(Split)</code> — a new class, zero changes to existing code. Add <code>SplitFactory.create_adjustment()</code> — a new method. Add one elif to <code>add_expense()</code>. Existing split logic, existing tests, existing validation: all untouched. Extension by addition.</div>
+    </div>
+
+    <div class="solid-card">
+      <div class="solid-letter">L</div>
+      <div class="solid-name">Liskov Substitution Principle</div>
+      <div class="solid-def">"Subclasses must be substitutable for their base class without breaking the program."</div>
+      <div class="vbox"><b>Violation in Splitwise:</b> <code>WeirdSplit(Split)</code> overrides <code>get_amount()</code> to return <code>None</code> when the user is not in the expense. <code>Group._update_balances()</code> calls <code>split.get_amount()</code> and does <code>self.balances[payer_id][pid] += amt</code>. <code>None</code> is not a float — <code>TypeError</code> at runtime. The base class promised a float. The subclass returned None. The entire balance update crashes.</div>
+      <div class="fbox"><b>How this design upholds it:</b> Every concrete Split must fulfill the same contract: <code>get_amount()</code> returns a non-negative float. It never returns None. <code>validate()</code> returns True or False — never raises an exception. Any Split can be substituted into <code>_update_balances()</code> without the caller knowing or caring which subclass it is.</div>
+    </div>
+
+    <div class="solid-card">
+      <div class="solid-letter">I</div>
+      <div class="solid-name">Interface Segregation Principle</div>
+      <div class="solid-def">"Clients should not be forced to implement interfaces they don't use."</div>
+      <div class="vbox"><b>Violation in Splitwise:</b> A single <code>ISplitwise</code> interface with: <code>add_expense()</code>, <code>minimize_transactions()</code>, <code>get_percent()</code>, <code>validate_group()</code>. <code>EqualSplit</code> implements this interface but must provide a <code>get_percent()</code> that raises NotImplementedError — Equal split has no concept of percent. <code>SettlementEngine</code> implements it but must stub <code>get_percent()</code> and <code>validate_group()</code>. Empty stubs are a code smell: they signal an interface that's too broad for its clients.</div>
+      <div class="fbox"><b>How this design upholds it:</b> <code>Split</code> interface has exactly two methods: <code>get_amount()</code> and <code>validate()</code>. Every Split subclass uses both. <code>ExpenseObserver</code> has one method: <code>on_expense_added()</code>. No implementor is forced to stub anything. Each interface is precisely as wide as its narrowest client needs.</div>
+    </div>
+
+    <div class="solid-card solid-full">
+      <div class="solid-letter">D</div>
+      <div class="solid-name">Dependency Inversion Principle</div>
+      <div class="solid-def">"High-level modules should not depend on low-level modules. Both should depend on abstractions."</div>
+      <div class="vbox"><b>Violation in Splitwise:</b> <code>ExpenseManager.__init__()</code> creates <code>self.engine = GreedyHeapEngine()</code> directly. Now: (1) you cannot test ExpenseManager without running the real greedy heap algorithm; (2) switching to a graph-based algorithm means opening ExpenseManager's constructor; (3) A/B testing two algorithms simultaneously is impossible.</div>
+      <div class="fbox"><b>How this design upholds it:</b> <code>ExpenseManager.__init__(engine: SettlementEngine)</code> — the abstraction is injected. In production: <code>ExpenseManager(engine=GreedyHeapEngine())</code>. In tests: <code>ExpenseManager(engine=MockEngine())</code> — runs in milliseconds, deterministic, no real algorithm executing. The test for "does add_expense() correctly update balances?" never needs to run settlement. Dependency injection is what makes this possible.</div>
+      <p style="margin-top:10px; font-size:13px; color:var(--text2)"><b>The practical impact:</b> Every class in this design can be tested with a mock injected for its dependencies. <code>Group</code> has no external dependencies at all — pure in-memory state management. <code>SplitFactory</code> is a collection of static methods — testable without any instantiation. <code>SettlementEngine</code> takes a dict and returns a list — no side effects, testable with a single function call. DIP is what makes each of these independently testable.</p>
+    </div>
+  </div>
+</div>
+
+<!-- ======== SECTION 9: TRADEOFFS ======== -->
+<div class="section" id="s-trd">
+  <div class="sec-eyebrow">Step 9 · Deep Dive</div>
+  <div class="sec-title">Trade-offs — Concrete Failures, Not Abstractions</div>
+  <div class="sec-intro">Every design decision is a bet. The wrong choice doesn't fail aesthetically — it fails with a specific, real scenario. For each trade-off: what breaks, why it breaks, and what the correct choice costs.</div>
+
+  <div class="tsec">
+    <div class="thead">1. Incremental balance update vs. recompute on query</div>
+    <div class="tbody">
+      <div class="scenario"><b>Concrete failure if you recompute on every query:</b> A popular travel group accumulates 500 expenses over a 2-week trip. 20 members. Every time any member opens the app to check their balance, your code scans 500 × 20 = 10,000 split objects. The settlement screen calls this 20 times (once per member): 200,000 operations per settlement page load. As the group grows older, the app gets slower — a feedback loop that makes the most-engaged groups the most painful to use. The balance was correct an hour ago. It will be correct an hour from now. There is no reason to recompute it from raw data each time.</div>
+      <div class="td-grid">
+        <div class="tpro"><span class="tlabel">✓ Chosen: incremental update</span>Balance is updated at write time (add_expense). Every subsequent read is O(1) — one dict lookup. No matter how many expenses accumulate, query time stays constant. The trade-off: correctness discipline — you must always update both directions of the pairwise dict atomically. Forgetting one direction silently corrupts balances.</div>
+        <div class="tcon"><span class="tlabel">Cost: correctness discipline</span>The bidirectional update invariant must be enforced by the developer. A single missed update in <code>record_payment()</code> (updating balances when a payment is made) corrupts the sheet. Mitigated by: a single method <code>_credit()</code> that always updates both sides, and a zero-sum assertion in tests.</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="tsec">
+    <div class="thead">2. Store payer as User object vs. user_id string in Expense</div>
+    <div class="tbody">
+      <div class="scenario"><b>Concrete failure if you store only user_id strings:</b> You want to display "Alice paid ₹900 for dinner." Your <code>display_expense(expense)</code> function calls <code>expense.paid_by</code> and gets <code>"user_abc123"</code>. Now you need the name. So <code>display_expense</code> must also accept a <code>user_registry: dict[str, User]</code> parameter. Every function that touches an Expense now carries the registry. Over time: <code>get_expense_summary(expense, user_registry)</code>, <code>format_receipt(expense, user_registry)</code>, <code>export_to_csv(expenses, user_registry)</code>. The user_registry leaks into every layer of the system as an ambient dependency. Every test must set up the registry.</div>
+      <div class="td-grid">
+        <div class="tpro"><span class="tlabel">✓ Chosen: store User object</span>Expense carries the complete User snapshot. <code>expense.paid_by.get_name()</code> works anywhere, no registry needed. The name is snapshotted at add time — if the user later changes their name, historical expenses still show the correct name at the time they were added.</div>
+        <div class="tcon"><span class="tlabel">Cost: object reference, not ID</span>If User objects are large, Expense objects become heavier. In practice, User has 3 fields. The cost is negligible. In a real system with a database, you'd store both the user_id (for relational integrity) and the name snapshot (for historical accuracy) — but in LLD scope, the object reference is the right choice.</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="tsec">
+    <div class="thead">3. Settlement on net balances vs. on pairwise balances</div>
+    <div class="tbody">
+      <div class="scenario"><b>Concrete failure if you settle pairwise:</b> Group trip with 6 people. Each pair has some balance — 15 pairwise relationships. The pairwise algorithm produces up to 15 transactions. The net-balance algorithm collapses these to at most 5. Your users would need to make 3× as many payments. In a real app at scale, this is the difference between Splitwise being useful and being noise. Every unnecessary transaction is friction: the app sends a payment request, the recipient has to confirm, both parties have to reconcile their records. The whole value proposition of Splitwise is minimizing this friction.</div>
+      <div class="td-grid">
+        <div class="tpro"><span class="tlabel">✓ Chosen: settle on net balances</span>Net balances collapse all pairwise relationships into one number per person. The greedy heap then produces at most n−1 transactions — provably optimal. The algorithm doesn't care about "who owes whom" historically — only about the net positions that need to be cleared.</div>
+        <div class="tcon"><span class="tlabel">Cost: settlements don't reflect real debts</span>The settlement might say "Alice pays Carol ₹700" even though Alice never directly incurred any debt to Carol. Historically, Alice owed Bob ₹400 and Bob owed Carol ₹300. Users might find this confusing. Real Splitwise shows both: the minimum-transaction settlement AND the pairwise breakdown for transparency. In LLD scope, the algorithm is the interesting part.</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="tsec">
+    <div class="thead">4. SplitFactory as static methods vs. as an injected instance</div>
+    <div class="tbody">
+      <div class="scenario"><b>Concrete failure with static methods at scale:</b> Your company decides split validation rules should be configurable per group — some groups allow tiny rounding tolerance (₹0.001 slack), others require strict zero tolerance. With static methods, the tolerance is a constant in the source code. Changing it requires a code change and redeployment. More importantly, testing different tolerances requires monkey-patching a class-level constant — fragile, thread-unsafe, and a testing anti-pattern.</div>
+      <div class="td-grid">
+        <div class="tpro"><span class="tlabel">✓ For LLD scope: static methods</span>Static methods are simple, direct, and have no setup cost. No instantiation, no injection wiring. For an interview, this is the right level of complexity — you demonstrate the Factory pattern without over-engineering into a configurable factory. State the limitation explicitly: "In production I'd make SplitFactory an injected instance so the tolerance is configurable per group."</div>
+        <div class="tcon"><span class="tlabel">Production alternative: injected factory instance</span><code>SplitFactory(tolerance=0.01)</code> passed into ExpenseManager's constructor. Tolerance is now a parameter, not a constant. Different groups can have different factories. Testing different tolerances requires constructing a different factory — clean, no patching. Cost: extra constructor parameter and wiring. Worth it at production scale.</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ======== SECTION 10: Q&A ======== -->
+<div class="section" id="s-qa">
+  <div class="sec-eyebrow">Step 10 · Interview Simulation</div>
+  <div class="sec-title">Interview Q&amp;A — Deep Answers</div>
+  <div class="sec-intro">These are the questions that come after you present your design. They test whether you understand your own design or memorized it. Every answer goes deeper than the surface — not just what, but exactly why, and what breaks if you choose differently.</div>
+
+  <div class="qa">
+    <div class="qa-q" onclick="t(this)">Why do you need both the pairwise balance dict AND a net balance method? Why not just one? <i class="fa-solid fa-chevron-down"></i></div>
+    <div class="qa-a">
+      <p>They serve different consumers. The pairwise dict answers UI questions: "show me exactly what I owe each person in this group." Alice owes Bob ₹300 and Carol ₹200 — the app can display these individually. The net balance answers algorithm questions: "run settlement to minimize transactions." The greedy heap doesn't care about pairwise relationships — it only needs "Alice nets +₹500, Bob nets -₹200."</p>
+      <p>If you only had the pairwise dict and no <code>get_net_balances()</code>, the settlement algorithm would need to sum each user's entries itself on every run — O(M) per user, O(M²) total, every call. If you only had net balances and no pairwise dict, you could run settlement but couldn't display "you owe Bob ₹300 specifically." Two different views derived from the same source of truth: the pairwise dict is the write-optimized storage, and <code>get_net_balances()</code> is the read-optimized projection for the algorithm.</p>
+    </div>
+  </div>
+
+  <div class="qa">
+    <div class="qa-q" onclick="t(this)">How would you add a new "Adjustment Split" type without breaking existing splits? <i class="fa-solid fa-chevron-down"></i></div>
+    <div class="qa-a">
+      <p>Exactly three changes, zero touches to existing code:</p>
+      <p><b>1. New class:</b> <code>AdjustmentSplit(Split)</code> — implements <code>get_amount()</code> as equal share plus adjustment, and <code>validate()</code> to check the amount is non-negative.</p>
+      <p><b>2. New factory method:</b> <code>SplitFactory.create_adjustment(users, total, adjustments)</code> — validates that adjustments sum to zero (they must, otherwise the total changes), then constructs AdjustmentSplit objects.</p>
+      <p><b>3. One new elif in add_expense():</b> <code>elif split_type == SplitType.ADJUSTMENT: splits = SplitFactory.create_adjustment(...)</code>.</p>
+      <p>EqualSplit, ExactSplit, PercentSplit: untouched. Group._update_balances(): untouched — it calls <code>split.get_amount()</code> polymorphically and doesn't care which subclass. SettlementEngine: untouched — it works on net balances, not on split types. This is the Open/Closed Principle in practice: extension by addition, not modification.</p>
+    </div>
+  </div>
+
+  <div class="qa">
+    <div class="qa-q" onclick="t(this)">Why is the rounding fix in create_equal() necessary, and where exactly does the error come from? <i class="fa-solid fa-chevron-down"></i></div>
+    <div class="qa-a">
+      <p>₹100 ÷ 3 = ₹33.333... Two decimal places: ₹33.33. Three people × ₹33.33 = ₹99.99. The payer paid ₹100 but only ₹99.99 is recorded as owed. The balance sheet is short by ₹0.01 permanently — no transaction will ever settle it because ₹0.01 is below any reasonable zero threshold.</p>
+      <p>Over thousands of equal splits across a real app, these errors accumulate. Finance teams auditing the platform will find consistent ₹0.01 discrepancies per three-way split. Multiply by 10 million splits: ₹100,000 of "missing" money in the system.</p>
+      <p>The fix: compute one share (₹33.33), give everyone that amount, then calculate the remainder (₹100 - ₹33.33 × 3 = ₹0.01) and add it to the last person (₹33.34). The last person pays slightly more, but the total is now exactly correct. This is the standard technique used in all financial batch payment systems. You assign the rounding adjustment to one party — typically the last in the list, though some systems pick the largest share or the payer themselves.</p>
+    </div>
+  </div>
+
+  <div class="qa">
+    <div class="qa-q" onclick="t(this)">Why does the settlement algorithm work on net balances rather than the pairwise balance dict directly? <i class="fa-solid fa-chevron-down"></i></div>
+    <div class="qa-a">
+      <p>Because pairwise relationships contain more information than the settlement algorithm needs — and that extra information leads to unnecessary transactions.</p>
+      <p>Concrete example: Alice owes Bob ₹300 (Bob lent her money last month). Bob owes Carol ₹300 (Bob borrowed from Carol for groceries). Pairwise settlement says: Alice pays Bob ₹300, Bob pays Carol ₹300 — two transactions. Net balances say: Alice nets -₹300, Bob nets ₹0, Carol nets +₹300. Bob is neutral — his debt and credit cancel. Settlement: Alice pays Carol directly ₹300 — one transaction.</p>
+      <p>The pairwise structure preserves historical context: "Alice owes Bob because of X, Bob owes Carol because of Y." But for settlement, historical context is irrelevant. Money is fungible. The only thing that matters is each person's final position. Collapsing to net balances first lets the algorithm route money optimally without being constrained by who-owes-whom history.</p>
+    </div>
+  </div>
+
+  <div class="qa">
+    <div class="qa-q" onclick="t(this)">What happens end-to-end when a payment is recorded? <i class="fa-solid fa-chevron-down"></i></div>
+    <div class="qa-a">
+      <p>The full sequence when Bob pays Alice ₹200:</p>
+      <p><b>1. ExpenseManager.record_payment(group, txn):</b> Validates the group exists. Delegates to <code>group.record_payment(txn)</code>. ExpenseManager is the facade — it validates and delegates, it doesn't implement.</p>
+      <p><b>2. Group.record_payment(txn):</b> Extracts payer_id, payee_id, amount from the Transaction. Updates both directions of the balance dict: <code>balances[payer_id][payee_id] += amount</code> and <code>balances[payee_id][payer_id] -= amount</code>. This is the exact inverse of <code>_update_balances()</code> — a debt being cleared is the mirror image of a debt being created.</p>
+      <p><b>3. Balance verification:</b> After recording, <code>get_net_balances()</code> will reflect the updated state. Bob's net moves closer to zero. Alice's net moves closer to zero. If Bob pays exactly what he owes, both net to zero. The zero-sum invariant still holds.</p>
+      <p><b>Key design point:</b> Record_payment does NOT create an Expense. It is not an expense — it is a financial settlement of existing debts. Adding it as an expense would double-count the debt: first when the original expense was added, and again when the payment was recorded. The balance dict handles payments separately from expenses precisely to avoid this.</p>
+    </div>
+  </div>
+
+  <div class="qa">
+    <div class="qa-q" onclick="t(this)">How would you support multiple currencies without breaking the existing design? <i class="fa-solid fa-chevron-down"></i></div>
+    <div class="qa-a">
+      <p>Three additions, zero changes to core logic:</p>
+      <p><b>1. Add currency field to Expense:</b> <code>currency: str</code> (or a Currency enum). The expense now knows what currency it was paid in.</p>
+      <p><b>2. Define CurrencyConverter interface:</b> <code>class CurrencyConverter(ABC): def convert(self, amount, from_ccy, to_ccy) -> float: ...</code> with a concrete implementation backed by real FX rates.</p>
+      <p><b>3. Inject CurrencyConverter into Group:</b> <code>Group.__init__(base_currency: str, converter: CurrencyConverter)</code>. In <code>_update_balances()</code>, before updating the dict, convert the split amount to the group's base currency: <code>amt = converter.convert(split.get_amount(), expense.currency, self.base_currency)</code>.</p>
+      <p>The settlement algorithm, SplitFactory, and ExpenseManager don't change at all. They operate on float amounts — they don't care about currencies. The conversion happens exactly once, at the point where amounts enter the balance dict. In tests, inject a MockConverter with fixed rates.</p>
+      <p>This is Dependency Inversion in action: Group depends on the abstract CurrencyConverter, not on a live FX feed. The live feed is injected from outside. Tests never make network calls.</p>
+    </div>
+  </div>
+
+  <div class="qa">
+    <div class="qa-q" onclick="t(this)">Why is SplitFactory a separate class rather than static methods on Split? <i class="fa-solid fa-chevron-down"></i></div>
+    <div class="qa-a">
+      <p>Two reasons: responsibility and testability.</p>
+      <p><b>Responsibility:</b> The Split abstract base class owns one thing: "given that I exist and have valid inputs, how much does my user owe?" That's get_amount() and validate(). Creating a list of Splits, validating cross-split rules (do percentages sum to 100?), and handling edge cases like rounding correction — these are creation concerns, not existence concerns. Putting them on Split would give Split two responsibilities: computing its own amount AND orchestrating the creation of a whole group of sibling splits. That violates SRP.</p>
+      <p><b>Testability:</b> With a separate SplitFactory, you can test <code>SplitFactory.create_percent()</code> in complete isolation — no Group, no Expense, no User needed beyond the inputs. If the factory were class methods on Split, tests would need to set up the full class hierarchy. More importantly, if SplitFactory is injected into ExpenseManager (rather than called statically), you can inject a mock factory in tests that returns pre-built splits — isolating the test from split-creation logic entirely.</p>
+    </div>
+  </div>
+
+</div>
+
+</main>
+
+<script>
+function show(id, el) {
+  document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
+  document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+  document.getElementById('s-' + id).classList.add('active');
+  el.classList.add('active');
+  window.scrollTo(0, 0);
+}
+function t(el) {
+  el.classList.toggle('open');
+  el.nextElementSibling.classList.toggle('show');
+}
+</script>
+</body>
+</html>

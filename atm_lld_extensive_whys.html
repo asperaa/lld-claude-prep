@@ -1,0 +1,1325 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ATM System LLD — Extensive Why Edition</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Serif:ital,wght@0,400;0,600;1,400&family=JetBrains+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+:root {
+  --blue: #1a4480; --blue2: #2563eb; --blue-bg: #eff6ff; --blue-border: #bfdbfe;
+  --bg: #f8fafc; --surface: #ffffff; --surface2: #f1f5f9; --surface3: #e2e8f0;
+  --border: #cbd5e1; --text: #0f172a; --text2: #475569; --text3: #94a3b8;
+  --green: #166534; --green-bg: #f0fdf4; --green-border: #bbf7d0;
+  --red: #991b1b; --red-bg: #fef2f2; --red-border: #fecaca;
+  --amber: #92400e; --amber-bg: #fffbeb; --amber-border: #fde68a;
+  --purple: #5b21b6; --purple-bg: #f5f3ff; --purple-border: #ddd6fe;
+  --orange: #c2410c; --orange-bg: #fff7ed; --orange-border: #fed7aa;
+  --mono: 'JetBrains Mono', monospace;
+  --sans: 'IBM Plex Sans', sans-serif;
+  --serif: 'IBM Plex Serif', serif;
+  --sidebar-w: 260px;
+  --r: 8px;
+}
+body { font-family: var(--sans); background: var(--bg); color: var(--text); display: flex; min-height: 100vh; }
+
+/* ---- SIDEBAR ---- */
+.sidebar {
+  width: var(--sidebar-w); position: fixed; top: 0; left: 0; bottom: 0;
+  background: var(--surface); border-right: 2px solid var(--border);
+  overflow-y: auto; z-index: 100; display: flex; flex-direction: column;
+}
+.logo-wrap { padding: 22px 18px 18px; border-bottom: 1px solid var(--border); }
+.logo { display: flex; align-items: center; gap: 10px; }
+.logo-icon { width: 36px; height: 36px; border-radius: 8px; background: var(--blue2); display: flex; align-items: center; justify-content: center; font-size: 18px; }
+.logo-name { font-size: 16px; font-weight: 600; font-family: var(--serif); }
+.logo-tag { font-size: 11px; color: var(--text3); margin-top: 3px; letter-spacing: 0.03em; }
+.nav-group { padding: 14px 18px 4px; font-size: 9px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.1em; color: var(--text3); }
+.nav-item { display: flex; align-items: center; gap: 9px; padding: 9px 18px; font-size: 13px; color: var(--text2); cursor: pointer; border-left: 3px solid transparent; transition: all 0.12s; }
+.nav-item:hover { background: var(--surface2); color: var(--text); }
+.nav-item.active { border-left-color: var(--blue2); background: var(--blue-bg); color: var(--blue); font-weight: 500; }
+.nav-item i { width: 15px; text-align: center; font-size: 12px; }
+.nav-item .step-num { font-size: 9px; font-weight: 700; background: var(--surface3); border-radius: 3px; padding: 1px 5px; margin-left: auto; color: var(--text3); }
+.nav-item.active .step-num { background: var(--blue-border); color: var(--blue); }
+
+/* ---- MAIN ---- */
+.main { margin-left: var(--sidebar-w); padding: 52px 60px; max-width: 940px; width: 100%; }
+.section { display: none; }
+.section.active { display: block; }
+
+/* ---- SECTION HEADER ---- */
+.sec-eyebrow { font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.1em; color: var(--blue2); margin-bottom: 10px; }
+.sec-title { font-family: var(--serif); font-size: 30px; font-weight: 600; line-height: 1.2; margin-bottom: 10px; }
+.sec-intro { font-size: 15px; color: var(--text2); line-height: 1.8; margin-bottom: 36px; border-left: 3px solid var(--border); padding-left: 16px; }
+
+/* ---- DIVIDERS / HEADINGS ---- */
+h3 { font-family: var(--serif); font-size: 19px; font-weight: 600; margin: 40px 0 14px; padding-top: 16px; border-top: 1px solid var(--border); color: var(--text); }
+h4 { font-size: 13px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.06em; margin: 18px 0 8px; color: var(--text3); }
+p { font-size: 14px; color: var(--text2); line-height: 1.8; margin: 10px 0; }
+
+/* ---- CALLOUT ---- */
+.prompt-box { background: var(--surface2); border: 1px solid var(--border); border-radius: var(--r); padding: 16px 20px; margin: 20px 0; }
+.prompt-box .plabel { font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.08em; color: var(--text3); margin-bottom: 7px; }
+.prompt-box .ptext { font-family: var(--serif); font-size: 16px; font-style: italic; color: var(--text); line-height: 1.6; }
+
+/* ---- DIALOGUE ---- */
+.dialogue { border: 1px solid var(--border); border-radius: var(--r); overflow: hidden; margin: 20px 0; }
+.d-row { padding: 14px 18px; border-bottom: 1px solid var(--border); font-size: 14px; line-height: 1.7; }
+.d-row:last-child { border-bottom: none; }
+.d-row.you { background: var(--surface); }
+.d-row.iv { background: var(--surface2); }
+.d-speaker { font-size: 9px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.09em; margin-bottom: 5px; }
+.d-row.you .d-speaker { color: var(--blue2); }
+.d-row.iv .d-speaker { color: var(--text3); }
+.why-inline {
+  margin-top: 12px; padding: 12px 14px;
+  background: var(--amber-bg); border-left: 3px solid #f59e0b;
+  border-radius: 0 6px 6px 0; font-size: 13px; color: var(--amber); line-height: 1.7;
+}
+.why-inline b { font-weight: 600; }
+.why-inline code { font-family: var(--mono); font-size: 11px; background: rgba(0,0,0,0.06); padding: 1px 5px; border-radius: 3px; }
+
+/* ---- ANNOTATED CODE ---- */
+.ann-wrap { margin: 22px 0; border: 1px solid var(--border); border-radius: var(--r); overflow: hidden; }
+.ann-header { background: #181825; padding: 10px 18px; display: flex; align-items: center; gap: 10px; border-bottom: 1px solid #2a2a3e; }
+.ann-header span { font-family: var(--mono); font-size: 12px; color: #6c7086; }
+.ann-row { display: grid; grid-template-columns: 46% 54%; border-bottom: 1px solid #2a2a3e; }
+.ann-row:last-child { border-bottom: none; }
+.ann-code { background: #1e1e2e; padding: 14px 18px; font-family: var(--mono); font-size: 12.5px; line-height: 1.75; color: #cdd6f4; overflow-x: auto; white-space: pre; }
+.ann-why { background: var(--surface2); padding: 14px 16px; border-left: 1px solid var(--border); font-size: 13px; line-height: 1.7; color: var(--text2); display: flex; flex-direction: column; gap: 6px; }
+.ann-why .wlabel { font-size: 9px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.09em; color: var(--blue2); }
+.ann-why .wmain { color: var(--text2); }
+.ann-why .wfail { background: var(--red-bg); border: 1px solid var(--red-border); border-radius: 5px; padding: 8px 10px; font-size: 12px; color: var(--red); }
+.ann-why .wfail b { font-weight: 600; }
+.ann-why .wfix { background: var(--green-bg); border: 1px solid var(--green-border); border-radius: 5px; padding: 8px 10px; font-size: 12px; color: var(--green); }
+.ann-why .wfix b { font-weight: 600; }
+
+/* ---- SYNTAX HIGHLIGHT ---- */
+.kw { color: #cba6f7; } .cls { color: #a6e3a1; font-weight: 500; }
+.cm { color: #585b70; font-style: italic; } .st { color: #f38ba8; }
+.nm { color: #89b4fa; } .dn { color: #fab387; }
+
+/* ---- PLAIN CODE ---- */
+.code-block { background: #1e1e2e; border-radius: var(--r); padding: 18px 20px; font-family: var(--mono); font-size: 13px; line-height: 1.8; overflow-x: auto; margin: 14px 0; color: #cdd6f4; white-space: pre; }
+
+/* ---- WHY BOX ---- */
+.why-box { background: var(--surface); border: 1px solid var(--border); border-radius: var(--r); padding: 18px 20px; margin: 18px 0; }
+.why-box .wl { display: flex; align-items: center; gap: 8px; font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.09em; color: var(--blue2); margin-bottom: 10px; }
+.why-box p { margin: 6px 0; }
+
+/* ---- ENTITY TABLE ---- */
+.etable { width: 100%; border-collapse: collapse; margin: 18px 0; font-size: 13.5px; }
+.etable th { text-align: left; padding: 10px 14px; background: var(--surface2); font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.07em; color: var(--text3); border-bottom: 2px solid var(--border); }
+.etable td { padding: 14px 14px; border-bottom: 1px solid var(--border); vertical-align: top; line-height: 1.7; color: var(--text2); }
+.etable td:first-child { font-weight: 500; color: var(--text); white-space: nowrap; }
+.etable tr:last-child td { border-bottom: none; }
+.etable tr:hover td { background: var(--surface2); }
+.badge { display: inline-block; font-size: 9px; font-weight: 700; padding: 2px 7px; border-radius: 20px; margin-right: 6px; text-transform: uppercase; letter-spacing: 0.05em; }
+.bk { background: var(--green-bg); color: var(--green); }
+.bs { background: var(--red-bg); color: var(--red); }
+
+/* ---- REQ LISTS ---- */
+.req-box { background: var(--surface2); border: 1px solid var(--border); border-radius: var(--r); padding: 18px 20px; margin: 14px 0; }
+.req-list { list-style: none; }
+.req-list li { font-size: 14px; color: var(--text2); padding: 6px 0; display: flex; gap: 10px; align-items: flex-start; line-height: 1.7; }
+.req-list li::before { font-weight: 700; flex-shrink: 0; margin-top: 1px; content: "✓"; color: var(--green); }
+.req-list.out li::before { content: "✗"; color: var(--red); }
+
+/* ---- STATE PILLS ---- */
+.state-row { display: flex; align-items: center; flex-wrap: wrap; gap: 6px; margin: 18px 0; }
+.sp { padding: 6px 14px; border-radius: 20px; font-size: 11px; font-weight: 600; border: 1px solid; }
+.sarrow { color: var(--text3); font-size: 12px; }
+.sg { background:#f3f2ef; border-color:#d0cdc7; color:#4a4845; }
+.sb { background:#eff6ff; border-color:#bfdbfe; color:#1a4480; }
+.spu{ background:#f5f3ff; border-color:#ddd6fe; color:#5b21b6; }
+.sam{ background:#fffbeb; border-color:#fde68a; color:#92400e; }
+.sco{ background:#fef2f2; border-color:#fecaca; color:#991b1b; }
+.ste{ background:#ecfdf5; border-color:#a7f3d0; color:#065f46; }
+.srd{ background:#fef2f2; border-color:#fca5a5; color:#7f1d1d; }
+
+/* ---- COMPARE ---- */
+.compare-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin: 14px 0; }
+.cb { background: var(--red-bg); border: 1px solid var(--red-border); border-radius: var(--r); padding: 14px 16px; }
+.cg { background: var(--green-bg); border: 1px solid var(--green-border); border-radius: var(--r); padding: 14px 16px; }
+.clabel { font-size: 9px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 9px; }
+.cb .clabel { color: var(--red); } .cg .clabel { color: var(--green); }
+.cb pre, .cg pre { font-family: var(--mono); font-size: 12px; line-height: 1.7; white-space: pre-wrap; }
+.cb pre { color: #7f1d1d; } .cg pre { color: #1a4731; }
+.cexplain { font-size: 13px; color: var(--text2); margin-top: 10px; line-height: 1.65; }
+
+/* ---- PATTERN CARD ---- */
+.pcard { border: 1px solid var(--border); border-radius: var(--r); padding: 20px 22px; margin: 16px 0; background: var(--surface); }
+.ptitle { font-family: var(--serif); font-size: 17px; font-weight: 600; margin-bottom: 4px; display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+.ptag { font-size: 10px; background: var(--surface2); border-radius: 20px; padding: 2px 9px; font-weight: 500; color: var(--text3); font-family: var(--sans); }
+.pcard p { margin: 8px 0; }
+.pcard b { font-weight: 600; color: var(--text); }
+
+/* ---- SOLID ---- */
+.solid-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin: 14px 0; }
+.solid-card { border: 1px solid var(--border); border-radius: var(--r); padding: 18px 20px; background: var(--surface); }
+.solid-letter { font-family: var(--serif); font-size: 32px; font-weight: 600; color: var(--blue2); line-height: 1; margin-bottom: 4px; }
+.solid-name { font-size: 13px; font-weight: 600; margin-bottom: 10px; }
+.solid-def { font-size: 13px; color: var(--text3); margin-bottom: 10px; font-style: italic; line-height: 1.6; }
+.solid-full { grid-column: 1 / -1; }
+.vbox { background: var(--red-bg); border: 1px solid var(--red-border); border-radius: 6px; padding: 11px 13px; margin: 8px 0; font-size: 12.5px; color: var(--red); line-height: 1.65; }
+.fbox { background: var(--green-bg); border: 1px solid var(--green-border); border-radius: 6px; padding: 11px 13px; margin: 8px 0; font-size: 12.5px; color: var(--green); line-height: 1.65; }
+.vbox b, .fbox b { font-weight: 600; }
+
+/* ---- TRADEOFF ---- */
+.tsec { margin: 24px 0; border: 1px solid var(--border); border-radius: var(--r); overflow: hidden; }
+.thead { padding: 13px 18px; background: var(--surface2); border-bottom: 1px solid var(--border); font-size: 15px; font-weight: 600; font-family: var(--serif); }
+.tbody { padding: 16px 18px; }
+.scenario { background: var(--amber-bg); border-left: 3px solid #f59e0b; border-radius: 0 6px 6px 0; padding: 12px 15px; margin: 10px 0; font-size: 13px; color: var(--amber); line-height: 1.7; }
+.scenario b { font-weight: 600; }
+.td-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin: 12px 0; }
+.tpro { background: var(--green-bg); border: 1px solid var(--green-border); border-radius: 6px; padding: 13px 15px; font-size: 13px; color: var(--green); line-height: 1.65; }
+.tcon { background: var(--amber-bg); border: 1px solid var(--amber-border); border-radius: 6px; padding: 13px 15px; font-size: 13px; color: var(--amber); line-height: 1.65; }
+.tlabel { font-size: 9px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 7px; display: block; }
+
+/* ---- Q&A ---- */
+.qa { border: 1px solid var(--border); border-radius: var(--r); overflow: hidden; margin: 12px 0; }
+.qa-q { padding: 15px 18px; cursor: pointer; font-size: 14px; font-weight: 500; display: flex; justify-content: space-between; align-items: center; background: var(--surface); user-select: none; gap: 12px; }
+.qa-q:hover { background: var(--surface2); }
+.qa-q i { color: var(--text3); transition: transform 0.2s; font-size: 11px; flex-shrink: 0; }
+.qa-q.open i { transform: rotate(180deg); }
+.qa-a { display: none; padding: 18px 20px; font-size: 14px; line-height: 1.85; color: var(--text2); background: var(--surface2); border-top: 1px solid var(--border); }
+.qa-a.show { display: block; }
+.qa-a h4 { margin-top: 16px; }
+.qa-a code { font-family: var(--mono); font-size: 12px; background: var(--surface3); padding: 1px 6px; border-radius: 4px; color: var(--text); }
+.qa-a .code-block { margin: 12px 0; font-size: 12px; }
+
+code { font-family: var(--mono); font-size: 12px; background: var(--surface2); padding: 1px 5px; border-radius: 4px; color: var(--blue2); border: 1px solid var(--border); }
+
+::-webkit-scrollbar { width: 5px; height: 5px; }
+::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+</style>
+</head>
+<body>
+
+<nav class="sidebar">
+  <div class="logo-wrap">
+    <div class="logo"><div class="logo-icon">🏧</div><div><div class="logo-name">ATM System LLD</div><div class="logo-tag">Extensive Whys Edition</div></div></div>
+  </div>
+  <div class="nav-group">Foundations</div>
+  <div class="nav-item active" onclick="show('req',this)"><i class="fa-solid fa-list-check"></i> Requirements <span class="step-num">01</span></div>
+  <div class="nav-item" onclick="show('ent',this)"><i class="fa-solid fa-diagram-project"></i> Core Entities <span class="step-num">02</span></div>
+  <div class="nav-group">Implementation</div>
+  <div class="nav-item" onclick="show('cls',this)"><i class="fa-solid fa-code"></i> Class Design <span class="step-num">03</span></div>
+  <div class="nav-item" onclick="show('flow',this)"><i class="fa-solid fa-arrow-right-arrow-left"></i> Key Flows <span class="step-num">04</span></div>
+  <div class="nav-group">Deep Dives</div>
+  <div class="nav-item" onclick="show('withdraw',this)"><i class="fa-solid fa-code-branch"></i> withdraw() Deep Dive <span class="step-num">04b</span></div>
+  <div class="nav-item" onclick="show('pat',this)"><i class="fa-solid fa-puzzle-piece"></i> Design Patterns <span class="step-num">05</span></div>
+  <div class="nav-item" onclick="show('sol',this)"><i class="fa-solid fa-layer-group"></i> SOLID Principles <span class="step-num">06</span></div>
+  <div class="nav-item" onclick="show('trd',this)"><i class="fa-solid fa-scale-balanced"></i> Trade-offs <span class="step-num">07</span></div>
+  <div class="nav-item" onclick="show('qa',this)"><i class="fa-solid fa-circle-question"></i> Interview Q&amp;A <span class="step-num">08</span></div>
+</nav>
+
+<main class="main">
+
+<!-- ======== SECTION 1: REQUIREMENTS ======== -->
+<div class="section active" id="s-req">
+  <div class="sec-eyebrow">Step 1 · ~5 minutes</div>
+  <div class="sec-title">Requirements &amp; Clarifications</div>
+  <div class="sec-intro">The interviewer gives you a sentence. Your first job is to interrogate it — not design. An ATM sounds like a solved problem you use every day, and that familiarity is a trap. Every person who has used an ATM thinks they know what an ATM does, which means people make assumptions they never verbalize — and those assumptions become wrong classes. Below is how to dismantle the prompt with precision.</div>
+
+  <div class="prompt-box">
+    <div class="plabel">The prompt you'll receive</div>
+    <div class="ptext">"Design an ATM system. Users should be able to insert a card, authenticate, and perform banking operations like withdrawals."</div>
+  </div>
+
+  <p>This sentence leaves almost everything ambiguous. "Banking operations" could mean withdrawal, deposit, transfer, balance inquiry, mini statement, PIN change — or just one of these. "Authenticate" might mean PIN only, or PIN + OTP, or biometrics. "Users" might be human customers at a physical ATM, or this might be a distributed system with hundreds of ATMs talking to a central bank server. These aren't small distinctions — each changes the class hierarchy fundamentally.</p>
+
+  <h3>Clarifying Questions — with deep reasoning</h3>
+  <div class="dialogue">
+
+    <div class="d-row you">
+      <div class="d-speaker">You</div>
+      "What operations should the ATM support — just withdrawal, or also deposit, transfer, balance inquiry, and PIN change?"
+      <div class="why-inline">
+        <b>Why this is the most important first question:</b> Each operation is a separate method on your <code>ATMSystem</code> or transaction class. More importantly, each operation changes <em>what you need to model</em>. Deposits require reasoning about how physical cash enters the machine. Transfers require a target account. PIN change requires verifying the old PIN and persisting the new one. If you assume "just withdrawal" and then the interviewer says "and deposits," you've built the wrong class. This question also reveals scope: if the interviewer says "just withdrawal and balance inquiry," you can design a tight, clean system. If they say "everything," you may need to propose which to design in depth and which to sketch. Never start drawing class boxes without knowing this.
+      </div>
+    </div>
+    <div class="d-row iv"><div class="d-speaker">Interviewer</div>"Support withdrawal, deposit, balance inquiry, and PIN change. Focus your deep design on withdrawal."</div>
+
+    <div class="d-row you">
+      <div class="d-speaker">You</div>
+      "Is this a single ATM with its own in-memory state, or are we modeling a distributed network of ATMs all talking to a central bank server?"
+      <div class="why-inline">
+        <b>Why this changes your entire architecture:</b> A standalone ATM holds account balances internally — your <code>Account</code> class has a <code>balance</code> field and is the source of truth. A networked ATM is just a terminal: it has no business logic about balances. It sends requests to a <code>BankServer</code> API and waits for responses. The second model requires a network layer, retry logic, timeout handling, and the ATM's behavior on server unavailability ("allow up to $200 offline?"). These two designs are not refinements of each other — they are different architectures. Knowing which one before you draw your first class saves you from designing the wrong system entirely.
+      </div>
+    </div>
+    <div class="d-row iv"><div class="d-speaker">Interviewer</div>"Model it as a standalone ATM — keep account state in memory. No need for a real bank server."</div>
+
+    <div class="d-row you">
+      <div class="d-speaker">You</div>
+      "How does authentication work — is it just a PIN, or are there multiple factors? And how many incorrect PIN attempts before the card is blocked?"
+      <div class="why-inline">
+        <b>Why "how many attempts" is a design constraint, not a detail:</b> The attempt limit drives a counter field on your <code>Card</code> or <code>Account</code> entity. Without it, you have no state to check. "3 failed attempts → card blocked" also forces a state machine decision: does blocking happen on the Card (<code>CardStatus.BLOCKED</code>) or on the Account (<code>AccountStatus.LOCKED</code>)? These are different business concepts — a card can be blocked while the account is fine (user's physical card was skimmed; they get a replacement card). If you don't ask this, you might model it either way, and the interviewer's follow-up question about card replacement will break your design.
+      </div>
+    </div>
+    <div class="d-row iv"><div class="d-speaker">Interviewer</div>"PIN only. Three wrong attempts blocks the card. Card block, not account lock."</div>
+
+    <div class="d-row you">
+      <div class="d-speaker">You</div>
+      "For withdrawals — does the ATM have a cash inventory it tracks? What happens if the machine is out of cash?"
+      <div class="why-inline">
+        <b>Why the ATM's cash inventory is a first-class entity:</b> Most junior designers model the ATM as a simple conduit — you ask for money, money comes out. But a real ATM has physical cash of specific denominations. Whether or not we track denominations determines whether <code>CashDispenser</code> is a serious class or just a side-note. It also reveals the need for a <code>dispense(amount)</code> method that must check if enough cash of the right denominations is available. If we track denominations, we need a "greedy" dispensing algorithm. If we don't, we just need a total-cash counter. Either way the ATM can run out of money — which is an error state that must be handled gracefully ("currently unavailable") and is completely different from "your account doesn't have that balance."
+      </div>
+    </div>
+    <div class="d-row iv"><div class="d-speaker">Interviewer</div>"Yes, track denominations — e.g., ₹500 and ₹100 notes. Dispense optimally. Handle insufficient cash gracefully."</div>
+
+    <div class="d-row you">
+      <div class="d-speaker">You</div>
+      "What happens to the session if the user takes too long between steps — like forgets to take their card after a transaction?"
+      <div class="why-inline">
+        <b>Why session timeout matters for your state machine:</b> A session has states: IDLE → CARD_INSERTED → AUTHENTICATED → TRANSACTION_IN_PROGRESS → COMPLETE. A timeout is a transition that can happen from any non-IDLE state back to IDLE. Without this, your ATM has no way to recover from a user who walks away mid-session. The card stays "logically inserted" forever. No other user can use the machine. In your LLD, even if you don't implement an actual timer, you need to show you understand that the state machine has a timeout transition — and that the ATM must eject the card and reset to IDLE when it fires. This shows systems thinking beyond the happy path.
+      </div>
+    </div>
+    <div class="d-row iv"><div class="d-speaker">Interviewer</div>"Good point — yes, include session timeout. The ATM resets to IDLE and ejects the card."</div>
+
+    <div class="d-row you">
+      <div class="d-speaker">You</div>
+      "Should we model transaction history — does the ATM keep a log of past transactions per account?"
+      <div class="why-inline">
+        <b>Why this determines whether Transaction is a class or just a temporary value:</b> If there's no history, a "transaction" is just the act of doing something — a method call with a result. You don't need a <code>Transaction</code> class at all. But if you need history, <code>Transaction</code> is a persistent entity with an ID, timestamp, amount, type, and status. It must be stored somewhere. The Account must hold a <code>transaction_history: list[Transaction]</code>. This distinction is the difference between 4 classes and 6 classes. Also, the mini-statement feature only makes sense if transactions are stored. Since they mentioned "balance inquiry," confirming history clarifies whether the fourth operation is secretly "mini-statement."
+      </div>
+    </div>
+    <div class="d-row iv"><div class="d-speaker">Interviewer</div>"Yes, maintain transaction history per account. Each transaction should have an ID, timestamp, type, amount, and status."</div>
+
+  </div>
+
+  <h3>Scope Decision — what's in and what's out</h3>
+  <div class="req-box">
+    <ul class="req-list">
+      <li>Card insertion and authentication via PIN (3-attempt limit → card blocked)</li>
+      <li>Session management with states: IDLE → CARD_INSERTED → AUTHENTICATED → TRANSACTION_IN_PROGRESS → COMPLETE</li>
+      <li>Withdrawal with denomination-aware cash dispensing (greedy algorithm)</li>
+      <li>Deposit — adds cash to account balance</li>
+      <li>Balance inquiry — reads and displays current balance</li>
+      <li>PIN change — validates old PIN, sets new PIN</li>
+      <li>Transaction history per account (ID, timestamp, type, amount, status)</li>
+      <li>ATM cash inventory tracking with graceful "insufficient cash" handling</li>
+    </ul>
+  </div>
+  <div class="req-box">
+    <ul class="req-list out">
+      <li>Multi-ATM network communication or bank server API</li>
+      <li>Real hardware interfaces (card reader, receipt printer drivers)</li>
+      <li>Multi-factor authentication (OTP, biometrics)</li>
+      <li>Inter-bank transfers or NEFT/UPI</li>
+      <li>Real-time fraud detection or AML compliance</li>
+    </ul>
+  </div>
+</div>
+
+<!-- ======== SECTION 2: ENTITIES ======== -->
+<div class="section" id="s-ent">
+  <div class="sec-eyebrow">Step 2 · ~8 minutes</div>
+  <div class="sec-title">Core Entities — Every Choice Justified</div>
+  <div class="sec-intro">Entity design is the most consequential step. Pick the wrong entities and you spend the rest of the interview fighting your own classes. The rule of thumb: an entity is a class if it (1) has behavior (methods that enforce rules), or (2) has state that changes over time in meaningful ways. Anything else is a dataclass or a field on another class.</div>
+
+  <table class="etable">
+    <thead><tr><th>Entity</th><th>Type</th><th>Why it's its own class — and why not simpler</th></tr></thead>
+    <tbody>
+      <tr>
+        <td><span class="badge bk">Class</span>ATM</td>
+        <td>Orchestrator</td>
+        <td>
+          The ATM is the single entry point — the facade for all user interactions. It holds the <code>Session</code>, the <code>CashDispenser</code>, and coordinates all operations. Without this class, who owns the state machine? Who decides whether a card insertion is valid? Who coordinates PIN validation with the Bank? An ATM is not just data — it actively manages state transitions and routes user actions to the right handler. It is the closest thing to a "controller" in this system.
+        </td>
+      </tr>
+      <tr>
+        <td><span class="badge bk">Class</span>Card</td>
+        <td>Entity</td>
+        <td>
+          A Card is not just a card number. It has state — <code>CardStatus</code> (ACTIVE, BLOCKED, EXPIRED). It has behavior — <code>block()</code>, <code>validate_pin(entered_pin)</code>, and tracking <code>failed_pin_attempts</code>. It enforces rules: "you cannot exceed 3 wrong PINs," "an EXPIRED card cannot be used." These rules live on Card, not on the caller. If Card were just a string (the card number), who would own these rules? They'd scatter across ATM and Account — which means duplicated checks and bugs when one copy gets updated but another doesn't.
+        </td>
+      </tr>
+      <tr>
+        <td><span class="badge bk">Class</span>Account</td>
+        <td>Entity</td>
+        <td>
+          The Account holds the financial truth of this system — balance and transaction history. It has behavior that enforces financial rules: <code>debit(amount)</code> must verify sufficient balance before modifying it. <code>credit(amount)</code> must reject negative amounts. These are guards — if they lived in ATM instead, every caller could bypass them. Account also owns <code>transaction_history</code>, which makes it the authoritative ledger. Keeping balance and history together on Account means you can never have a transaction history that contradicts the balance (both change in the same method call).
+        </td>
+      </tr>
+      <tr>
+        <td><span class="badge bk">Class</span>Session</td>
+        <td>Entity</td>
+        <td>
+          A session tracks who is using the ATM right now and at what stage. It is a state machine with states: IDLE → CARD_INSERTED → AUTHENTICATED → TRANSACTION_IN_PROGRESS → COMPLETE. Without a Session class, where does the current authenticated user live? You'd put <code>current_card</code> and <code>current_account</code> directly on ATM, but then ATM becomes responsible for both machine management AND session lifecycle — two concerns. Session separates "who is using this machine right now" from "what can this machine do." It also naturally holds the timeout timer and the current user's context.
+        </td>
+      </tr>
+      <tr>
+        <td><span class="badge bk">Class</span>CashDispenser</td>
+        <td>Entity</td>
+        <td>
+          CashDispenser encapsulates the physical cash the ATM holds. Its behavior is non-trivial: given an amount, determine which combination of denominations to dispense using a greedy algorithm, validate total cash availability, and update inventory after dispensing. If this logic lived on ATM, the ATM class would grow to include financial math, inventory management, and session management simultaneously. CashDispenser also makes the denomination algorithm swappable — an important extensibility point. It knows one thing deeply: how to turn a number into physical notes.
+        </td>
+      </tr>
+      <tr>
+        <td><span class="badge bk">Class</span>Transaction</td>
+        <td>Entity</td>
+        <td>
+          A Transaction is a persistent record of a financial event. It has an ID (for audit trails), a timestamp (for ordering history), a type (WITHDRAWAL, DEPOSIT, etc.), an amount, and a status (SUCCESS, FAILED). It is immutable after creation — once a withdrawal happened, you never modify the transaction record; you create a new one if a reversal occurs. Without Transaction as its own class, you'd store this as ad-hoc strings or tuples in a list — which loses type safety, makes queries impossible, and makes the code unreadable. Transaction is also an excellent candidate for a dataclass since it's mostly data with no mutable behavior after construction.
+        </td>
+      </tr>
+      <tr>
+        <td><span class="badge bk">Class</span>Bank</td>
+        <td>Registry / Service</td>
+        <td>
+          Bank is the system's directory — it maps card numbers to accounts and manages account creation. Without Bank, who validates whether a card number corresponds to a real account? ATM would need a <code>dict[card_number → Account]</code>, which is a repository pattern that deserves its own class. Bank also cleanly represents the separation between "the machine" (ATM) and "the financial institution" — even in our simplified model. In a real system, Bank would be replaced by an API client calling the core banking system. By giving it its own class now, you make that replacement a single-file change.
+        </td>
+      </tr>
+      <tr>
+        <td><span class="badge bs">Skip</span>Address / CustomerInfo</td>
+        <td>@dataclass</td>
+        <td>
+          Customer information (name, phone, email) is pure data — no behavior, no rules. A <code>@dataclass</code> is the right tool. You won't write methods on CustomerInfo. If you promoted it to a full class, you'd add empty method placeholders that mislead future readers into thinking it has behavior it doesn't. The one-question test: "Would this thing ever need to enforce a rule on its own data?" No. It is a dataclass.
+        </td>
+      </tr>
+    </tbody>
+  </table>
+
+  <div class="why-box">
+    <div class="wl"><i class="fa-solid fa-lightbulb"></i> Why Session and ATM are separate classes — the key mental model</div>
+    <p>Think about what each class answers when you ask it a question. ATM answers: "What hardware do I have? What can I physically do? Am I operational?" Session answers: "Who is currently using me? What stage are they at? What have they been authenticated for?" These are different questions with different lifecycles. An ATM outlives any individual session — it exists for years. A Session lives for one customer interaction — minutes. When the customer walks away, the Session dies. The ATM stays. Mixing them means you have to manually "clear" customer state from the ATM after each session — a side effect that's easy to forget and hard to test. Session makes that cleanup automatic: just create a new Session object.</p>
+  </div>
+</div>
+
+<!-- ======== SECTION 3: CLASS DESIGN ======== -->
+<div class="section" id="s-cls">
+  <div class="sec-eyebrow">Step 3 · ~15 minutes</div>
+  <div class="sec-title">Class Design — Every Line Justified</div>
+  <div class="sec-intro">In every well-structured LLD there is one orchestrator. Here it is <code>ATM</code>. Everything is designed top-down: first the orchestrator, then the most complex class (<code>Account</code>), then the entities with the most interesting behavior (<code>Card</code>, <code>CashDispenser</code>, <code>Session</code>). For every field, ask: "what breaks if this field doesn't exist?" For every method: "who else would own this if I removed it?"</div>
+
+  <h3>ATM — the Single Entry Point</h3>
+  <p>ATM is the facade. External code (your main script, a UI) interacts only with ATM. Internally it delegates to Card, Account, CashDispenser, and Session. It does not implement business rules — it coordinates the entities that do. Without this class, callers must reason about "do I call Card.validate_pin() directly, then Account.debit()?" — coupling the caller to implementation details.</p>
+
+  <div class="ann-wrap">
+    <div class="ann-header"><span>ATM — fields and public interface</span></div>
+
+    <div class="ann-row">
+      <div class="ann-code"><span class="kw">class</span> <span class="cls">ATM</span>:
+  bank: Bank
+  cash_dispenser: CashDispenser
+  session: Session | None = None</div>
+      <div class="ann-why">
+        <span class="wlabel">Why inject Bank and CashDispenser instead of creating them?</span>
+        <span class="wmain">Dependency Injection. ATM receives its dependencies rather than creating them internally. This means: (1) In tests, you can inject a <code>FakeBank</code> that returns predetermined accounts. (2) You can inject a <code>MockCashDispenser</code> that records what it was asked to dispense. (3) The ATM is testable without any real bank or physical hardware. If ATM did <code>self.bank = Bank()</code> internally, you can never separate ATM logic from Bank logic in a test.</span>
+        <div class="wfail"><b>Without DI:</b> Testing <code>withdraw()</code> requires a real Bank with real accounts. Every test is an integration test. A bug in Bank breaks all ATM tests even if ATM logic is correct.</div>
+      </div>
+    </div>
+
+    <div class="ann-row">
+      <div class="ann-code">  session: Session | None</div>
+      <div class="ann-why">
+        <span class="wlabel">Why Session | None and not always-present Session?</span>
+        <span class="wmain">When no card is inserted, there is no active session. <code>None</code> makes this explicit — any code that tries to perform an operation without a session encounters a type-checker warning or a runtime AttributeError, not a silent wrong result. An always-present "empty" Session object would silently allow operations to proceed in an invalid state — the ATM would think it's authenticated when it isn't. <code>None</code> is the honest representation of "nobody is using this machine right now."</span>
+      </div>
+    </div>
+
+    <div class="ann-row">
+      <div class="ann-code">  def insert_card(self,
+    card_number: str) → bool</div>
+      <div class="ann-why">
+        <span class="wlabel">Why return bool, not raise an exception?</span>
+        <span class="wmain">Card insertion failure ("card not recognized") is a <em>normal, expected event</em> — someone inserts a card from a different bank, or a demagnetized card. Exceptions should signal unexpected failures, not routine user errors. A <code>False</code> return signals "try again or contact your bank," which the UI can display cleanly. Reserve exceptions for true errors — hardware failure, database unreachable, code bugs. This distinction (expected failures → return values; unexpected errors → exceptions) is a hallmark of well-designed interfaces.</span>
+        <div class="wfail"><b>If you raise on invalid card:</b> UI code must wrap insert_card in try/except for normal flow — making normal operation look like error handling. The happy path and the expected-failure path look identical in the code structure.</div>
+      </div>
+    </div>
+
+    <div class="ann-row">
+      <div class="ann-code">  def authenticate(self,
+    pin: str) → bool</div>
+      <div class="ann-why">
+        <span class="wlabel">Why does ATM.authenticate() not directly check the PIN?</span>
+        <span class="wmain">ATM delegates to <code>session.card.validate_pin(pin)</code>. The PIN validation logic — including the 3-attempt counter and card-blocking — lives on Card, not ATM. If ATM checked the PIN directly, the attempt counter would need to live on ATM, which means it's associated with the machine, not the card. But blocking is a property of the card — you can replace a blocked card; you can't replace the ATM. Delegation preserves the right ownership: ATM orchestrates, Card enforces.</span>
+      </div>
+    </div>
+
+    <div class="ann-row">
+      <div class="ann-code">  def withdraw(self,
+    amount: int) → TransactionResult
+  def deposit(self,
+    amount: int) → TransactionResult
+  def check_balance(self) → Decimal
+  def change_pin(self,
+    old_pin: str,
+    new_pin: str) → bool</div>
+      <div class="ann-why">
+        <span class="wlabel">Why amount: int for withdrawal, not float?</span>
+        <span class="wmain">Cash is dispensed in whole notes. You cannot withdraw ₹500.50. Accepting a <code>float</code> invites floating-point errors: <code>200.0 + 100.0</code> can produce <code>299.9999...</code> in binary floating point, and comparing that to account balance produces wrong results. Use <code>int</code> (amounts in paise/cents) or <code>Decimal</code> for monetary values. <code>int</code> for withdrawal amounts is clean — it matches the physical reality that notes come in whole denominations. Balances use <code>Decimal</code> because they may include interest or fractional paise.</span>
+        <div class="wfail"><b>float for money:</b> Classic production bug — user has balance 999.99, withdraws 1000.0, balance check computes to -0.0099999... which is &lt; 0, so withdrawal incorrectly fails. Or worse: rounds in the wrong direction and allows an overdraft.</div>
+      </div>
+    </div>
+
+    <div class="ann-row">
+      <div class="ann-code">  def eject_card(self) → None</div>
+      <div class="ann-why">
+        <span class="wlabel">Why a dedicated eject method instead of just setting session=None?</span>
+        <span class="wmain">Ejecting a card involves multiple cleanup steps: (1) mark session as terminated, (2) eject physical card (hardware call), (3) set <code>self.session = None</code>. If you just write <code>self.session = None</code> everywhere, the hardware call gets forgotten in some code paths. A dedicated <code>eject_card()</code> ensures all cleanup happens in one place. This is the same principle as Agent's <code>complete_delivery()</code> — atomic operations that must happen together belong in one method, never done piecemeal by callers.</span>
+      </div>
+    </div>
+  </div>
+
+  <h3>Card — The State Machine for Physical Access</h3>
+  <div class="ann-wrap">
+    <div class="ann-header"><span>Card — status, PIN, attempt tracking</span></div>
+
+    <div class="ann-row">
+      <div class="ann-code"><span class="kw">class</span> <span class="cls">CardStatus</span>(Enum):
+  ACTIVE  = auto()
+  BLOCKED = auto()
+  EXPIRED = auto()</div>
+      <div class="ann-why">
+        <span class="wlabel">Why Enum, not a boolean is_blocked?</span>
+        <span class="wmain">A boolean captures one distinction: blocked or not. But there are three meaningfully different states — ACTIVE (usable), BLOCKED (too many wrong PINs — can be unblocked by calling the bank), EXPIRED (past validity date — must be replaced, cannot be unblocked). These states have different recovery paths. If you use a boolean, BLOCKED and EXPIRED both appear as <code>True</code>, and the code that handles them must ask a second question ("is it expired?") — re-creating state complexity you tried to hide. An Enum makes all three states explicit and unambiguous.</span>
+      </div>
+    </div>
+
+    <div class="ann-row">
+      <div class="ann-code">  card_number: str  <span class="cm"># not int</span>
+  pin_hash: str
+  failed_attempts: int = 0
+  MAX_ATTEMPTS: int = 3</div>
+      <div class="ann-why">
+        <span class="wlabel">Why store pin_hash, not the PIN itself?</span>
+        <span class="wmain">Never store PINs in plaintext — even in an interview LLD. The habit matters. In production, a database leak exposing plaintext PINs is catastrophic. We store a one-way hash (<code>hashlib.sha256(pin.encode()).hexdigest()</code>). When the user enters a PIN, we hash their input and compare hashes. The original PIN is never recoverable from storage. In an interview, mentioning this shows security awareness even in a design that isn't production-grade.</span>
+        <div class="wfail"><b>Plaintext PIN stored:</b> Attacker gets DB read access. Every account is compromised. This has happened to real banks.</div>
+        <div class="wfix"><b>Hashed PIN:</b> Attacker gets the hash. They cannot reverse it to get the PIN. Accounts remain safe.</div>
+      </div>
+    </div>
+
+    <div class="ann-row">
+      <div class="ann-code">  def validate_pin(self,
+      entered: str) -> bool:
+    if self.status != ACTIVE:
+        raise CardNotActiveError()
+    hashed = hash_pin(entered)
+    if hashed == self.pin_hash:
+        self.failed_attempts = 0
+        return True
+    self.failed_attempts += 1
+    if self.failed_attempts >= 3:
+        self.block()
+    return False</div>
+      <div class="ann-why">
+        <span class="wlabel">Why reset failed_attempts on success?</span>
+        <span class="wmain">Without resetting, a user who enters 2 wrong PINs, then the correct one, then later enters 1 wrong PIN — gets blocked. Their total lifetime errors sum to 3. That is wrong. The 3-attempt limit is per <em>consecutive</em> failed attempts — a protection against brute force. Once the correct PIN is entered, the brute force attempt is over. The counter resets. Not resetting this is a subtle bug that makes legitimate users get blocked after a single future mistake.</span>
+      </div>
+    </div>
+
+    <div class="ann-row">
+      <div class="ann-code">  def block(self):
+    self.status = CardStatus.BLOCKED
+    self.failed_attempts = 0</div>
+      <div class="ann-why">
+        <span class="wlabel">Why a dedicated block() method instead of setting status directly?</span>
+        <span class="wmain">Today, blocking just changes status and resets the counter. Tomorrow, blocking might also: (1) send an SMS alert to the customer, (2) log the event to a fraud detection system, (3) notify the bank server. All of these are one-line additions to <code>block()</code>. If you had 3 places that each wrote <code>self.status = BLOCKED</code>, you would need to find and update all 3. One method, one update. This is the Tell, Don't Ask principle — tell the Card to block itself; don't ask for its fields and modify them externally.</span>
+      </div>
+    </div>
+  </div>
+
+  <h3>Account — The Financial Ledger</h3>
+  <div class="ann-wrap">
+    <div class="ann-header"><span>Account — balance, guards, history</span></div>
+
+    <div class="ann-row">
+      <div class="ann-code">  balance: Decimal
+  transaction_history: list[Transaction]</div>
+      <div class="ann-why">
+        <span class="wlabel">Why Decimal for balance, not float?</span>
+        <span class="wmain">Bank balances include fractional rupees (interest, for example). <code>float</code> in Python uses binary floating-point, which cannot represent values like 0.1 exactly — <code>0.1 + 0.2 == 0.30000000000000004</code> in Python. <code>Decimal</code> is exact decimal arithmetic. For financial calculations, this difference between "almost right" and "exactly right" is the difference between a correct and an incorrect bank statement. One wrong cent per transaction compounds. Use <code>Decimal</code> for all monetary values.</span>
+      </div>
+    </div>
+
+    <div class="ann-row">
+      <div class="ann-code">  def debit(self, amount: Decimal,
+           txn_type: TransactionType
+           ) -> Transaction:
+    if amount <= 0:
+        raise InvalidAmountError()
+    if amount > self.balance:
+        raise InsufficientFundsError()
+    self.balance -= amount
+    txn = Transaction(
+        amount=-amount,
+        txn_type=txn_type,
+        status=SUCCESS)
+    self.transaction_history.append(txn)
+    return txn</div>
+      <div class="ann-why">
+        <span class="wlabel">Why validate amount > 0 inside debit(), when ATM already checked?</span>
+        <span class="wmain">Design by Contract: every method validates its own preconditions regardless of what the caller claims to have checked. A second entry point added 6 months later — an admin console, a scheduled fee deduction — may bypass ATM's validation. The guard inside <code>debit()</code> catches it regardless. This rule cost one line. The bug it prevents — a negative-amount debit that accidentally credits the account — would take days to diagnose in production. Never trust callers. Always validate at the point of mutation.</span>
+      </div>
+    </div>
+
+    <div class="ann-row">
+      <div class="ann-code">  <span class="cm"># Balance and history updated
+  # atomically in the same method</span>
+  self.balance -= amount
+  self.transaction_history.append(txn)</div>
+      <div class="ann-why">
+        <span class="wlabel">Why update balance and record history in the same method?</span>
+        <span class="wmain">These two operations must always happen together. A debit without a transaction record produces a balance that nobody can explain — the money is gone but there's no audit trail. A transaction record without a balance update creates a phantom transaction. By co-locating both mutations in <code>debit()</code>, they are either both done or neither is. This is the "atomic operation" principle at the class level — the Python equivalent of a database transaction.</span>
+        <div class="wfail"><b>If separated:</b> ATM calls <code>account.balance -= amount</code>, then something throws an exception before <code>transaction_history.append()</code>. Balance is reduced, history is missing. Customer disputes the charge; bank has no record to defend itself.</div>
+      </div>
+    </div>
+  </div>
+
+  <h3>CashDispenser — Denomination-Aware Dispensing</h3>
+  <div class="ann-wrap">
+    <div class="ann-header"><span>CashDispenser — inventory, greedy algorithm</span></div>
+
+    <div class="ann-row">
+      <div class="ann-code">  denominations: dict[int, int]
+  <span class="cm"># e.g. {500: 20, 100: 50, 50: 10}</span>
+  <span class="cm"># denomination → count of notes</span></div>
+      <div class="ann-why">
+        <span class="wlabel">Why dict[int, int] — denomination to count — not a list?</span>
+        <span class="wmain">A dict gives O(1) lookup by denomination. When checking "do I have ₹500 notes?", <code>self.denominations[500]</code> is instant. A list would require scanning for the right denomination every time. More importantly, a dict makes the denomination amounts explicit keys — you can't accidentally look up the wrong denomination. The dict structure also makes adding or removing denominations trivial: one dict update, no code changes elsewhere. This is the "flexible by design" approach — making change easy by choosing the right data structure.</span>
+      </div>
+    </div>
+
+    <div class="ann-row">
+      <div class="ann-code">  def dispense(self,
+    amount: int) -> dict[int,int]:
+    <span class="cm"># Phase 1: Validate</span>
+    if amount > self.total_cash():
+        raise InsufficientCashError()
+    result = {}
+    remaining = amount
+    <span class="cm"># Phase 2: Greedy algorithm</span>
+    for denom in sorted(
+        self.denominations,
+        reverse=True):
+      count = min(remaining // denom,
+                  self.denominations[denom])
+      if count > 0:
+        result[denom] = count
+        remaining -= denom * count
+    if remaining > 0:
+        raise CannotDispenseExactError()
+    <span class="cm"># Phase 3: Deduct inventory</span>
+    for denom, count in result.items():
+        self.denominations[denom] -= count
+    return result</div>
+      <div class="ann-why">
+        <span class="wlabel">Why validate total cash before the greedy loop — two separate errors?</span>
+        <span class="wmain">There are two distinct failure modes: (1) ATM doesn't have enough total cash — raise <code>InsufficientCashError</code>. Show "ATM currently unavailable." (2) ATM has enough cash but not the right combination of denominations to make the exact amount — e.g., amount=₹150 but only ₹500 notes remain. Raise <code>CannotDispenseExactError</code>. Show "Cannot dispense this exact amount." These errors have different recovery actions: the first sends a technician, the second might allow the user to request a different amount. One generic "dispensing error" loses the distinction that drives those different responses.</span>
+        <div class="wfail"><b>One generic error:</b> User requests ₹750 from an ATM with ₹500 notes only. Code raises the same "error" as "ATM is empty." Bank's monitoring system treats it as "ATM out of cash" and sends a technician. The ATM had cash — it just needed the user to request ₹500 or ₹1000.</div>
+      </div>
+    </div>
+
+    <div class="ann-row">
+      <div class="ann-code">  <span class="cm"># Deduct AFTER successful computation</span>
+  for denom, count in result.items():
+      self.denominations[denom] -= count</div>
+      <div class="ann-why">
+        <span class="wlabel">Why deduct inventory only after the full computation succeeds?</span>
+        <span class="wmain">Two-phase design: compute everything first, mutate only if the computation succeeds entirely. If we deducted denomination by denomination inside the loop, and the loop discovered midway that exact change is impossible, we'd have partially deducted inventory with no corresponding dispensing. Getting inventory back to a consistent state would require rollback code — untested, complex, and fragile. Separating "figure out what to dispense" from "actually deduct it" eliminates the need for rollback entirely.</span>
+      </div>
+    </div>
+  </div>
+
+  <h3>Session — The State Machine for User Interaction</h3>
+  <div class="ann-wrap">
+    <div class="ann-header"><span>Session — states, card/account refs, timeout</span></div>
+
+    <div class="ann-row">
+      <div class="ann-code"><span class="kw">class</span> <span class="cls">SessionState</span>(Enum):
+  IDLE             = auto()
+  CARD_INSERTED    = auto()
+  AUTHENTICATED    = auto()
+  TXN_IN_PROGRESS  = auto()
+  COMPLETE         = auto()</div>
+      <div class="ann-why">
+        <span class="wlabel">Why TXN_IN_PROGRESS as a separate state from AUTHENTICATED?</span>
+        <span class="wmain">AUTHENTICATED means "user proved identity." TXN_IN_PROGRESS means "user is currently executing a transaction." These are different states with different valid next actions. From AUTHENTICATED, valid operations are: start a transaction (→ TXN_IN_PROGRESS) or eject card (→ IDLE). From TXN_IN_PROGRESS, valid operations are: complete the transaction (→ AUTHENTICATED, allowing multiple transactions per session) or cancel. Collapsing them means you can't represent "user wants another transaction after the first one completes" without inventing ad-hoc booleans. The state machine makes multi-transaction sessions structurally natural.</span>
+      </div>
+    </div>
+
+    <div class="ann-row">
+      <div class="ann-code">  card: Card | None
+  account: Account | None
+  state: SessionState
+  session_id: str  <span class="cm"># UUID</span>
+  started_at: datetime</div>
+      <div class="ann-why">
+        <span class="wlabel">Why does Session hold both Card and Account references?</span>
+        <span class="wmain">After authentication, both are needed for every subsequent operation. Withdrawal needs the Account to check balance and debit. PIN change needs the Card to validate old PIN and store new one. Keeping both in Session avoids repeated Bank lookups mid-session — the lookups happened at card insertion and authentication; everything after uses the already-resolved references. Session is the "context" for the entire user interaction. This is the classic "session as context" pattern — load once, use many times.</span>
+      </div>
+    </div>
+
+    <div class="ann-row">
+      <div class="ann-code">  VALID_TRANSITIONS = {
+    IDLE:            [CARD_INSERTED],
+    CARD_INSERTED:   [AUTHENTICATED,
+                      IDLE],
+    AUTHENTICATED:   [TXN_IN_PROGRESS,
+                      IDLE],
+    TXN_IN_PROGRESS: [AUTHENTICATED,
+                      IDLE],
+    COMPLETE:        []
+  }</div>
+      <div class="ann-why">
+        <span class="wlabel">Why does TXN_IN_PROGRESS go back to AUTHENTICATED (not COMPLETE)?</span>
+        <span class="wmain">A real ATM session allows multiple transactions: "Withdraw ₹2000, then check balance, then change PIN — all without re-inserting the card." After each transaction completes, the session returns to AUTHENTICATED, allowing the user to choose another operation. COMPLETE is reached only when the user explicitly selects "End Session" or the card is ejected. IDLE is reachable from any non-COMPLETE state via timeout or cancellation. This models actual ATM behavior and prevents the anti-pattern of forcing card re-insertion between each operation.</span>
+      </div>
+    </div>
+  </div>
+
+  <h3>Transaction — Immutable Financial Record</h3>
+  <div class="ann-wrap">
+    <div class="ann-header"><span>Transaction — as a frozen dataclass</span></div>
+
+    <div class="ann-row">
+      <div class="ann-code"><span class="kw">@dataclass</span>(frozen=<span class="nm">True</span>)
+<span class="kw">class</span> <span class="cls">Transaction</span>:
+  txn_id: str  <span class="cm"># UUID</span>
+  account_id: str
+  txn_type: TransactionType
+  amount: Decimal
+  status: TransactionStatus
+  timestamp: datetime = field(
+    default_factory=datetime.now)</div>
+      <div class="ann-why">
+        <span class="wlabel">Why frozen=True on Transaction?</span>
+        <span class="wmain"><code>frozen=True</code> makes all fields immutable after creation — Python will raise a <code>FrozenInstanceError</code> if any code tries to modify a field. This enforces an important business rule: financial records are <em>append-only</em>. You never modify a transaction that happened. If a correction is needed, you create a reversal transaction. Freezing the dataclass makes this rule enforceable at the language level — a developer cannot accidentally write <code>txn.amount = new_amount</code>. The type system becomes your audit enforcer.</span>
+        <div class="wfail"><b>Without frozen:</b> A bug in error handling code modifies a transaction's amount to 0 to "mark it cancelled" instead of creating a reversal. The original debit record is gone. Audit trail is corrupted. Regulators are not amused.</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ======== SECTION 4: KEY FLOWS ======== -->
+<div class="section" id="s-flow">
+  <div class="sec-eyebrow">Step 4 · ~10 minutes</div>
+  <div class="sec-title">Key Flows — Step by Step</div>
+  <div class="sec-intro">Understanding the happy path is table stakes. What separates good from great answers is knowing exactly what happens at each step, which entity owns each action, and what error handling is required. Below are the four core flows with step-by-step reasoning.</div>
+
+  <h3>Flow 1 — Card Insertion and PIN Authentication</h3>
+
+  <div class="ann-wrap">
+    <div class="ann-header"><span>ATM.insert_card(card_number) then ATM.authenticate(pin)</span></div>
+
+    <div class="ann-row">
+      <div class="ann-code">Step 1: Check ATM state
+if self.session is not None:
+    return False  <span class="cm"># already in use</span></div>
+      <div class="ann-why">
+        <span class="wlabel">Why check if session exists before allowing insertion?</span>
+        <span class="wmain">A physical ATM can only serve one user at a time. If a session already exists (someone's card is inside), a second card insertion must be rejected. Without this check, inserting a second card could corrupt the active session — overwriting the current user's card and account references mid-transaction. This is a guard for physical concurrency — a constraint that flows directly from the hardware reality of one card slot.</span>
+      </div>
+    </div>
+
+    <div class="ann-row">
+      <div class="ann-code">Step 2: Look up card
+card = self.bank.get_card(card_number)
+if card is None:
+    return False  <span class="cm"># unknown card</span>
+if card.status != CardStatus.ACTIVE:
+    return False  <span class="cm"># blocked/expired</span></div>
+      <div class="ann-why">
+        <span class="wlabel">Why check card status before creating a session?</span>
+        <span class="wmain">Fail fast. If the card is BLOCKED or EXPIRED, there is no valid path forward — not even to CARD_INSERTED state. Creating a session for a blocked card wastes state and creates a path that will fail at authentication regardless. Checking status here prevents the user from entering their PIN (a UX dead-end) before being told their card is blocked. The earlier you surface an error, the cleaner the system and the faster the feedback to the user.</span>
+      </div>
+    </div>
+
+    <div class="ann-row">
+      <div class="ann-code">Step 3: Create session
+account = self.bank.get_account(
+    card.account_id)
+self.session = Session(
+    card=card,
+    account=account,
+    state=CARD_INSERTED)</div>
+      <div class="ann-why">
+        <span class="wlabel">Why resolve the Account at insertion, not at authentication?</span>
+        <span class="wmain">Authentication proves identity, but the account is associated with the card from the moment the card is identified. Once we know it's a valid card, we know which account it belongs to. Loading the account eagerly (at insertion) means all subsequent operations — even PIN validation feedback ("3 more attempts remaining") — have the account context they need. It also reduces Bank lookups: one call at insertion vs. a separate call per operation. In a real system, this would also "lock" the session record in the database, preventing concurrent sessions.</span>
+      </div>
+    </div>
+
+    <div class="ann-row">
+      <div class="ann-code">Step 4: Validate PIN (in authenticate())
+result = self.session.card
+         .validate_pin(entered_pin)
+if not result:
+    if self.session.card.status
+       == BLOCKED:
+        self.eject_card()
+    return False</div>
+      <div class="ann-why">
+        <span class="wlabel">Why check if card got blocked after PIN failure and eject immediately?</span>
+        <span class="wmain">When the third wrong PIN is entered, <code>validate_pin()</code> blocks the card and returns <code>False</code>. If we don't check whether the card got blocked, the session stays in CARD_INSERTED state — waiting for more PIN attempts that can never succeed (card is blocked, all future <code>validate_pin()</code> calls raise <code>CardNotActiveError</code>). Checking the post-call status and ejecting immediately returns the machine to IDLE — physically returning the card to the user with a "card blocked" message. Clean state, clear feedback.</span>
+      </div>
+    </div>
+
+    <div class="ann-row">
+      <div class="ann-code">Step 5: Session promotion
+self.session.transition_to(AUTHENTICATED)
+return True</div>
+      <div class="ann-why">
+        <span class="wlabel">Why use transition_to() instead of directly setting session.state?</span>
+        <span class="wmain"><code>transition_to()</code> validates the transition against <code>VALID_TRANSITIONS</code> before making it. Direct state assignment bypasses this check — any code path could put the session into any state. A bug that does <code>session.state = AUTHENTICATED</code> without going through PIN validation would create an authenticated session with no PIN check. <code>transition_to()</code> is the single enforcement point for the state machine's rules. This is exactly the same principle as Order's <code>update_status()</code> — enforce rules at the point of mutation, not in the caller.</span>
+      </div>
+    </div>
+  </div>
+
+  <h3>Flow 2 — Withdrawal (happy path overview)</h3>
+  <p>The full deep-dive is in Section 04b. Here's the high-level sequence showing which entity is responsible for each step:</p>
+
+  <div class="ann-wrap">
+    <div class="ann-header"><span>ATM.withdraw(amount) — entity responsibilities</span></div>
+    <div class="ann-row">
+      <div class="ann-code">Step 1: Guard — session valid?
+self._require_authenticated()</div>
+      <div class="ann-why"><span class="wlabel">Whose responsibility?</span><span class="wmain">ATM. All operations must first verify the session is in AUTHENTICATED state. This single internal guard method is called at the top of every protected operation. Centralizing it means you cannot accidentally write a withdrawal method that forgets to check authentication.</span></div>
+    </div>
+    <div class="ann-row">
+      <div class="ann-code">Step 2: Amount validation
+if amount <= 0 or amount % 100 != 0:
+    raise InvalidAmountError()</div>
+      <div class="ann-why"><span class="wlabel">Why check multiples of 100?</span><span class="wmain">ATM. Cash dispensers have minimum denomination constraints. If the smallest note is ₹100, the ATM literally cannot dispense ₹150. Checking this constraint before hitting the account or dispenser produces the right error message early: "Please enter a multiple of ₹100." Without this, the CashDispenser would raise <code>CannotDispenseExactError</code> — a more confusing message about denominations.</span></div>
+    </div>
+    <div class="ann-row">
+      <div class="ann-code">Step 3: Check account balance
+account = self.session.account
+if amount > account.balance:
+    raise InsufficientFundsError()</div>
+      <div class="ann-why"><span class="wlabel">Whose responsibility?</span><span class="wmain">ATM checks here for early exit, but Account.debit() also checks internally (design by contract). The check here gives a clean user-facing error before attempting to interact with the dispenser. A user with ₹500 balance trying to withdraw ₹2000 should be told immediately — don't even check the dispenser.</span></div>
+    </div>
+    <div class="ann-row">
+      <div class="ann-code">Step 4: Reserve cash
+notes = self.cash_dispenser.dispense(amount)</div>
+      <div class="ann-why"><span class="wlabel">Why dispense before deducting account balance?</span><span class="wmain">CashDispenser. The physical cash must be available before the account is debited. If we debited first and then found the dispenser empty, we'd need to reverse the debit — a rollback. Dispensing first means if the dispenser fails, no account mutation has occurred. No rollback needed. The two-phase principle: validate/reserve physical resources first, then commit financial changes.</span></div>
+    </div>
+    <div class="ann-row">
+      <div class="ann-code">Step 5: Debit account
+txn = account.debit(
+    Decimal(amount), WITHDRAWAL)</div>
+      <div class="ann-why"><span class="wlabel">Whose responsibility?</span><span class="wmain">Account owns its own mutation. ATM doesn't directly modify <code>account.balance</code> — it calls <code>account.debit()</code> which validates, deducts, and records the transaction atomically. ATM gets back a Transaction object and nothing more.</span></div>
+    </div>
+    <div class="ann-row">
+      <div class="ann-code">Step 6: Transition session state
+self.session.transition_to(
+    TXN_IN_PROGRESS)  <span class="cm"># during op</span>
+<span class="cm"># ... after completion:</span>
+self.session.transition_to(AUTHENTICATED)</div>
+      <div class="ann-why"><span class="wlabel">Why track TXN_IN_PROGRESS?</span><span class="wmain">Session. Marking the session as TXN_IN_PROGRESS prevents the user (or a concurrent thread in a real system) from initiating a second transaction before the first completes. Returning to AUTHENTICATED after completion allows further transactions in the same session — realistic behavior that also naturally enables the "would you like another transaction?" UX prompt.</span></div>
+    </div>
+  </div>
+
+  <h3>Flow 3 — The Session State Machine (every transition justified)</h3>
+
+  <div class="state-row">
+    <span class="sp sg">IDLE</span><span class="sarrow">→</span>
+    <span class="sp sb">CARD_INSERTED</span><span class="sarrow">→</span>
+    <span class="sp spu">AUTHENTICATED</span><span class="sarrow">→</span>
+    <span class="sp sam">TXN_IN_PROGRESS</span><span class="sarrow">→</span>
+    <span class="sp spu">AUTHENTICATED</span><span class="sarrow">→</span>
+    <span class="sp ste">COMPLETE</span>
+  </div>
+  <p>↳ <span class="sp srd" style="font-size:11px; padding:3px 10px;">IDLE</span> is reachable from any state via timeout or explicit card ejection — the "reset to safe state" transition.</p>
+
+  <div class="ann-wrap">
+    <div class="ann-header"><span>Why each transition is exactly what it is</span></div>
+    <div class="ann-row">
+      <div class="ann-code">IDLE → CARD_INSERTED only</div>
+      <div class="ann-why"><span class="wlabel">Why can't IDLE go directly to AUTHENTICATED?</span><span class="wmain">Physical constraint: you cannot be authenticated without a card. Authentication requires a PIN entry, which requires a card to be present. The CARD_INSERTED state is not administrative overhead — it represents real physical reality: the card is in the slot. Skipping this state would allow authentication without a card, which is nonsensical.</span></div>
+    </div>
+    <div class="ann-row">
+      <div class="ann-code">CARD_INSERTED → AUTHENTICATED
+CARD_INSERTED → IDLE (ejection/timeout)</div>
+      <div class="ann-why"><span class="wlabel">Why does CARD_INSERTED go back to IDLE?</span><span class="wmain">IDLE is the safe resting state. If the user inserts a card and then walks away, the timeout fires, the session goes CARD_INSERTED → IDLE, and the card is physically ejected. Without this transition, a forgotten card keeps the ATM "occupied" forever. The IDLE → anything → IDLE path being possible from every state is what makes the ATM resilient to abandoned sessions.</span></div>
+    </div>
+    <div class="ann-row">
+      <div class="ann-code">TXN_IN_PROGRESS → AUTHENTICATED
+(allows multiple transactions)</div>
+      <div class="ann-why"><span class="wlabel">Why not TXN_IN_PROGRESS → COMPLETE directly?</span><span class="wmain">Returning to AUTHENTICATED after each transaction enables multi-operation sessions. The user might withdraw, then check balance, then change their PIN. Each operation is a round trip: AUTHENTICATED → TXN_IN_PROGRESS → AUTHENTICATED. COMPLETE is only reached when the user explicitly ends the session (selects "Done" on the screen) or the session times out from AUTHENTICATED. Real ATMs work exactly this way — the machine prompts "Would you like another transaction?" between operations.</span></div>
+    </div>
+    <div class="ann-row">
+      <div class="ann-code">Any state → IDLE via timeout</div>
+      <div class="ann-why"><span class="wlabel">Why allow IDLE from any state (not just AUTHENTICATED)?</span><span class="wmain">Users can abandon the ATM at any stage — while entering their PIN, mid-transaction selection, even mid-PIN-change. The ATM must always be able to recover to a clean state. The timeout is the safety net. Making IDLE reachable from every state means the ATM is always self-healing: any abandoned session, any forgotten card, any stuck state resolves itself within the timeout window without human intervention.</span></div>
+    </div>
+  </div>
+</div>
+
+<!-- ======== SECTION 4b: WITHDRAW DEEP DIVE ======== -->
+<div class="section" id="s-withdraw">
+  <div class="sec-eyebrow">Step 4b · Deep Dive</div>
+  <div class="sec-title">withdraw() — Bad to Great</div>
+  <div class="sec-intro">Withdrawal is the most critical and complex operation in the ATM. It touches four entities, has multiple validation layers, and contains a sequencing decision — "deduct cash before or after debiting account?" — that, if wrong, introduces a class of bugs requiring production rollback code. Let's build it from scratch.</div>
+
+  <div style="border:1px solid var(--border);border-radius:var(--r);overflow:hidden;margin:22px 0;">
+    <div style="display:flex;align-items:center;gap:10px;padding:12px 18px;background:var(--red-bg);border-bottom:1px solid var(--red-border);">
+      <span style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--red);background:white;border:1px solid var(--red-border);padding:2px 9px;border-radius:20px;">Bad</span>
+      <span style="font-size:14px;font-weight:600;color:var(--text);">Debit account first, then dispense cash</span>
+    </div>
+    <div style="padding:18px 20px;">
+      <h4>The intuitive approach</h4>
+      <p>The "obvious" order: check balance, deduct from account, dispense cash. This feels right — deduct money, give money. But it creates a gap that is catastrophic in production.</p>
+      <div class="code-block"><span class="kw">def</span> <span class="nm">withdraw</span>(self, amount):
+    account = self.session.account
+    <span class="cm"># Step 1: Validate balance</span>
+    <span class="kw">if</span> amount > account.balance:
+        <span class="kw">raise</span> InsufficientFundsError()
+
+    <span class="cm"># Step 2: Debit account FIRST</span>
+    txn = account.debit(amount, WITHDRAWAL)  <span class="cm"># ← money is gone</span>
+
+    <span class="cm"># Step 3: Now try to dispense</span>
+    <span class="kw">try</span>:
+        notes = self.cash_dispenser.dispense(amount)
+    <span class="kw">except</span> InsufficientCashError:
+        <span class="cm"># 🔥 Account debited but no cash dispensed</span>
+        account.credit(amount)  <span class="cm"># ← rollback attempt</span>
+        <span class="kw">raise</span> ATMError(<span class="st">"ATM out of cash"</span>)</div>
+      <h4>Why this fails — two compounding problems</h4>
+      <p><b>Bug 1 — The rollback is fragile:</b> The <code>account.credit(amount)</code> "rollback" works in the happy case. But what if <code>credit()</code> itself throws an exception? (Disk full, server unavailable, any runtime error.) Now you have a debited account with no credit reversal and no cash dispensed. The customer has paid without receiving anything. This is the fundamental problem with "compensating transactions" — they're code that runs when things are already wrong, and if they also fail, you've made things worse.</p>
+      <p><b>Bug 2 — The transaction record is corrupted:</b> The <code>debit()</code> call already appended a WITHDRAWAL transaction to account history. The attempted rollback via <code>credit()</code> adds a second CREDIT transaction. The net effect on balance is correct, but the customer's statement now shows a withdrawal and a mysterious credit — confusing and alarming. A clean "ATM out of cash" should produce no transaction record at all.</p>
+      <div class="vbox"><b>Production consequence:</b> In a real system under load, a network partition between the debit (which succeeded) and the dispenser check (which fails due to timeout) produces an account that has been debited but no cash given. The customer calls the bank. The bank's logs show a successful debit. The ATM's logs show a dispensing failure. Reconciling these takes days — and this happens thousands of times per day across the banking system. This is why ATMs have specific transaction sequencing standards (ISO 8583).</div>
+    </div>
+  </div>
+
+  <div style="border:1px solid var(--border);border-radius:var(--r);overflow:hidden;margin:22px 0;">
+    <div style="display:flex;align-items:center;gap:10px;padding:12px 18px;background:var(--amber-bg);border-bottom:1px solid var(--amber-border);">
+      <span style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--amber);background:white;border:1px solid var(--amber-border);padding:2px 9px;border-radius:20px;">Good</span>
+      <span style="font-size:14px;font-weight:600;color:var(--text);">Reserve cash first, then debit account</span>
+    </div>
+    <div style="padding:18px 20px;">
+      <h4>The correct insight</h4>
+      <p>Physical resources (cash) must be reserved before financial records are committed. If the physical operation fails, no financial change should ever occur. Reverse the order: dispense first, debit after. The invariant you want is: <em>"If the account is debited, cash was definitely dispensed."</em></p>
+      <div class="code-block"><span class="kw">def</span> <span class="nm">withdraw</span>(self, amount: int) -> Transaction:
+    <span class="cm"># --- PHASE 1: Full validation (no mutations) ---</span>
+    self._require_authenticated()
+
+    <span class="kw">if</span> amount <= <span class="dn">0</span> or amount % <span class="dn">100</span> != <span class="dn">0</span>:
+        <span class="kw">raise</span> InvalidAmountError(
+            <span class="st">"Amount must be a positive multiple of ₹100"</span>)
+
+    account = self.session.account
+    <span class="kw">if</span> Decimal(amount) > account.balance:
+        <span class="kw">raise</span> InsufficientFundsError(
+            <span class="st">f"Balance: {account.balance}, requested: {amount}"</span>)
+
+    <span class="cm"># --- PHASE 2: Reserve physical resource first ---</span>
+    self.session.transition_to(TXN_IN_PROGRESS)
+    notes = self.cash_dispenser.dispense(amount)
+    <span class="cm"># ↑ If this raises, NO financial record is created.
+    # ↑ No rollback needed. Session stays clean.</span>
+
+    <span class="cm"># --- PHASE 3: Commit financial change ---</span>
+    txn = account.debit(Decimal(amount), TransactionType.WITHDRAWAL)
+    <span class="cm"># ↑ Only reached if cash was successfully reserved.</span>
+    <span class="cm"># ↑ Invariant: "if debit happened, cash was dispensed."</span>
+
+    self.session.transition_to(AUTHENTICATED)
+    <span class="kw">return</span> txn</div>
+      <h4>Why this is correct — the two guarantees it provides</h4>
+      <p><b>Guarantee 1 — No rollback code:</b> If <code>cash_dispenser.dispense()</code> raises for any reason (out of cash, wrong denominations, hardware fault), the exception propagates out before <code>account.debit()</code> is ever called. No debit happened. No transaction was recorded. No rollback is needed. The system is in a perfectly clean state: the session is back to AUTHENTICATED (the transition to TXN_IN_PROGRESS should be rolled back on exception too — handled in the exception handler), and the user can try again or contact support.</p>
+      <p><b>Guarantee 2 — The invariant is structural:</b> "If <code>account.debit()</code> ran, then <code>cash_dispenser.dispense()</code> must have succeeded." This isn't a comment or a hope — it's a structural consequence of the code order. The debit line is unreachable unless dispense succeeded. Invariants enforced by code structure are infinitely stronger than invariants enforced by programmer discipline.</p>
+      <div class="why-inline">
+        <b>What to say in the interview:</b> "I split withdraw() into three phases: pure validation, physical resource reservation, and financial commitment. The key sequencing decision is that cash dispensing comes before account debiting. This ensures that if the dispenser fails for any reason — out of cash, wrong denominations, hardware fault — no financial record is created and no rollback is needed. The invariant 'account was debited ↔ cash was dispensed' is structurally enforced by code order, not by programmer discipline."
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ======== SECTION 5: PATTERNS ======== -->
+<div class="section" id="s-pat">
+  <div class="sec-eyebrow">Step 5 · Deep Dive</div>
+  <div class="sec-title">Design Patterns — Justified, Not Just Named</div>
+  <div class="sec-intro">Name a pattern only when you can say: "Without this pattern, here is the specific problem I would face." Patterns are solutions to recurring problems, not decorations. Below, each pattern is introduced with its concrete problem, applied to the ATM domain, with before-vs-after code.</div>
+
+  <div class="pcard">
+    <div class="ptitle">1. State Machine Pattern <span class="ptag">applied in Session</span></div>
+    <p><b>The specific problem without it:</b> Every ATM operation needs to verify the session is in the right state. <code>withdraw()</code> needs AUTHENTICATED. <code>authenticate()</code> needs CARD_INSERTED. Without a state machine, each method has its own if/else check. When a new state (like TXN_IN_PROGRESS) is added, every method needs reviewing. The rules are scattered and easy to get wrong.</p>
+    <div class="compare-grid">
+      <div class="cb">
+        <div class="clabel">Without State Machine</div>
+        <pre>def withdraw(self, amount):
+    if not self.session:
+        raise NoSessionError()
+    if self.session.state != AUTHENTICATED
+       and self.session.state != TXN_IN_PROGRESS:
+        raise WrongStateError()
+    # ... now do work
+
+def change_pin(self, old, new):
+    if not self.session:
+        raise NoSessionError()
+    if self.session.state != AUTHENTICATED:
+        raise WrongStateError()
+    # Different check!</pre>
+        <div class="cexplain">Two methods, two different checks. When you add a new state, you must audit every method to see if it needs updating. In a 10-operation ATM, that's 10 checks to get right.</div>
+      </div>
+      <div class="cg">
+        <div class="clabel">With State Machine</div>
+        <pre>VALID_TRANSITIONS = {
+    IDLE:           [CARD_INSERTED],
+    CARD_INSERTED:  [AUTHENTICATED, IDLE],
+    AUTHENTICATED:  [TXN_IN_PROGRESS, IDLE],
+    TXN_IN_PROGRESS:[AUTHENTICATED, IDLE],
+}
+
+def transition_to(self, new_state):
+    allowed = VALID_TRANSITIONS.get(
+        self.state, [])
+    if new_state not in allowed:
+        raise InvalidTransitionError()
+    self.state = new_state</pre>
+        <div class="cexplain">All rules live in one dict. Adding TXN_IN_PROGRESS is one dict entry. Every method calls transition_to() and gets the right check automatically. Rules are data, not code.</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="pcard">
+    <div class="ptitle">2. Strategy Pattern <span class="ptag">applied in CashDispenser</span></div>
+    <p><b>The specific problem without it:</b> The greedy denomination algorithm works for most cases, but different ATM operators may want different dispensing strategies — some prefer using larger notes first (greedy), others want to minimize total notes given (minimum-count), others may have regulatory constraints. If the algorithm is hardcoded in <code>CashDispenser.dispense()</code>, changing it requires modifying a class that already works correctly — risking regressions.</p>
+    <div class="code-block"><span class="kw">class</span> <span class="cls">DispenseStrategy</span>(ABC):
+    @abstractmethod
+    <span class="kw">def</span> <span class="nm">compute</span>(self,
+        amount: int,
+        denominations: dict[int, int]
+    ) -> dict[int, int]: ...
+
+<span class="kw">class</span> <span class="cls">GreedyStrategy</span>(DispenseStrategy):
+    <span class="kw">def</span> <span class="nm">compute</span>(self, amount, denominations):
+        <span class="cm"># Sort denominations largest-first</span>
+        <span class="cm"># Greedily take as many of each as possible</span>
+        ...
+
+<span class="kw">class</span> <span class="cls">MinNotesStrategy</span>(DispenseStrategy):
+    <span class="kw">def</span> <span class="nm">compute</span>(self, amount, denominations):
+        <span class="cm"># Dynamic programming to minimize note count</span>
+        ...
+
+<span class="kw">class</span> <span class="cls">CashDispenser</span>:
+    <span class="kw">def</span> <span class="nm">__init__</span>(self,
+        strategy: DispenseStrategy = GreedyStrategy()):
+        self.strategy = strategy
+
+    <span class="kw">def</span> <span class="nm">dispense</span>(self, amount):
+        notes = self.strategy.compute(
+            amount, self.denominations)
+        <span class="cm"># validate then deduct...</span></div>
+    <p><b>The concrete benefit:</b> Swapping dispensing algorithms requires no changes to <code>CashDispenser</code> — inject a different strategy. Tests can inject a <code>MockStrategy</code> that returns predetermined results regardless of the denominations. The algorithm and the inventory management are separated. In an interview, mentioning this shows you understand that algorithms are a separate concern from the class that hosts them.</p>
+  </div>
+
+  <div class="pcard">
+    <div class="ptitle">3. Singleton Pattern <span class="ptag">applied in Bank</span></div>
+    <p><b>The specific problem without it:</b> If <code>Bank</code> can be instantiated multiple times, you can have multiple in-memory stores of accounts and cards. Two <code>ATM</code> instances using two <code>Bank</code> instances would see different accounts — one update on one Bank would not be visible to the other. In our single-ATM model this isn't an issue, but the interviewer often asks "how would this extend to multiple ATMs?" Singleton on Bank ensures one shared registry regardless of how many ATM instances exist.</p>
+    <div class="code-block"><span class="kw">class</span> <span class="cls">Bank</span>:
+    _instance: <span class="st">'Bank'</span> | None = None
+
+    <span class="kw">def</span> <span class="nm">__new__</span>(cls):
+        <span class="kw">if</span> cls._instance <span class="kw">is None</span>:
+            cls._instance = super().__new__(cls)
+            cls._instance.accounts = {}
+            cls._instance.cards = {}
+        <span class="kw">return</span> cls._instance</div>
+    <p><b>Important caveat to mention in the interview:</b> Singleton is appropriate here because Bank is stateful shared infrastructure. It is <em>not</em> appropriate for things like configuration or logging in a library — those should use dependency injection. The rule: use Singleton only when the "exactly one instance" property is a genuine business requirement (one shared bank, one printer queue) rather than a convenience shortcut. Be ready to explain why you chose Singleton over dependency injection here: because Bank's identity (same instance everywhere) is the point.</p>
+  </div>
+
+  <div class="pcard">
+    <div class="ptitle">4. Template Method Pattern <span class="ptag">applied in ATM operations</span></div>
+    <p><b>The specific problem without it:</b> Every ATM operation follows the same skeleton: (1) validate session is AUTHENTICATED, (2) transition to TXN_IN_PROGRESS, (3) do the operation-specific work, (4) transition back to AUTHENTICATED, (5) return result. Steps 1, 2, 4 are identical across all four operations. Without Template Method, you copy-paste these three steps into every operation — and when step 1's logic changes, you update it in 4 places.</p>
+    <div class="code-block"><span class="kw">class</span> <span class="cls">ATM</span>:
+    <span class="kw">def</span> <span class="nm">_execute_transaction</span>(self, operation):
+        <span class="cm">"""Template: all transactions follow this skeleton."""</span>
+        self._require_authenticated()
+        self.session.transition_to(TXN_IN_PROGRESS)
+        <span class="kw">try</span>:
+            result = operation()   <span class="cm"># ← variable step</span>
+            self.session.transition_to(AUTHENTICATED)
+            <span class="kw">return</span> result
+        <span class="kw">except</span> Exception:
+            self.session.transition_to(AUTHENTICATED)
+            <span class="kw">raise</span>
+
+    <span class="kw">def</span> <span class="nm">withdraw</span>(self, amount):
+        <span class="kw">return</span> self._execute_transaction(
+            <span class="kw">lambda</span>: self._do_withdraw(amount))
+
+    <span class="kw">def</span> <span class="nm">check_balance</span>(self):
+        <span class="kw">return</span> self._execute_transaction(
+            <span class="kw">lambda</span>: self.session.account.balance)</div>
+    <p><b>The concrete benefit:</b> The session lifecycle (authenticate → in-progress → authenticate) is written once. Adding a new operation (say, "mini-statement") requires only adding the <code>_do_mini_statement()</code> method and wrapping it in <code>_execute_transaction()</code>. The template ensures it automatically gets the right state transitions. This is the Open/Closed Principle made concrete: the system is open for new operations, closed for changes to the shared skeleton.</p>
+  </div>
+
+  <div class="pcard">
+    <div class="ptitle">5. Observer Pattern <span class="ptag">applied for transaction notifications</span></div>
+    <p><b>The specific problem without it:</b> After a successful transaction, multiple things need to happen: the receipt prints, an SMS is sent to the customer, the bank's audit log is updated, potentially a fraud alert is triggered. If Account.debit() calls all of these directly, it has five dependencies — printing, SMS, audit, fraud — none of which are related to managing a bank account. Every new notification requirement (a new app push notification service) requires modifying Account, a core financial class.</p>
+    <div class="code-block"><span class="kw">class</span> <span class="cls">TransactionObserver</span>(ABC):
+    @abstractmethod
+    <span class="kw">def</span> <span class="nm">on_transaction</span>(self,
+        account: <span class="st">'Account'</span>,
+        txn: Transaction) -> None: ...
+
+<span class="kw">class</span> <span class="cls">SMSNotifier</span>(TransactionObserver):
+    <span class="kw">def</span> <span class="nm">on_transaction</span>(self, account, txn):
+        <span class="cm"># send SMS: "₹{txn.amount} debited from account"</span>
+        ...
+
+<span class="kw">class</span> <span class="cls">AuditLogger</span>(TransactionObserver):
+    <span class="kw">def</span> <span class="nm">on_transaction</span>(self, account, txn):
+        <span class="cm"># write to audit log with timestamp</span>
+        ...
+
+<span class="kw">class</span> <span class="cls">Account</span>:
+    observers: list[TransactionObserver]
+
+    <span class="kw">def</span> <span class="nm">debit</span>(self, amount, txn_type):
+        <span class="cm"># ... do the debit ...</span>
+        txn = Transaction(...)
+        <span class="kw">for</span> obs <span class="kw">in</span> self.observers:
+            obs.on_transaction(self, txn)
+        <span class="kw">return</span> txn</div>
+    <p><b>The concrete benefit:</b> Account knows nothing about SMS, printing, or fraud. It just calls <code>on_transaction()</code> on whoever is listening. Adding a new notification channel (push notifications) is a new class that implements <code>TransactionObserver</code> — Account never changes. In tests, inject a <code>MockObserver</code> that records calls, verify the right notifications fired without sending any real SMS.</p>
+  </div>
+</div>
+
+<!-- ======== SECTION 6: SOLID ======== -->
+<div class="section" id="s-sol">
+  <div class="sec-eyebrow">Step 6 · Deep Dive</div>
+  <div class="sec-title">SOLID Principles — Applied to ATM</div>
+  <div class="sec-intro">SOLID principles are only valuable if you can point to a specific consequence in your design. For each principle, here is: the definition, the concrete ATM scenario that violates it, and the specific change in your design that fixes it.</div>
+
+  <div class="solid-grid">
+    <div class="solid-card">
+      <div class="solid-letter">S</div>
+      <div class="solid-name">Single Responsibility Principle</div>
+      <div class="solid-def">"A class should have one reason to change."</div>
+      <div class="vbox"><b>Violation:</b> Merging CashDispenser into ATM. Now ATM changes when: the denomination algorithm changes, the dispensing hardware API changes, the session logic changes, or a new operation is added. Four reasons to change.</div>
+      <div class="fbox"><b>Fix:</b> CashDispenser is its own class. ATM changes only when the user-facing interaction model changes. CashDispenser changes only when denomination logic or hardware interface changes. The classes evolve independently.</div>
+    </div>
+
+    <div class="solid-card">
+      <div class="solid-letter">O</div>
+      <div class="solid-name">Open/Closed Principle</div>
+      <div class="solid-def">"Open for extension, closed for modification."</div>
+      <div class="vbox"><b>Violation:</b> Hardcoding the greedy dispensing algorithm in CashDispenser. To add min-notes or regulatory strategies, you modify existing tested code — risking regression.</div>
+      <div class="fbox"><b>Fix:</b> DispenseStrategy abstract class + GreedyStrategy + MinNotesStrategy. New strategy = new class. CashDispenser never changes. Existing tests pass unchanged.</div>
+    </div>
+
+    <div class="solid-card">
+      <div class="solid-letter">L</div>
+      <div class="solid-name">Liskov Substitution Principle</div>
+      <div class="solid-def">"Subtypes must be substitutable for their base type."</div>
+      <div class="vbox"><b>Violation:</b> A <code>PremiumDispenseStrategy</code> subclass that overrides <code>compute()</code> but raises an exception when the amount is above ₹10,000. The base class contract promises a result for any valid amount. The subclass breaks it.</div>
+      <div class="fbox"><b>Fix:</b> All DispenseStrategy implementations must handle the full contract: return valid notes for any dispensable amount, raise InsufficientCashError or CannotDispenseExactError only for genuinely impossible requests — no new exception types that callers don't know to catch.</div>
+    </div>
+
+    <div class="solid-card">
+      <div class="solid-letter">I</div>
+      <div class="solid-name">Interface Segregation Principle</div>
+      <div class="solid-def">"Clients should not be forced to depend on methods they don't use."</div>
+      <div class="vbox"><b>Violation:</b> A single <code>BankService</code> interface with 15 methods — card lookup, account lookup, inter-bank transfer, fraud scoring, KYC verification. ATM only needs 3 of these but must "know about" all 15.</div>
+      <div class="fbox"><b>Fix:</b> Split into <code>CardRepository</code> (get_card, block_card), <code>AccountRepository</code> (get_account, update_balance). ATM depends only on these two focused interfaces — not on the full bank service surface area.</div>
+    </div>
+
+    <div class="solid-card solid-full">
+      <div class="solid-letter">D</div>
+      <div class="solid-name">Dependency Inversion Principle</div>
+      <div class="solid-def">"High-level modules should not depend on low-level modules. Both should depend on abstractions."</div>
+      <div class="vbox"><b>Violation:</b> ATM creates its own Bank and CashDispenser internally: <code>self.bank = Bank()</code>, <code>self.cash_dispenser = CashDispenser()</code>. ATM is now coupled to the concrete implementations. You cannot test ATM without running real Bank and CashDispenser code. You cannot replace Bank with a different implementation.</div>
+      <div class="fbox"><b>Fix:</b> ATM receives its dependencies through the constructor: <code>ATM(bank: Bank, cash_dispenser: CashDispenser)</code>. In tests, inject <code>FakeBank</code> (returns predetermined accounts) and <code>MockCashDispenser</code> (records calls). In production, inject the real implementations. ATM logic is testable in pure isolation. This is why the four patterns (Strategy, Observer, Template, Singleton) work cleanly — they depend on abstractions, not concretions.</div>
+    </div>
+  </div>
+</div>
+
+<!-- ======== SECTION 7: TRADEOFFS ======== -->
+<div class="section" id="s-trd">
+  <div class="sec-eyebrow">Step 7 · Discussions</div>
+  <div class="sec-title">Trade-offs — Every Design Decision Has a Cost</div>
+  <div class="sec-intro">A senior engineer doesn't just make decisions — they articulate the tradeoffs of those decisions. For every design choice below, here is why you made it, what you gave up, and the scenario where the opposite choice would be correct.</div>
+
+  <div class="tsec">
+    <div class="thead">Session as a separate class vs. fields on ATM</div>
+    <div class="tbody">
+      <div class="scenario"><b>The tradeoff:</b> We gave Session its own class (with its own state, card ref, account ref, timeout). The alternative is storing <code>current_card</code>, <code>current_account</code>, <code>session_state</code> directly as fields on ATM.</div>
+      <div class="td-grid">
+        <div class="tpro">
+          <span class="tlabel">Chose: Separate Session class</span>
+          Clean lifecycle: creating a new Session object at card insertion and discarding it at ejection is self-documenting. Session's state machine is isolated and testable independently. Adding a session-level field (like session duration timer) doesn't touch ATM.
+        </div>
+        <div class="tcon">
+          <span class="tlabel">Cost</span>
+          One more class to explain. Object creation/deletion on each session is slightly more overhead. For a toy system with no complexity beyond the happy path, fields on ATM are simpler.
+        </div>
+      </div>
+      <p><b>When you'd choose otherwise:</b> If the scope was "design a simple ATM for one operation only — withdrawal," the separate Session class might be over-engineering. With four operations, timeout, and multi-transaction sessions, Session earns its existence.</p>
+    </div>
+  </div>
+
+  <div class="tsec">
+    <div class="thead">Denomination tracking vs. simple total-cash counter</div>
+    <div class="tbody">
+      <div class="scenario"><b>The tradeoff:</b> We model CashDispenser with <code>dict[denomination → count]</code> and a greedy algorithm. The alternative is a single <code>total_cash: int</code> field — deduct requested amount, raise error if insufficient.</div>
+      <div class="td-grid">
+        <div class="tpro">
+          <span class="tlabel">Chose: Denomination tracking</span>
+          Models physical reality. Catches the case where ATM has ₹10,000 cash but only in ₹2,000 notes and you request ₹500. Enables ATM monitoring ("ATM low on ₹100 notes, restock soon"). Interview-grade design shows awareness of real-world constraints.
+        </div>
+        <div class="tcon">
+          <span class="tlabel">Cost</span>
+          Greedy algorithm is O(k) where k is number of denomination types (small constant, irrelevant). But CannotDispenseExactError introduces a failure mode that doesn't exist in the simple model — the ATM has cash but can't make change. More complex to explain.
+        </div>
+      </div>
+      <p><b>When you'd choose otherwise:</b> If the interviewer says "keep it simple, just check if ATM has enough cash," use the simple counter. Don't add complexity that wasn't asked for. The right answer depends on the scope question you asked in Section 1.</p>
+    </div>
+  </div>
+
+  <div class="tsec">
+    <div class="thead">Block on Card vs. block on Account</div>
+    <div class="tbody">
+      <div class="scenario"><b>The tradeoff:</b> We block the Card after 3 wrong PINs (CardStatus.BLOCKED), not the Account. The alternative is locking the Account.</div>
+      <div class="td-grid">
+        <div class="tpro">
+          <span class="tlabel">Chose: Block on Card</span>
+          Correctly models reality: card skimming → block this card, issue new card, account is fine. A blocked card can be replaced; the account never goes offline. Customer can immediately use internet banking or walk into a branch while waiting for the new card.
+        </div>
+        <div class="tcon">
+          <span class="tlabel">Cost</span>
+          Slightly more complex: Bank needs to issue a new Card and link it to the existing Account. If you block on Account instead, card replacement is simpler (just reset the account) but the account goes offline — worse for the customer.
+        </div>
+      </div>
+      <p><b>When you'd choose otherwise:</b> If the threat model is "someone knows the customer's credentials and is trying to log in via online banking," you'd lock the Account. The distinction: physical card theft → block Card. Credential compromise → lock Account. Your design should support both independently.</p>
+    </div>
+  </div>
+
+  <div class="tsec">
+    <div class="thead">In-memory state vs. database-backed persistence</div>
+    <div class="tbody">
+      <div class="scenario"><b>The tradeoff:</b> We hold accounts, cards, and transactions in dictionaries in memory (our Bank class is an in-memory store). In production, these would be backed by a database.</div>
+      <div class="td-grid">
+        <div class="tpro">
+          <span class="tlabel">Chose: In-memory for LLD scope</span>
+          Clean class design. No persistence layer to reason about. Focused on showing entity relationships and behavior. All interview evaluations of LLD focus on class design, not database schema.
+        </div>
+        <div class="tcon">
+          <span class="tlabel">Cost</span>
+          All data is lost on restart. No concurrency safety — two simultaneous withdrawals could both read the same balance before either writes. In production, both are solved by a database with transaction isolation.
+        </div>
+      </div>
+      <p><b>How to extend it:</b> The clean class design means swapping in-memory storage for database calls is additive, not rewriting. Replace <code>self.accounts[id]</code> with <code>db.query("SELECT * FROM accounts WHERE id = %s", id)</code>. The class interfaces don't change — only the storage layer changes. This is the Repository pattern — and our <code>Bank</code> class is already shaped like a repository.</p>
+    </div>
+  </div>
+</div>
+
+<!-- ======== SECTION 8: Q&A ======== -->
+<div class="section" id="s-qa">
+  <div class="sec-eyebrow">Step 8 · Interview Prep</div>
+  <div class="sec-title">Hard Interview Questions — Fully Answered</div>
+  <div class="sec-intro">These are the follow-up questions that separate candidates who know the surface design from those who understand the reasoning. For each, there is a concise answer and the key insight the interviewer is probing for.</div>
+
+  <div class="qa">
+    <div class="qa-q" onclick="t(this)">What happens if the ATM dispenses cash but the network goes down before the account debit is recorded? <i class="fa-solid fa-chevron-down"></i></div>
+    <div class="qa-a">
+      <p>This is the hardest failure scenario in ATM design — it's called the "dispense-but-no-debit" problem. In our LLD, it can't happen because we're in-memory and there's no network. But in a production system this is why ATMs maintain a <strong>local transaction journal</strong>.</p>
+      <p>The ATM writes a "pending dispense" record to its local disk <em>before</em> dispensing cash. After dispensing, it marks the record "complete." When the network comes back, the ATM sends all pending/incomplete transactions to the bank for reconciliation. If the ATM crashed mid-dispense, the journal shows an incomplete record — the bank investigates whether cash was actually given.</p>
+      <p>The key insight: in distributed systems, you cannot have atomicity across a network partition without a protocol. ATMs use a "log first, act second" (write-ahead logging) approach. In an LLD interview, showing you know this failure mode exists — even if you can't implement it — demonstrates real production thinking.</p>
+    </div>
+  </div>
+
+  <div class="qa">
+    <div class="qa-q" onclick="t(this)">Why is failed_attempts on Card, not on Session? <i class="fa-solid fa-chevron-down"></i></div>
+    <div class="qa-a">
+      <p>This is a Tell, Don't Ask question in disguise. The 3-attempt limit is a property of the <em>card</em>, not a property of a particular session.</p>
+      <p>If attempts were tracked on Session: a malicious user inserts their blocked card, gets rejected at 3 attempts, physically removes and re-inserts the card (starting a new Session), and gets 3 more attempts. Repeat. The session-level counter resets with each insertion. The attacker gets unlimited PIN attempts — the entire security mechanism is defeated.</p>
+      <p>With attempts on Card: re-inserting the card doesn't reset the counter. <code>card.failed_attempts</code> persists across sessions because it's a field on the Card object, not the Session object. The card gets blocked regardless of how many sessions it creates. The security guarantee is unconditional.</p>
+      <p>The general rule: put state on the entity whose properties it describes. Card blocking is about the card. Session is just the current interaction context.</p>
+    </div>
+  </div>
+
+  <div class="qa">
+    <div class="qa-q" onclick="t(this)">How would you add support for a transfer operation between two accounts? <i class="fa-solid fa-chevron-down"></i></div>
+    <div class="qa-a">
+      <p>This tests whether your design is extensible without major surgery. Here's the minimal change set:</p>
+      <p><b>New operation on ATM:</b> <code>transfer(amount: int, target_account_id: str) → Transaction</code>. Same session guard and TXN_IN_PROGRESS transition as other operations via <code>_execute_transaction()</code>.</p>
+      <p><b>The critical sequencing problem:</b> You must debit source and credit destination atomically. If debit succeeds but credit fails (target account not found), you have lost money. The solution: validate <em>both</em> accounts exist before touching either balance. This is the two-phase pattern again — validate everything, then mutate.</p>
+      <div class="code-block"><span class="kw">def</span> <span class="nm">_do_transfer</span>(self, amount, target_id):
+    source = self.session.account
+    target = self.bank.get_account(target_id)
+    <span class="kw">if</span> target <span class="kw">is None</span>:
+        <span class="kw">raise</span> AccountNotFoundError()  <span class="cm"># validate first</span>
+    <span class="kw">if</span> Decimal(amount) > source.balance:
+        <span class="kw">raise</span> InsufficientFundsError()
+    <span class="cm"># Both valid — now mutate</span>
+    txn_out = source.debit(amount, TRANSFER_OUT)
+    txn_in = target.credit(amount, TRANSFER_IN)
+    <span class="kw">return</span> txn_out</div>
+      <p><b>On CashDispenser:</b> No changes. Transfers don't dispense cash. This is a key sign that CashDispenser was correctly separated — a new financial operation doesn't touch it.</p>
+      <p><b>On TransactionType enum:</b> Add <code>TRANSFER_IN</code> and <code>TRANSFER_OUT</code>. This is one line. The existing enum handling in <code>debit()</code> and <code>credit()</code> works unchanged — they accept any <code>TransactionType</code>.</p>
+      <p>No other class changes. This is what "designed for extension" looks like in practice.</p>
+    </div>
+  </div>
+
+  <div class="qa">
+    <div class="qa-q" onclick="t(this)">Why does ATM.withdraw() check balance before calling cash_dispenser.dispense()? Why not let dispense handle everything? <i class="fa-solid fa-chevron-down"></i></div>
+    <div class="qa-a">
+      <p>This tests your understanding of where business rules belong. The balance check is an <em>account rule</em> — "you cannot withdraw more than you have." CashDispenser knows nothing about accounts; it only knows about physical cash. If you moved the balance check into CashDispenser, you'd be giving CashDispenser a dependency on Account — a machine part that knows about your bank balance. That's a wrong coupling.</p>
+      <p>More practically: if the user has ₹200 balance and requests ₹5000, the right error is "Insufficient funds" — an account-level error. If we skipped the balance check and let CashDispenser try to dispense ₹5000, it would succeed (the machine might have the cash), then Account.debit() would fail — a confusing error that came from the wrong place. Error messages should come from the entity that owns the rule.</p>
+      <p>The sequencing in <code>withdraw()</code> puts each check in the right entity in the right order: ATM validates session and amount format, Account validates balance (via the ATM's pre-check and Account's own guard), CashDispenser validates physical availability. Three entities, three domains of responsibility, none overstepping.</p>
+    </div>
+  </div>
+
+  <div class="qa">
+    <div class="qa-q" onclick="t(this)">How would you make this design thread-safe for a multi-threaded environment? <i class="fa-solid fa-chevron-down"></i></div>
+    <div class="qa-a">
+      <p>There are two sources of concurrency risk in this design:</p>
+      <p><b>1. Account balance — the classic race condition:</b> Two threads call <code>account.debit(1000)</code> simultaneously. Both read <code>balance = 1500</code>. Both check <code>1000 &lt; 1500</code> → True. Both deduct. Balance becomes 500. The account gave out ₹2000 but only had ₹1500. Fix: add a threading lock to Account:</p>
+      <div class="code-block"><span class="kw">import</span> threading
+
+<span class="kw">class</span> <span class="cls">Account</span>:
+    <span class="kw">def</span> <span class="nm">__init__</span>(self, ...):
+        self._lock = threading.Lock()
+
+    <span class="kw">def</span> <span class="nm">debit</span>(self, amount, txn_type):
+        <span class="kw">with</span> self._lock:  <span class="cm"># atomic read-check-write</span>
+            <span class="kw">if</span> amount > self.balance:
+                <span class="kw">raise</span> InsufficientFundsError()
+            self.balance -= amount
+            ...</div>
+      <p><b>2. CashDispenser inventory — the same race:</b> Two withdrawals both compute a valid dispensing plan from the same inventory state, then both try to deduct. Same fix — a lock on CashDispenser's <code>dispense()</code>.</p>
+      <p><b>The key insight for the interviewer:</b> Our two-phase design (compute first, deduct after) reduces but doesn't eliminate the race condition window. In a distributed system (multiple ATMs hitting one database), you'd need database-level locking — pessimistic (SELECT FOR UPDATE) or optimistic (compare-and-swap on the balance column). In-memory with threading, the Lock suffices.</p>
+    </div>
+  </div>
+
+  <div class="qa">
+    <div class="qa-q" onclick="t(this)">Walk me through the complete sequence when a withdrawal fails because the ATM is out of cash. <i class="fa-solid fa-chevron-down"></i></div>
+    <div class="qa-a">
+      <p>Here's every step, the responsible entity, and what state the system is in at each point:</p>
+      <p><b>1. Session guard:</b> <code>ATM._require_authenticated()</code> passes — user is authenticated. Session transitions AUTHENTICATED → TXN_IN_PROGRESS.</p>
+      <p><b>2. Amount validation:</b> ATM checks amount is positive and a multiple of ₹100. Passes.</p>
+      <p><b>3. Balance check:</b> ATM checks <code>amount &lt;= account.balance</code>. Passes — user has sufficient funds.</p>
+      <p><b>4. Dispensing attempt:</b> <code>cash_dispenser.dispense(amount)</code> is called. CashDispenser computes <code>total_cash()</code> — it's less than the requested amount. Raises <code>InsufficientCashError</code>.</p>
+      <p><b>5. Exception propagation:</b> The exception exits <code>_execute_transaction()</code>'s try block. The except clause transitions the session back: TXN_IN_PROGRESS → AUTHENTICATED. <em>No account.debit() was called. No Transaction was created. The account balance is unchanged.</em></p>
+      <p><b>6. ATM displays message:</b> "This ATM is temporarily unable to process your request. Please try another ATM." The user can then select another operation or eject their card.</p>
+      <p><b>The key takeaway:</b> Because we dispensed before debiting (the two-phase ordering decision), the system is in a perfectly clean state after the failure. No partial mutations. No orphaned transaction records. No need for compensating transactions. The account has its full balance, the session is back to AUTHENTICATED, and the user can try a different amount or walk to a different ATM. This is what correct failure handling looks like.</p>
+    </div>
+  </div>
+
+</div>
+
+</main>
+
+<script>
+function show(id, el) {
+  document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
+  document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+  document.getElementById('s-' + id).classList.add('active');
+  el.classList.add('active');
+  window.scrollTo(0, 0);
+}
+function t(el) {
+  el.classList.toggle('open');
+  el.nextElementSibling.classList.toggle('show');
+}
+</script>
+</body>
+</html>

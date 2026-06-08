@@ -1,0 +1,786 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Vending Machine LLD — Extensive Why Edition</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Serif:ital,wght@0,400;0,600;1,400&family=JetBrains+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+:root {
+  --mint: #0f766e; --mint2: #14b8a6; --mint-bg: #ecfdf5; --mint-border: #99f6e4;
+  --bg: #faf9f7; --surface: #ffffff; --surface2: #f4f3ef; --surface3: #eceae4;
+  --border: #e3e0d8; --text: #1c1a17; --text2: #54514a; --text3: #9c9891;
+  --green: #2d6a4f; --green-bg: #edf7f2; --green-border: #b7dfc8;
+  --red: #9b1c1c; --red-bg: #fef2f2; --red-border: #fecaca;
+  --blue: #1a4480; --blue-bg: #eff6ff; --blue-border: #bfdbfe;
+  --amber: #92400e; --amber-bg: #fffbeb; --amber-border: #fde68a;
+  --purple: #5b21b6; --purple-bg: #f5f3ff; --purple-border: #ddd6fe;
+  --mono: 'JetBrains Mono', monospace;
+  --sans: 'IBM Plex Sans', sans-serif;
+  --serif: 'IBM Plex Serif', serif;
+  --sidebar-w: 260px;
+  --r: 10px;
+}
+html { scroll-behavior: smooth; }
+body { font-family: var(--sans); background: var(--bg); color: var(--text); display: flex; min-height: 100vh; }
+.sidebar {
+  width: var(--sidebar-w); position: fixed; inset: 0 auto 0 0;
+  background: var(--surface); border-right: 2px solid var(--border);
+  overflow-y: auto; z-index: 100; display: flex; flex-direction: column;
+}
+.logo-wrap { padding: 22px 18px 18px; border-bottom: 1px solid var(--border); }
+.logo { display: flex; align-items: center; gap: 10px; }
+.logo-icon { width: 38px; height: 38px; border-radius: 9px; background: var(--mint2); display: flex; align-items: center; justify-content: center; font-size: 19px; }
+.logo-name { font-size: 16px; font-weight: 600; font-family: var(--serif); }
+.logo-tag { font-size: 11px; color: var(--text3); margin-top: 3px; letter-spacing: 0.03em; }
+.nav-group { padding: 14px 18px 4px; font-size: 9px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.1em; color: var(--text3); }
+.nav-item { display: flex; align-items: center; gap: 9px; padding: 9px 18px; font-size: 13px; color: var(--text2); cursor: pointer; border-left: 3px solid transparent; transition: all 0.12s; }
+.nav-item:hover { background: var(--surface2); color: var(--text); }
+.nav-item.active { border-left-color: var(--mint2); background: var(--mint-bg); color: var(--mint); font-weight: 500; }
+.nav-item i { width: 15px; text-align: center; font-size: 12px; }
+.nav-item .step-num { font-size: 9px; font-weight: 700; background: var(--surface3); border-radius: 3px; padding: 1px 5px; margin-left: auto; color: var(--text3); }
+.nav-item.active .step-num { background: var(--mint-border); color: var(--mint); }
+.main { margin-left: var(--sidebar-w); padding: 52px 60px; max-width: 960px; width: 100%; }
+.section { display: none; }
+.section.active { display: block; }
+.sec-eyebrow { font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.1em; color: var(--mint2); margin-bottom: 10px; }
+.sec-title { font-family: var(--serif); font-size: 32px; font-weight: 600; line-height: 1.18; margin-bottom: 10px; }
+.sec-intro { font-size: 15px; color: var(--text2); line-height: 1.8; margin-bottom: 36px; border-left: 3px solid var(--border); padding-left: 16px; }
+h3 { font-family: var(--serif); font-size: 20px; font-weight: 600; margin: 40px 0 14px; padding-top: 16px; border-top: 1px solid var(--border); color: var(--text); }
+h4 { font-size: 13px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.06em; margin: 18px 0 8px; color: var(--text3); }
+p { font-size: 14px; color: var(--text2); line-height: 1.8; margin: 10px 0; }
+code { font-family: var(--mono); font-size: 12px; background: var(--surface2); padding: 1px 5px; border-radius: 4px; color: var(--mint); border: 1px solid var(--border); }
+.prompt-box { background: var(--surface2); border: 1px solid var(--border); border-radius: var(--r); padding: 16px 20px; margin: 20px 0; }
+.prompt-box .plabel { font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.08em; color: var(--text3); margin-bottom: 7px; }
+.prompt-box .ptext { font-family: var(--serif); font-size: 16px; font-style: italic; color: var(--text); line-height: 1.6; }
+.dialogue { border: 1px solid var(--border); border-radius: var(--r); overflow: hidden; margin: 20px 0; }
+.d-row { padding: 14px 18px; border-bottom: 1px solid var(--border); font-size: 14px; line-height: 1.7; }
+.d-row:last-child { border-bottom: none; }
+.d-row.you { background: var(--surface); }
+.d-row.iv { background: var(--surface2); }
+.d-speaker { font-size: 9px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.09em; margin-bottom: 5px; }
+.d-row.you .d-speaker { color: var(--mint2); }
+.d-row.iv .d-speaker { color: var(--text3); }
+.why-inline { margin-top: 12px; padding: 12px 14px; background: var(--amber-bg); border-left: 3px solid #f59e0b; border-radius: 0 6px 6px 0; font-size: 13px; color: var(--amber); line-height: 1.7; }
+.req-box { background: var(--surface2); border: 1px solid var(--border); border-radius: var(--r); padding: 18px 20px; margin: 14px 0; }
+.req-list { list-style: none; }
+.req-list li { font-size: 14px; color: var(--text2); padding: 6px 0; display: flex; gap: 10px; align-items: flex-start; line-height: 1.7; }
+.req-list li::before { content: "✓"; color: var(--green); font-weight: 700; flex-shrink: 0; margin-top: 1px; }
+.req-list.out li::before { content: "✗"; color: var(--red); }
+.why-box { background: var(--surface); border: 1px solid var(--border); border-radius: var(--r); padding: 18px 20px; margin: 18px 0; }
+.why-box .wl { display: flex; align-items: center; gap: 8px; font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.09em; color: var(--mint2); margin-bottom: 10px; }
+.why-box p { margin: 6px 0; }
+.etable { width: 100%; border-collapse: collapse; margin: 18px 0; font-size: 13.5px; }
+.etable th { text-align: left; padding: 10px 14px; background: var(--surface2); font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.07em; color: var(--text3); border-bottom: 2px solid var(--border); }
+.etable td { padding: 14px 14px; border-bottom: 1px solid var(--border); vertical-align: top; line-height: 1.7; color: var(--text2); }
+.etable td:first-child { font-weight: 500; color: var(--text); white-space: nowrap; }
+.etable tr:last-child td { border-bottom: none; }
+.etable tr:hover td { background: var(--surface2); }
+.badge { display: inline-block; font-size: 9px; font-weight: 700; padding: 2px 7px; border-radius: 20px; margin-right: 6px; text-transform: uppercase; letter-spacing: 0.05em; }
+.bk { background: var(--green-bg); color: var(--green); }
+.bs { background: var(--red-bg); color: var(--red); }
+.state-row { display: flex; align-items: center; flex-wrap: wrap; gap: 6px; margin: 18px 0; }
+.sp { padding: 6px 14px; border-radius: 20px; font-size: 11px; font-weight: 600; border: 1px solid; }
+.sarrow { color: var(--text3); font-size: 12px; }
+.sg { background:#f3f2ef; border-color:#d0cdc7; color:#4a4845; }
+.sb { background:#eff6ff; border-color:#bfdbfe; color:#1a4480; }
+.spu{ background:#f5f3ff; border-color:#ddd6fe; color:#5b21b6; }
+.sam{ background:#fffbeb; border-color:#fde68a; color:#92400e; }
+.ste{ background:#ecfdf5; border-color:#a7f3d0; color:#065f46; }
+.srd{ background:#fef2f2; border-color:#fca5a5; color:#7f1d1d; }
+.ann-wrap { margin: 22px 0; border: 1px solid var(--border); border-radius: var(--r); overflow: hidden; }
+.ann-header { background: #181825; padding: 10px 18px; display: flex; align-items: center; gap: 10px; border-bottom: 1px solid #2a2a3e; }
+.ann-header span { font-family: var(--mono); font-size: 12px; color: #a6adc8; }
+.ann-row { display: grid; grid-template-columns: 47% 53%; border-bottom: 1px solid #2a2a3e; }
+.ann-row:last-child { border-bottom: none; }
+.ann-code { background: #1e1e2e; padding: 14px 18px; font-family: var(--mono); font-size: 12.5px; line-height: 1.75; color: #cdd6f4; overflow-x: auto; white-space: pre; }
+.ann-why { background: var(--surface2); padding: 14px 16px; border-left: 1px solid var(--border); font-size: 13px; line-height: 1.7; color: var(--text2); display: flex; flex-direction: column; gap: 6px; }
+.ann-why .wlabel { font-size: 9px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.09em; color: var(--mint2); }
+.ann-why .wmain { color: var(--text2); }
+.ann-why .wfail { background: var(--red-bg); border: 1px solid var(--red-border); border-radius: 5px; padding: 8px 10px; font-size: 12px; color: var(--red); }
+.ann-why .wfix { background: var(--green-bg); border: 1px solid var(--green-border); border-radius: 5px; padding: 8px 10px; font-size: 12px; color: var(--green); }
+.code-block { background: #1e1e2e; border-radius: var(--r); padding: 18px 20px; font-family: var(--mono); font-size: 13px; line-height: 1.8; overflow-x: auto; margin: 14px 0; color: #cdd6f4; white-space: pre; }
+.kw { color: #cba6f7; } .cls { color: #a6e3a1; font-weight: 500; } .cm { color: #6c7086; font-style: italic; } .st { color: #f38ba8; } .nm { color: #89b4fa; } .dn { color: #fab387; }
+.compare-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin: 14px 0; }
+.cb { background: var(--red-bg); border: 1px solid var(--red-border); border-radius: var(--r); padding: 14px 16px; }
+.cg { background: var(--green-bg); border: 1px solid var(--green-border); border-radius: var(--r); padding: 14px 16px; }
+.clabel { font-size: 9px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 9px; }
+.cb .clabel { color: var(--red); } .cg .clabel { color: var(--green); }
+.cb pre, .cg pre { font-family: var(--mono); font-size: 12px; line-height: 1.7; white-space: pre-wrap; }
+.cb pre { color: #7f1d1d; } .cg pre { color: #1a4731; }
+.cexplain { font-size: 13px; color: var(--text2); margin-top: 10px; line-height: 1.65; }
+.pcard { border: 1px solid var(--border); border-radius: var(--r); padding: 20px 22px; margin: 16px 0; background: var(--surface); }
+.ptitle { font-family: var(--serif); font-size: 17px; font-weight: 600; margin-bottom: 4px; display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+.ptag { font-size: 10px; background: var(--surface2); border-radius: 20px; padding: 2px 9px; font-weight: 500; color: var(--text3); font-family: var(--sans); }
+.pcard p { margin: 8px 0; }
+.solid-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin: 14px 0; }
+.solid-card { border: 1px solid var(--border); border-radius: var(--r); padding: 18px 20px; background: var(--surface); }
+.solid-letter { font-family: var(--serif); font-size: 32px; font-weight: 600; color: var(--mint2); line-height: 1; margin-bottom: 4px; }
+.solid-name { font-size: 13px; font-weight: 600; margin-bottom: 10px; }
+.solid-def { font-size: 13px; color: var(--text3); margin-bottom: 10px; font-style: italic; line-height: 1.6; }
+.vbox { background: var(--red-bg); border: 1px solid var(--red-border); border-radius: 6px; padding: 11px 13px; margin: 8px 0; font-size: 12.5px; color: var(--red); line-height: 1.65; }
+.fbox { background: var(--green-bg); border: 1px solid var(--green-border); border-radius: 6px; padding: 11px 13px; margin: 8px 0; font-size: 12.5px; color: var(--green); line-height: 1.65; }
+.tsec { margin: 24px 0; border: 1px solid var(--border); border-radius: var(--r); overflow: hidden; }
+.thead { padding: 13px 18px; background: var(--surface2); border-bottom: 1px solid var(--border); font-size: 15px; font-weight: 600; font-family: var(--serif); }
+.tbody { padding: 16px 18px; }
+.scenario { background: var(--amber-bg); border-left: 3px solid #f59e0b; border-radius: 0 6px 6px 0; padding: 12px 15px; margin: 10px 0; font-size: 13px; color: var(--amber); line-height: 1.7; }
+.td-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin: 12px 0; }
+.tpro { background: var(--green-bg); border: 1px solid var(--green-border); border-radius: 6px; padding: 13px 15px; font-size: 13px; color: var(--green); line-height: 1.65; }
+.tcon { background: var(--amber-bg); border: 1px solid var(--amber-border); border-radius: 6px; padding: 13px 15px; font-size: 13px; color: var(--amber); line-height: 1.65; }
+.tlabel { font-size: 9px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 7px; display: block; }
+.qa { border: 1px solid var(--border); border-radius: var(--r); overflow: hidden; margin: 12px 0; }
+.qa-q { padding: 15px 18px; cursor: pointer; font-size: 14px; font-weight: 500; display: flex; justify-content: space-between; align-items: center; background: var(--surface); user-select: none; gap: 12px; }
+.qa-q:hover { background: var(--surface2); }
+.qa-q i { color: var(--text3); transition: transform 0.2s; font-size: 11px; flex-shrink: 0; }
+.qa-q.open i { transform: rotate(180deg); }
+.qa-a { display: none; padding: 18px 20px; font-size: 14px; line-height: 1.85; color: var(--text2); background: var(--surface2); border-top: 1px solid var(--border); }
+.qa-a.show { display: block; }
+::-webkit-scrollbar { width: 5px; height: 5px; }
+::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+@media (max-width: 860px) {
+  body { display:block; }
+  .sidebar { position: relative; width: 100%; height: auto; border-right: none; border-bottom: 2px solid var(--border); }
+  .main { margin-left: 0; padding: 32px 22px; }
+  .ann-row, .compare-grid, .solid-grid, .td-grid { grid-template-columns: 1fr; }
+  .ann-why { border-left: none; border-top: 1px solid var(--border); }
+}
+</style>
+</head>
+<body>
+<nav class="sidebar">
+  <div class="logo-wrap">
+    <div class="logo"><div class="logo-icon">🥤</div><div><div class="logo-name">Vending Machine LLD</div><div class="logo-tag">Extensive Whys Edition</div></div></div>
+  </div>
+  <div class="nav-group">Foundations</div>
+  <div class="nav-item active" onclick="show('req',this)"><i class="fa-solid fa-list-check"></i> Requirements <span class="step-num">01</span></div>
+  <div class="nav-item" onclick="show('ent',this)"><i class="fa-solid fa-diagram-project"></i> Core Entities <span class="step-num">02</span></div>
+  <div class="nav-item" onclick="show('state',this)"><i class="fa-solid fa-route"></i> State Machine <span class="step-num">03</span></div>
+  <div class="nav-group">Implementation</div>
+  <div class="nav-item" onclick="show('cls',this)"><i class="fa-solid fa-code"></i> Class Design <span class="step-num">04</span></div>
+  <div class="nav-item" onclick="show('flow',this)"><i class="fa-solid fa-arrow-right-arrow-left"></i> Key Flows <span class="step-num">05</span></div>
+  <div class="nav-item" onclick="show('code',this)"><i class="fa-brands fa-python"></i> Full Python Code <span class="step-num">06</span></div>
+  <div class="nav-group">Deep Dives</div>
+  <div class="nav-item" onclick="show('pat',this)"><i class="fa-solid fa-puzzle-piece"></i> Design Patterns <span class="step-num">07</span></div>
+  <div class="nav-item" onclick="show('sol',this)"><i class="fa-solid fa-layer-group"></i> SOLID Principles <span class="step-num">08</span></div>
+  <div class="nav-item" onclick="show('trd',this)"><i class="fa-solid fa-scale-balanced"></i> Trade-offs <span class="step-num">09</span></div>
+  <div class="nav-item" onclick="show('qa',this)"><i class="fa-solid fa-circle-question"></i> Interview Q&A <span class="step-num">10</span></div>
+</nav>
+<main class="main">
+
+<section class="section active" id="s-req">
+  <div class="sec-eyebrow">Step 1 · Requirements</div>
+  <div class="sec-title">Requirements & Clarifications</div>
+  <div class="sec-intro">A vending machine sounds like a toy problem. It is not. The moment you add change-return, cancellation, stock, and invalid flows, it becomes a crisp state-machine + inventory + payment design. Your first job is to make the hidden rules explicit.</div>
+
+  <div class="prompt-box">
+    <div class="plabel">The prompt you'll receive</div>
+    <div class="ptext">"Design a vending machine. Users should be able to select an item, pay, and receive the item."</div>
+  </div>
+
+  <h3>Clarifying Questions — with deep reasoning</h3>
+  <div class="dialogue">
+    <div class="d-row you">
+      <div class="d-speaker">You</div>
+      "What payment methods should we support — coins, notes, card, UPI, or all of them?"
+      <div class="why-inline"><b>Why ask this first:</b> Cash and digital payments produce very different designs. Cash needs denomination tracking and change-making. Card/UPI needs a payment processor, pending state, timeout, and failure handling. If you design all of that when the interviewer wanted cash only, you burn time. If you design only a balance when the interviewer wanted exact change, you miss the real problem.</div>
+    </div>
+    <div class="d-row iv"><div class="d-speaker">Interviewer</div>"Cash only. Coins/notes are enough."</div>
+
+    <div class="d-row you">
+      <div class="d-speaker">You</div>
+      "Should the machine return change? What if it cannot return exact change?"
+      <div class="why-inline"><b>Why this changes the class diagram:</b> Returning change means the machine cannot just store <code>current_balance</code>. It needs <code>CashInventory</code> with denomination counts. A machine with ₹100 total cash may still be unable to return ₹30 if it only has one ₹100 note. This one requirement creates the most important supporting class.</div>
+    </div>
+    <div class="d-row iv"><div class="d-speaker">Interviewer</div>"Yes, return exact change. If exact change is unavailable, refund the user."</div>
+
+    <div class="d-row you">
+      <div class="d-speaker">You</div>
+      "How are items represented? Does the user select a product name or a physical slot code like A1/B2?"
+      <div class="why-inline"><b>Why this prevents a beginner bug:</b> Real vending machines are slot-based. Coke can be present in A1 and A2. If stock lives on <code>Product</code>, both slots accidentally share one global count. The correct model is <code>Product</code> = what the item is, <code>Slot</code> = where it physically sits and how many units remain.</div>
+    </div>
+    <div class="d-row iv"><div class="d-speaker">Interviewer</div>"Users select a slot code. Each slot has one product and quantity."</div>
+
+    <div class="d-row you">
+      <div class="d-speaker">You</div>
+      "Can the user cancel after selecting or inserting money?"
+      <div class="why-inline"><b>Why cancellation is not a side feature:</b> Cancellation forces you to track inserted denominations separately from the machine's permanent cash. Until the purchase succeeds, inserted money is in temporary escrow. If you immediately merge it into machine cash, refunding exactly what the user inserted becomes error-prone.</div>
+    </div>
+    <div class="d-row iv"><div class="d-speaker">Interviewer</div>"Yes. User can cancel before dispense and receive inserted money back."</div>
+
+    <div class="d-row you">
+      <div class="d-speaker">You</div>
+      "Should we support admin restocking and collecting cash?"
+      <div class="why-inline"><b>Why this separates core user flow from maintenance flow:</b> Restocking belongs to inventory management, not the normal purchase transaction. Cash collection belongs to machine maintenance. We can include simple methods, but avoid full admin auth/UI unless explicitly requested.</div>
+    </div>
+    <div class="d-row iv"><div class="d-speaker">Interviewer</div>"Add simple restock support. Admin auth is out of scope."</div>
+  </div>
+
+  <h3>Final Requirements</h3>
+  <div class="req-box">
+    <h4>In scope</h4>
+    <ul class="req-list">
+      <li>Users select an item by slot code, for example <code>A1</code>.</li>
+      <li>Each slot stores one product and a quantity.</li>
+      <li>Machine accepts supported cash denominations.</li>
+      <li>Machine tracks inserted money during an active transaction.</li>
+      <li>Machine dispenses only if selected item is in stock and enough money is inserted.</li>
+      <li>Machine returns exact change if possible.</li>
+      <li>If exact change is impossible, machine refunds inserted money and does not dispense.</li>
+      <li>User can cancel before dispense and get inserted money back.</li>
+      <li>Admin can restock slots and add cash/change to the machine.</li>
+    </ul>
+    <h4 style="margin-top:16px;">Out of scope</h4>
+    <ul class="req-list out">
+      <li>Card/UPI/payment gateway integration.</li>
+      <li>Remote monitoring and IoT telemetry.</li>
+      <li>Expiry dates and product freshness checks.</li>
+      <li>Discounts, combos, coupons, or dynamic pricing.</li>
+      <li>Admin authentication and UI.</li>
+      <li>Multiple vending machines or central fleet management.</li>
+    </ul>
+  </div>
+
+  <div class="why-box">
+    <div class="wl"><i class="fa-solid fa-lightbulb"></i> Why the vending machine is really a state-machine problem</div>
+    <p>The machine has strict legal sequences: select before paying, pay before dispensing, refund before reset, never dispense after cancel. If you do not model state explicitly, every method becomes a pile of defensive checks. With a state machine, invalid actions become easy to reject and easy to explain in an interview.</p>
+  </div>
+</section>
+
+<section class="section" id="s-ent">
+  <div class="sec-eyebrow">Step 2 · Entity discovery</div>
+  <div class="sec-title">Core Entities & Relationships</div>
+  <div class="sec-intro">Circle the nouns, then apply the class test: does this thing have state that changes over time and behavior that enforces rules on that state? If yes, class. If it is just data, use a dataclass or enum. Do not make everything a class just because it has a name.</div>
+
+  <h3>Noun-by-noun evaluation</h3>
+  <table class="etable">
+    <thead><tr><th>Noun</th><th>Decision</th><th>Deep reasoning — including what breaks if you get it wrong</th></tr></thead>
+    <tbody>
+      <tr><td><span class="badge bk">Keep</span>VendingMachine</td><td>Full class</td><td>The orchestrator. It owns the inventory, cash store, current transaction, and state. External code should talk to this one object, not directly mutate slots and cash. Without it, callers must know the whole internal choreography.</td></tr>
+      <tr><td><span class="badge bk">Keep</span>Slot</td><td>Full class</td><td>Has mutable quantity and enforces the rule that stock cannot go below zero. This is the physical rack in the machine: A1, A2, B1. Same product can exist in multiple slots, so quantity belongs here, not on Product.</td></tr>
+      <tr><td><span class="badge bk">Keep</span>Inventory</td><td>Full class</td><td>Maps slot code to Slot and validates slot lookup. If this logic is scattered inside VendingMachine, the orchestrator becomes a warehouse manager too. Inventory is the natural home for slot lookup and restocking.</td></tr>
+      <tr><td><span class="badge bk">Keep</span>CashInventory</td><td>Full class</td><td>Tracks denomination counts and calculates exact change. A plain integer balance cannot answer "can I return ₹35?" Denominations matter. This class prevents fake correctness.</td></tr>
+      <tr><td><span class="badge bk">Keep</span>Transaction</td><td>Full class</td><td>Holds temporary purchase state: selected slot, price snapshot, inserted denominations, inserted amount. This prevents reset bugs where one temporary field is cleared and another is accidentally left behind.</td></tr>
+      <tr><td><span class="badge bs">Data</span>Product</td><td>Frozen dataclass</td><td>Mostly immutable descriptive data: name and price. Product does not own stock because stock is physical-slot-specific. Make it frozen so name/price do not accidentally mutate during an active transaction.</td></tr>
+      <tr><td><span class="badge bs">Enum</span>Denomination</td><td>Enum</td><td>Only certain cash values are valid. With raw integers, someone can insert ₹37. Enum makes invalid denominations impossible through the public API.</td></tr>
+      <tr><td><span class="badge bs">Enum</span>MachineState</td><td>Enum</td><td>States should not be raw strings. A typo like <code>DISPENCING</code> should fail immediately, not silently strand a transaction.</td></tr>
+    </tbody>
+  </table>
+
+  <div class="why-box">
+    <div class="wl"><i class="fa-solid fa-lightbulb"></i> The key modeling insight</div>
+    <p><strong>Product is not inventory.</strong> Product is the catalog definition. Slot is the physical container. Inventory is the collection of slots. This single separation avoids a surprising number of bugs.</p>
+  </div>
+
+  <div class="compare-grid">
+    <div class="cb">
+      <div class="clabel">Bad model</div>
+      <pre>Product("Coke", price=40, quantity=8)</pre>
+      <div class="cexplain">This says all Coke stock is one global number. But vending machines have physical slots.</div>
+    </div>
+    <div class="cg">
+      <div class="clabel">Good model</div>
+      <pre>Slot("A1", Coke, quantity=5)
+Slot("A2", Coke, quantity=3)</pre>
+      <div class="cexplain">Same product, two independent physical locations. Correct.</div>
+    </div>
+  </div>
+</section>
+
+<section class="section" id="s-state">
+  <div class="sec-eyebrow">Step 3 · State machine</div>
+  <div class="sec-title">Machine Lifecycle</div>
+  <div class="sec-intro">A vending machine has one active user flow at a time. State decides which actions are valid right now. This keeps the design honest.</div>
+
+  <div class="state-row">
+    <span class="sp sg">IDLE</span><span class="sarrow">→</span>
+    <span class="sp sb">HAS_SELECTION</span><span class="sarrow">→</span>
+    <span class="sp spu">HAS_MONEY</span><span class="sarrow">→</span>
+    <span class="sp sam">DISPENSING</span><span class="sarrow">→</span>
+    <span class="sp ste">IDLE</span>
+  </div>
+  <div class="state-row">
+    <span class="sp srd">OUT_OF_SERVICE</span>
+  </div>
+
+  <h3>Why not use booleans?</h3>
+  <div class="compare-grid">
+    <div class="cb"><div class="clabel">Boolean soup</div><pre>has_selection = False
+has_money = True
+is_dispensing = False</pre><div class="cexplain">This impossible state says money exists without a selected item. Which method should be allowed now? Unclear.</div></div>
+    <div class="cg"><div class="clabel">Single state</div><pre>state = MachineState.HAS_MONEY</pre><div class="cexplain">One machine phase. No impossible combination. Easier guards, easier debugging.</div></div>
+  </div>
+
+  <h3>Allowed transitions</h3>
+  <div class="code-block">VALID_TRANSITIONS = {
+    MachineState.IDLE: [MachineState.HAS_SELECTION, MachineState.OUT_OF_SERVICE],
+    MachineState.HAS_SELECTION: [MachineState.HAS_MONEY, MachineState.IDLE, MachineState.OUT_OF_SERVICE],
+    MachineState.HAS_MONEY: [MachineState.DISPENSING, MachineState.IDLE, MachineState.OUT_OF_SERVICE],
+    MachineState.DISPENSING: [MachineState.IDLE, MachineState.OUT_OF_SERVICE],
+}</div>
+
+  <div class="why-box">
+    <div class="wl"><i class="fa-solid fa-shield-halved"></i> What bug this prevents</div>
+    <p>Without transitions, someone may call <code>dispense()</code> from <code>IDLE</code>, or call <code>insert_money()</code> during <code>DISPENSING</code>. The transition table makes legal movement explicit and invalid movement loud.</p>
+  </div>
+</section>
+
+<section class="section" id="s-cls">
+  <div class="sec-eyebrow">Step 4 · Class design</div>
+  <div class="sec-title">Class Design — Every Line Justified</div>
+  <div class="sec-intro">Start with the orchestrator, then the most rule-heavy classes. For every field ask: what bug appears if this field does not exist? For every method ask: who should own this rule?</div>
+
+  <h3>VendingMachine — the Single Entry Point</h3>
+  <div class="ann-wrap">
+    <div class="ann-header"><span>VendingMachine — fields and methods</span></div>
+    <div class="ann-row"><div class="ann-code"><span class="kw">class</span> <span class="cls">VendingMachine</span>:</div><div class="ann-why"><span class="wlabel">Why a dedicated orchestrator?</span><span class="wmain">External code should not directly touch slots, cash, and transaction objects. The vending machine exposes a simple public API: select, insert money, buy, cancel. Internally it delegates to the right object.</span></div></div>
+    <div class="ann-row"><div class="ann-code">  inventory: Inventory</div><div class="ann-why"><span class="wlabel">Why not dict[str, Slot] directly?</span><span class="wmain">A direct dict works for a tiny solution, but inventory has behavior: validate slot, restock, check availability. Putting that in <code>Inventory</code> prevents VendingMachine from becoming a god class.</span></div></div>
+    <div class="ann-row"><div class="ann-code">  cash_inventory: CashInventory</div><div class="ann-why"><span class="wlabel">Why separate cash handling?</span><span class="wmain">Change-making is a real algorithm. It depends on denominations and counts. That logic deserves one home instead of being mixed into purchase orchestration.</span><div class="wfail"><b>If omitted:</b> You can know the user inserted enough money, but not whether exact change can be returned.</div></div></div>
+    <div class="ann-row"><div class="ann-code">  current_transaction: Transaction | None</div><div class="ann-why"><span class="wlabel">Why Optional?</span><span class="wmain">The machine spends most of its life with no active purchase. <code>None</code> makes that absence explicit. Methods must handle it instead of assuming a transaction exists.</span></div></div>
+    <div class="ann-row"><div class="ann-code">  def select_product(slot_code)</div><div class="ann-why"><span class="wlabel">Why selection before payment?</span><span class="wmain">The machine needs to know the target price before it can evaluate inserted money. Also, selecting an out-of-stock slot should fail before the user inserts cash.</span></div></div>
+    <div class="ann-row"><div class="ann-code">  def buy()</div><div class="ann-why"><span class="wlabel">Why explicit buy instead of auto-dispense?</span><span class="wmain">Some machines auto-dispense when enough cash is inserted. But explicit <code>buy()</code> is cleaner in interviews: it creates a clear commit point where stock, change, cash acceptance, and reset happen together.</span></div></div>
+    <div class="ann-row"><div class="ann-code">  def cancel()</div><div class="ann-why"><span class="wlabel">Why does cancel live here?</span><span class="wmain">Cancellation coordinates transaction refund and state reset. It is a cross-entity operation, so the orchestrator owns the flow while <code>Transaction</code> owns the inserted denominations.</span></div></div>
+  </div>
+
+  <h3>Slot — Stock Rules Encapsulated</h3>
+  <div class="ann-wrap">
+    <div class="ann-header"><span>Slot — physical rack with quantity</span></div>
+    <div class="ann-row"><div class="ann-code"><span class="kw">class</span> <span class="cls">Slot</span>:
+  code: str
+  product: Product
+  quantity: int</div><div class="ann-why"><span class="wlabel">Why Slot as a class?</span><span class="wmain">The slot has mutable quantity and rules around that quantity. Product does not know where it sits physically. Slot does.</span></div></div>
+    <div class="ann-row"><div class="ann-code">  def is_available(self):
+    return self.quantity &gt; 0</div><div class="ann-why"><span class="wlabel">Why not check quantity directly?</span><span class="wmain">Encapsulation. Callers ask the object whether it is available; they do not need to know which fields determine availability. Later you can add <code>is_disabled</code> without changing callers.</span></div></div>
+    <div class="ann-row"><div class="ann-code">  def dispense_one(self):
+    if not self.is_available():
+      raise OutOfStockError()
+    self.quantity -= 1
+    return self.product</div><div class="ann-why"><span class="wlabel">Why re-check inside dispense?</span><span class="wmain">Because methods should protect their own invariants. Even if <code>buy()</code> checked stock earlier, another code path could call <code>dispense_one()</code> directly. This method guarantees quantity never goes below zero.</span><div class="wfail"><b>Without this:</b> Quantity can become -1 after a race or forgotten check.</div><div class="wfix"><b>With this:</b> The slot refuses invalid dispense at the source.</div></div></div>
+  </div>
+
+  <h3>CashInventory — Denomination-Aware Change</h3>
+  <div class="ann-wrap">
+    <div class="ann-header"><span>CashInventory — machine's wallet</span></div>
+    <div class="ann-row"><div class="ann-code">cash: dict[Denomination, int]</div><div class="ann-why"><span class="wlabel">Why denomination counts?</span><span class="wmain">Change is not about total money. It is about whether the required amount can be composed from available coins/notes. ₹100 total cash does not imply ₹30 change is possible.</span></div></div>
+    <div class="ann-row"><div class="ann-code">  def can_make_change(amount):
+    return get_change_combination(amount) is not None</div><div class="ann-why"><span class="wlabel">Why check before dispense?</span><span class="wmain">If the machine dispenses first and then discovers it cannot return change, the transaction is already physically irreversible. Validate money side before releasing the item.</span></div></div>
+    <div class="ann-row"><div class="ann-code">  def get_change(amount):
+    combo = calculate_combo(amount)
+    deduct(combo)
+    return combo</div><div class="ann-why"><span class="wlabel">Why combine calculation and deduction?</span><span class="wmain">Returning change must update the machine's cash state. If callers calculate externally and forget to deduct, the machine believes it still has coins it already gave away.</span></div></div>
+  </div>
+
+  <h3>Transaction — Temporary Purchase State</h3>
+  <div class="ann-wrap">
+    <div class="ann-header"><span>Transaction — active user session</span></div>
+    <div class="ann-row"><div class="ann-code">slot_code: str
+price_at_selection: int
+inserted_denominations: list[Denomination]
+inserted_amount: int</div><div class="ann-why"><span class="wlabel">Why this class exists?</span><span class="wmain">During a purchase, state is temporary. Selected slot, price, inserted cash, and inserted amount all belong together. One object makes reset/cancel safe.</span></div></div>
+    <div class="ann-row"><div class="ann-code">price_at_selection: int</div><div class="ann-why"><span class="wlabel">Why snapshot price?</span><span class="wmain">If the product price changes after selection, the transaction should still use the price the user saw. This is the same temporal-data idea used in order systems.</span></div></div>
+    <div class="ann-row"><div class="ann-code">inserted_denominations: list[Denomination]</div><div class="ann-why"><span class="wlabel">Why store exact inserted notes?</span><span class="wmain">On cancel, the machine should return what the user inserted. Storing only <code>inserted_amount</code> loses denomination information.</span></div></div>
+  </div>
+</section>
+
+<section class="section" id="s-flow">
+  <div class="sec-eyebrow">Step 5 · Flows</div>
+  <div class="sec-title">Key Flows — Every Step Justified</div>
+
+  <h3>Successful purchase</h3>
+  <div class="code-block">1. User selects slot A1
+2. Machine checks state is IDLE
+3. Inventory validates A1 exists
+4. Slot checks stock &gt; 0
+5. Machine creates Transaction with price snapshot
+6. User inserts supported denominations
+7. Transaction tracks inserted money
+8. User presses buy
+9. Machine checks sufficient amount
+10. Machine checks exact change availability
+11. Machine enters DISPENSING
+12. Slot dispenses one product and decrements stock
+13. Machine accepts inserted money into CashInventory
+14. CashInventory returns change and deducts denominations
+15. Machine clears transaction and returns to IDLE</div>
+
+  <div class="why-box"><div class="wl"><i class="fa-solid fa-lightbulb"></i> Why this order matters</div><p>Stock and change are validated before dispense. Cash is permanently accepted only after the machine knows the purchase can succeed. This keeps temporary money separate from machine money until commit.</p></div>
+
+  <h3>Insufficient money</h3>
+  <div class="code-block">1. User selects A1 priced ₹40
+2. User inserts ₹20
+3. User presses buy
+4. Machine sees inserted_amount &lt; price_at_selection
+5. Machine refuses purchase
+6. Transaction remains active so user can insert more or cancel</div>
+  <p>Do not auto-refund on insufficient money. The user may simply insert more cash.</p>
+
+  <h3>Cannot return exact change</h3>
+  <div class="code-block">1. Product price = ₹40
+2. User inserts ₹100
+3. Change due = ₹60
+4. CashInventory cannot compose ₹60 from available denominations
+5. Machine refunds inserted ₹100
+6. Machine does not dispense
+7. Machine resets to IDLE</div>
+  <p>This is the flow that exposes weak designs. A simple balance cannot solve it. Denomination-aware cash inventory can.</p>
+
+  <h3>User cancels</h3>
+  <div class="code-block">1. User selects product
+2. User inserts money
+3. User cancels before dispense
+4. Machine returns Transaction.inserted_denominations
+5. Machine clears current_transaction
+6. Machine returns to IDLE</div>
+  <p>The inserted money was never merged into machine cash, so refund is simple and exact.</p>
+</section>
+
+<section class="section" id="s-code">
+  <div class="sec-eyebrow">Step 6 · Reference implementation</div>
+  <div class="sec-title">Full Python Code</div>
+  <div class="sec-intro">This is intentionally interview-sized. Not production-perfect, but it captures the core object model, state machine, inventory, transactions, cash handling, and change-return logic.</div>
+
+  <div class="code-block">from __future__ import annotations
+
+from dataclasses import dataclass
+from enum import Enum, auto
+from typing import Optional
+
+
+class VendingMachineError(Exception):
+    pass
+
+
+class InvalidStateError(VendingMachineError):
+    pass
+
+
+class InvalidSlotError(VendingMachineError):
+    pass
+
+
+class OutOfStockError(VendingMachineError):
+    pass
+
+
+class InsufficientBalanceError(VendingMachineError):
+    pass
+
+
+class CannotMakeChangeError(VendingMachineError):
+    pass
+
+
+class MachineState(Enum):
+    IDLE = auto()
+    HAS_SELECTION = auto()
+    HAS_MONEY = auto()
+    DISPENSING = auto()
+    OUT_OF_SERVICE = auto()
+
+
+class Denomination(Enum):
+    ONE = 1
+    TWO = 2
+    FIVE = 5
+    TEN = 10
+    TWENTY = 20
+    FIFTY = 50
+    HUNDRED = 100
+
+
+@dataclass(frozen=True)
+class Product:
+    product_id: str
+    name: str
+    price: int
+
+
+class Slot:
+    def __init__(self, code: str, product: Product, quantity: int):
+        if quantity &lt; 0:
+            raise ValueError("Quantity cannot be negative")
+        self.code = code
+        self.product = product
+        self.quantity = quantity
+
+    def is_available(self) -&gt; bool:
+        return self.quantity &gt; 0
+
+    def dispense_one(self) -&gt; Product:
+        if not self.is_available():
+            raise OutOfStockError(f"Slot {self.code} is out of stock")
+        self.quantity -= 1
+        return self.product
+
+    def restock(self, quantity: int) -&gt; None:
+        if quantity &lt;= 0:
+            raise ValueError("Restock quantity must be positive")
+        self.quantity += quantity
+
+
+class Inventory:
+    def __init__(self):
+        self._slots: dict[str, Slot] = {}
+
+    def add_slot(self, slot: Slot) -&gt; None:
+        self._slots[slot.code] = slot
+
+    def get_slot(self, slot_code: str) -&gt; Slot:
+        if slot_code not in self._slots:
+            raise InvalidSlotError(f"Invalid slot code: {slot_code}")
+        return self._slots[slot_code]
+
+    def restock(self, slot_code: str, quantity: int) -&gt; None:
+        self.get_slot(slot_code).restock(quantity)
+
+    def list_available_items(self) -&gt; list[tuple[str, str, int, int]]:
+        return [
+            (slot.code, slot.product.name, slot.product.price, slot.quantity)
+            for slot in self._slots.values()
+            if slot.is_available()
+        ]
+
+
+class Transaction:
+    def __init__(self, slot_code: str, product: Product):
+        self.slot_code = slot_code
+        self.product_name = product.name
+        self.price_at_selection = product.price
+        self.inserted_denominations: list[Denomination] = []
+        self.inserted_amount = 0
+
+    def add_money(self, denomination: Denomination) -&gt; None:
+        self.inserted_denominations.append(denomination)
+        self.inserted_amount += denomination.value
+
+    def has_enough_money(self) -&gt; bool:
+        return self.inserted_amount &gt;= self.price_at_selection
+
+    def change_due(self) -&gt; int:
+        return self.inserted_amount - self.price_at_selection
+
+
+class CashInventory:
+    def __init__(self):
+        self._cash: dict[Denomination, int] = {d: 0 for d in Denomination}
+
+    def add(self, denomination: Denomination, count: int = 1) -&gt; None:
+        if count &lt;= 0:
+            raise ValueError("Count must be positive")
+        self._cash[denomination] += count
+
+    def add_many(self, denominations: list[Denomination]) -&gt; None:
+        for denom in denominations:
+            self.add(denom)
+
+    def total_amount(self) -&gt; int:
+        return sum(denom.value * count for denom, count in self._cash.items())
+
+    def can_make_change(self, amount: int) -&gt; bool:
+        return self._get_change_combination(amount) is not None
+
+    def get_change(self, amount: int) -&gt; list[Denomination]:
+        change = self._get_change_combination(amount)
+        if change is None:
+            raise CannotMakeChangeError(f"Cannot make exact change for {amount}")
+
+        for denom in change:
+            self._cash[denom] -= 1
+
+        return change
+
+    def _get_change_combination(self, amount: int) -&gt; Optional[list[Denomination]]:
+        if amount &lt; 0:
+            return None
+        if amount == 0:
+            return []
+
+        result: list[Denomination] = []
+        remaining = amount
+        temp_counts = dict(self._cash)
+
+        for denom in sorted(Denomination, key=lambda d: d.value, reverse=True):
+            while remaining &gt;= denom.value and temp_counts[denom] &gt; 0:
+                result.append(denom)
+                temp_counts[denom] -= 1
+                remaining -= denom.value
+
+        return result if remaining == 0 else None
+
+
+class VendingMachine:
+    VALID_TRANSITIONS = {
+        MachineState.IDLE: [MachineState.HAS_SELECTION, MachineState.OUT_OF_SERVICE],
+        MachineState.HAS_SELECTION: [MachineState.HAS_MONEY, MachineState.IDLE, MachineState.OUT_OF_SERVICE],
+        MachineState.HAS_MONEY: [MachineState.DISPENSING, MachineState.IDLE, MachineState.OUT_OF_SERVICE],
+        MachineState.DISPENSING: [MachineState.IDLE, MachineState.OUT_OF_SERVICE],
+    }
+
+    def __init__(self):
+        self.inventory = Inventory()
+        self.cash_inventory = CashInventory()
+        self.state = MachineState.IDLE
+        self.current_transaction: Optional[Transaction] = None
+
+    def _transition_to(self, new_state: MachineState) -&gt; None:
+        allowed = self.VALID_TRANSITIONS.get(self.state, [])
+        if new_state not in allowed:
+            raise InvalidStateError(f"Cannot move from {self.state.name} to {new_state.name}")
+        self.state = new_state
+
+    def select_product(self, slot_code: str) -&gt; None:
+        if self.state != MachineState.IDLE:
+            raise InvalidStateError("Machine is busy")
+
+        slot = self.inventory.get_slot(slot_code)
+        if not slot.is_available():
+            raise OutOfStockError(f"Slot {slot_code} is out of stock")
+
+        self.current_transaction = Transaction(slot_code, slot.product)
+        self._transition_to(MachineState.HAS_SELECTION)
+
+    def insert_money(self, denomination: Denomination) -&gt; None:
+        if self.state not in [MachineState.HAS_SELECTION, MachineState.HAS_MONEY]:
+            raise InvalidStateError("Select a product before inserting money")
+        if self.current_transaction is None:
+            raise InvalidStateError("No active transaction")
+
+        self.current_transaction.add_money(denomination)
+        if self.state == MachineState.HAS_SELECTION:
+            self._transition_to(MachineState.HAS_MONEY)
+
+    def buy(self) -&gt; tuple[Product, list[Denomination]]:
+        if self.state != MachineState.HAS_MONEY:
+            raise InvalidStateError("Insert money before buying")
+        if self.current_transaction is None:
+            raise InvalidStateError("No active transaction")
+
+        txn = self.current_transaction
+
+        if not txn.has_enough_money():
+            raise InsufficientBalanceError("Insufficient balance")
+
+        change_amount = txn.change_due()
+
+        # Temporarily include inserted cash when checking change.
+        # This is realistic: the machine can use the user's inserted denominations for change too.
+        temp_cash = CashInventory()
+        temp_cash._cash = dict(self.cash_inventory._cash)
+        temp_cash.add_many(txn.inserted_denominations)
+
+        if not temp_cash.can_make_change(change_amount):
+            refund = self.cancel()
+            raise CannotMakeChangeError(f"Cannot make change. Refunded {refund}")
+
+        self._transition_to(MachineState.DISPENSING)
+
+        slot = self.inventory.get_slot(txn.slot_code)
+        product = slot.dispense_one()
+
+        self.cash_inventory.add_many(txn.inserted_denominations)
+        change = self.cash_inventory.get_change(change_amount)
+
+        self._reset()
+        return product, change
+
+    def cancel(self) -&gt; list[Denomination]:
+        if self.current_transaction is None:
+            return []
+
+        refund = list(self.current_transaction.inserted_denominations)
+        self._reset()
+        return refund
+
+    def restock(self, slot_code: str, quantity: int) -&gt; None:
+        self.inventory.restock(slot_code, quantity)
+
+    def add_change_cash(self, denomination: Denomination, count: int) -&gt; None:
+        self.cash_inventory.add(denomination, count)
+
+    def _reset(self) -&gt; None:
+        self.current_transaction = None
+        self.state = MachineState.IDLE</div>
+</section>
+
+<section class="section" id="s-pat">
+  <div class="sec-eyebrow">Step 7 · Patterns</div>
+  <div class="sec-title">Design Patterns Used</div>
+
+  <div class="pcard"><div class="ptitle">Facade Pattern <span class="ptag">VendingMachine</span></div><p><code>VendingMachine</code> hides all internal complexity. A caller does not need to know about <code>Inventory</code>, <code>Slot</code>, <code>CashInventory</code>, or <code>Transaction</code>. They just call <code>select_product()</code>, <code>insert_money()</code>, <code>buy()</code>, and <code>cancel()</code>.</p></div>
+
+  <div class="pcard"><div class="ptitle">State Machine Pattern <span class="ptag">MachineState</span></div><p>The legal lifecycle is explicit: <code>IDLE → HAS_SELECTION → HAS_MONEY → DISPENSING → IDLE</code>. This prevents weird flows like dispensing without payment.</p></div>
+
+  <div class="pcard"><div class="ptitle">Value Object <span class="ptag">Product</span></div><p><code>Product</code> is frozen descriptive data. It is passed around safely and does not own mutable physical inventory.</p></div>
+
+  <div class="pcard"><div class="ptitle">Encapsulation <span class="ptag">Slot / CashInventory</span></div><p>Stock cannot be decremented except through <code>dispense_one()</code>. Cash denominations cannot be deducted except through <code>get_change()</code>. Rules stay next to the state they protect.</p></div>
+</section>
+
+<section class="section" id="s-sol">
+  <div class="sec-eyebrow">Step 8 · SOLID</div>
+  <div class="sec-title">SOLID Principles</div>
+
+  <div class="solid-grid">
+    <div class="solid-card"><div class="solid-letter">S</div><div class="solid-name">Single Responsibility</div><div class="solid-def">One class, one reason to change.</div><div class="fbox"><b>Good:</b> <code>Slot</code> handles stock. <code>CashInventory</code> handles change. <code>Transaction</code> handles temporary purchase state.</div><div class="vbox"><b>Bad:</b> One giant <code>VendingMachine</code> class handles everything directly.</div></div>
+    <div class="solid-card"><div class="solid-letter">O</div><div class="solid-name">Open/Closed</div><div class="solid-def">Open for extension, closed for modification.</div><div class="fbox">If card payment is added later, introduce <code>PaymentProcessor</code> and implement <code>CashPaymentProcessor</code>, <code>CardPaymentProcessor</code>, etc.</div></div>
+    <div class="solid-card"><div class="solid-letter">L</div><div class="solid-name">Liskov Substitution</div><div class="solid-def">Subclasses should be usable wherever parent type is expected.</div><div class="fbox">A future <code>PaymentMethod</code> abstraction should let cash/card/UPI work without callers knowing which one they received.</div></div>
+    <div class="solid-card"><div class="solid-letter">I</div><div class="solid-name">Interface Segregation</div><div class="solid-def">Do not force classes to implement methods they do not need.</div><div class="vbox"><b>Bad:</b> One interface with <code>insert_coin()</code>, <code>swipe_card()</code>, and <code>scan_qr()</code>. Cash does not scan QR. UPI does not insert coins.</div></div>
+    <div class="solid-card" style="grid-column:1/-1"><div class="solid-letter">D</div><div class="solid-name">Dependency Inversion</div><div class="solid-def">Depend on abstractions, not concrete implementations.</div><div class="fbox">For an advanced version, inject a <code>ChangeMakingStrategy</code> or <code>PaymentProcessor</code> into <code>VendingMachine</code>. That makes testing and extension cleaner.</div></div>
+  </div>
+</section>
+
+<section class="section" id="s-trd">
+  <div class="sec-eyebrow">Step 9 · Trade-offs</div>
+  <div class="sec-title">Trade-offs & Edge Cases</div>
+
+  <div class="tsec"><div class="thead">Trade-off 1: Auto-dispense vs explicit buy</div><div class="tbody"><div class="scenario"><b>Scenario:</b> User selects ₹40 Coke and inserts ₹50. Should the machine immediately dispense?</div><div class="td-grid"><div class="tpro"><span class="tlabel">Auto-dispense</span>Feels like many real machines. Fewer button presses.</div><div class="tcon"><span class="tlabel">Explicit buy</span>Cleaner state model. User can cancel after inserting enough money. Better for interview clarity.</div></div><p>For LLD interviews, explicit <code>buy()</code> is usually easier to reason about.</p></div></div>
+
+  <div class="tsec"><div class="thead">Trade-off 2: Greedy change-making</div><div class="tbody"><div class="scenario"><b>Scenario:</b> Need ₹30 change. Greedy tries ₹20 + ₹10 if available.</div><p>For Indian denominations, greedy usually works for normal coin/note systems, but in arbitrary denominations it can fail. Example denominations: 1, 3, 4. For amount 6, greedy picks 4 + 1 + 1, but optimal is 3 + 3. In production, use dynamic programming/backtracking for arbitrary denominations. For interview cash denominations, greedy is acceptable if you explicitly state the assumption.</p></div></div>
+
+  <div class="tsec"><div class="thead">Trade-off 3: Include inserted cash while making change?</div><div class="tbody"><div class="scenario"><b>Scenario:</b> Machine has no ₹10 notes. User inserts ₹50 for ₹40 item. Can the inserted ₹50 help make ₹10 change? No. But if user inserts ₹20 + ₹20 + ₹10 for ₹40 item, the inserted ₹10 can be returned as change.</div><p>A realistic machine often holds inserted cash in escrow but may use it in the final change calculation. The implementation in this guide temporarily includes inserted denominations when checking change, then commits cash and deducts change at purchase time.</p></div></div>
+
+  <div class="tsec"><div class="thead">Trade-off 4: Concurrency</div><div class="tbody"><div class="scenario"><b>Scenario:</b> Two users try to buy the last item in the same slot.</div><p>A physical vending machine usually serves one user at a time, so single-threaded transaction processing is a reasonable assumption. If this were an API for remote reservations, <code>dispense_one()</code> would need locking/transactions around stock decrement.</p></div></div>
+</section>
+
+<section class="section" id="s-qa">
+  <div class="sec-eyebrow">Step 10 · Interview defense</div>
+  <div class="sec-title">Interview Q&A</div>
+
+  <div class="qa"><div class="qa-q" onclick="toggleQa(this)">Why is Product not a full class with quantity? <i class="fa-solid fa-chevron-down"></i></div><div class="qa-a">Because quantity belongs to a physical slot. The same product can appear in multiple slots. If quantity lives on Product, A1 and A2 accidentally share stock. Product is catalog data; Slot is inventory state.</div></div>
+
+  <div class="qa"><div class="qa-q" onclick="toggleQa(this)">Why do we need Transaction? <i class="fa-solid fa-chevron-down"></i></div><div class="qa-a">Because selected slot, price snapshot, inserted amount, and inserted denominations are temporary state. Keeping them in one object prevents reset bugs and makes cancellation clean.</div></div>
+
+  <div class="qa"><div class="qa-q" onclick="toggleQa(this)">Why not add inserted cash to CashInventory immediately? <i class="fa-solid fa-chevron-down"></i></div><div class="qa-a">Because until purchase succeeds, that money belongs to the user. Treating it as machine cash early makes refund logic messy. The better model is escrow: hold inserted denominations in Transaction, then commit them after successful dispense.</div></div>
+
+  <div class="qa"><div class="qa-q" onclick="toggleQa(this)">What is the hardest part of this design? <i class="fa-solid fa-chevron-down"></i></div><div class="qa-a">Change-making. Most beginner solutions only track inserted amount and machine balance. But exact change depends on denomination counts. That is why <code>CashInventory</code> is a first-class class.</div></div>
+
+  <div class="qa"><div class="qa-q" onclick="toggleQa(this)">What happens if dispense fails mechanically after payment succeeds? <i class="fa-solid fa-chevron-down"></i></div><div class="qa-a">That is a production-grade extension. You would need a hardware result from the dispenser. If dispense fails, refund the user and keep/restore stock depending on whether the item actually moved. For interview scope, we assume <code>dispense_one()</code> succeeds once called.</div></div>
+
+  <div class="qa"><div class="qa-q" onclick="toggleQa(this)">How would you add UPI/card payment? <i class="fa-solid fa-chevron-down"></i></div><div class="qa-a">Introduce a <code>PaymentProcessor</code> interface. Cash payment would use denomination logic. UPI/card would have pending/success/failure states and probably no change-return. This is exactly why payment logic should not be hardcoded across the machine.</div></div>
+
+  <div class="why-box"><div class="wl"><i class="fa-solid fa-brain"></i> Final mental model</div><p><code>VendingMachine</code> is the conductor. <code>Inventory</code> is the shelf system. <code>Slot</code> is one physical rack. <code>Product</code> is item information. <code>Transaction</code> is the current user's temporary session. <code>CashInventory</code> is the machine's wallet. <code>MachineState</code> is the guardrail that keeps the flow legal.</p></div>
+</section>
+
+</main>
+<script>
+function show(id, el) {
+  document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
+  document.getElementById('s-' + id).classList.add('active');
+  document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+  el.classList.add('active');
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+function toggleQa(el) {
+  const ans = el.nextElementSibling;
+  const isOpen = ans.classList.contains('show');
+  document.querySelectorAll('.qa-a').forEach(a => a.classList.remove('show'));
+  document.querySelectorAll('.qa-q').forEach(q => q.classList.remove('open'));
+  if (!isOpen) {
+    ans.classList.add('show');
+    el.classList.add('open');
+  }
+}
+</script>
+</body>
+</html>

@@ -1,0 +1,1629 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+<title>Splitwise — Low Level Design</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"/>
+<link href="https://fonts.googleapis.com/css2?family=DM+Mono:ital,wght@0,400;0,500;1,400&family=Playfair+Display:wght@600;700&family=DM+Sans:ital,wght@0,300;0,400;0,500;1,400&display=swap" rel="stylesheet"/>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/base16/solarized-dark.min.css"/>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/languages/python.min.js"></script>
+<style>
+:root{
+  --bg:#0d1117;--bg2:#161b22;--bg3:#21262d;--bg4:#30363d;
+  --border:#30363d;--border2:#484f58;
+  --text:#e6edf3;--text2:#8b949e;--text3:#6e7681;
+  --accent:#f79a3e;--accent2:#ff7b72;--accent3:#79c0ff;
+  --green:#56d364;--purple:#bc8cff;--teal:#39d353;
+  --sidebar-w:260px;
+  --font-display:'Playfair Display',serif;
+  --font-body:'DM Sans',sans-serif;
+  --font-mono:'DM Mono',monospace;
+}
+*{box-sizing:border-box;margin:0;padding:0;}
+body{background:var(--bg);color:var(--text);font-family:var(--font-body);font-size:15px;line-height:1.7;display:flex;min-height:100vh;}
+
+/* ── SIDEBAR ── */
+#sidebar{
+  width:var(--sidebar-w);min-width:var(--sidebar-w);background:var(--bg2);
+  border-right:1px solid var(--border);height:100vh;position:fixed;top:0;left:0;
+  overflow-y:auto;display:flex;flex-direction:column;z-index:100;
+}
+#sidebar::-webkit-scrollbar{width:4px;}
+#sidebar::-webkit-scrollbar-thumb{background:var(--border2);border-radius:4px;}
+.sidebar-header{padding:24px 20px 16px;border-bottom:1px solid var(--border);}
+.sidebar-logo{font-family:var(--font-display);font-size:18px;color:var(--accent);letter-spacing:-.3px;}
+.sidebar-sub{font-size:11px;color:var(--text3);margin-top:2px;text-transform:uppercase;letter-spacing:.8px;}
+.sidebar-nav{padding:12px 0;flex:1;}
+.nav-group{margin-bottom:4px;}
+.nav-group-label{font-size:10px;color:var(--text3);text-transform:uppercase;letter-spacing:1px;padding:8px 20px 4px;}
+.nav-item{display:block;padding:7px 20px;font-size:13px;color:var(--text2);cursor:pointer;border-left:2px solid transparent;transition:all .15s;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.nav-item:hover{color:var(--text);background:var(--bg3);border-left-color:var(--border2);}
+.nav-item.active{color:var(--accent);border-left-color:var(--accent);background:rgba(247,154,62,.06);}
+.nav-dot{display:inline-block;width:6px;height:6px;border-radius:50%;margin-right:8px;background:var(--border2);vertical-align:middle;position:relative;top:-1px;}
+.nav-item.active .nav-dot{background:var(--accent);}
+
+/* ── MAIN ── */
+#main{margin-left:var(--sidebar-w);flex:1;max-width:900px;padding:48px 56px;}
+
+/* ── SECTION ── */
+.section{display:none;animation:fadeIn .25s ease;}
+.section.active{display:block;}
+@keyframes fadeIn{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
+
+/* ── TYPOGRAPHY ── */
+h1{font-family:var(--font-display);font-size:36px;font-weight:700;line-height:1.2;margin-bottom:8px;background:linear-gradient(135deg,var(--accent),var(--accent2));-webkit-background-clip:text;-webkit-text-fill-color:transparent;}
+h2{font-family:var(--font-display);font-size:24px;font-weight:600;color:var(--text);margin:36px 0 16px;padding-bottom:8px;border-bottom:1px solid var(--border);}
+h3{font-size:16px;font-weight:500;color:var(--accent3);margin:24px 0 10px;}
+h4{font-size:14px;font-weight:500;color:var(--text2);margin:16px 0 8px;text-transform:uppercase;letter-spacing:.5px;}
+p{color:var(--text2);margin-bottom:12px;}
+strong{color:var(--text);font-weight:500;}
+ul,ol{color:var(--text2);padding-left:20px;margin-bottom:12px;}
+li{margin-bottom:4px;}
+code{font-family:var(--font-mono);font-size:13px;background:var(--bg3);color:var(--accent3);padding:1px 5px;border-radius:3px;}
+
+/* ── HERO ── */
+.hero-meta{font-size:13px;color:var(--text3);margin-bottom:32px;}
+.hero-tag{display:inline-block;padding:2px 10px;border-radius:12px;background:rgba(247,154,62,.12);color:var(--accent);border:1px solid rgba(247,154,62,.3);font-size:11px;margin-right:6px;text-transform:uppercase;letter-spacing:.5px;}
+
+/* ── REQUIREMENT GRID ── */
+.req-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin:16px 0 24px;}
+.req-card{background:var(--bg2);border:1px solid var(--border);border-radius:10px;padding:18px 20px;}
+.req-card-title{font-size:12px;color:var(--text3);text-transform:uppercase;letter-spacing:.8px;margin-bottom:10px;}
+.req-card ul{margin:0;padding-left:16px;}
+.req-card li{font-size:13px;color:var(--text2);margin-bottom:5px;}
+
+/* ── UML DIAGRAM ── */
+.uml-wrap{background:var(--bg2);border:1px solid var(--border);border-radius:12px;padding:24px;margin:20px 0;overflow-x:auto;}
+.uml-wrap svg{min-width:620px;}
+
+/* ── CODE BLOCKS ── */
+.code-wrap{margin:16px 0 24px;border-radius:10px;overflow:hidden;border:1px solid var(--border);}
+.code-header{background:var(--bg3);padding:8px 16px;display:flex;justify-content:space-between;align-items:center;border-bottom:1px solid var(--border);}
+.code-filename{font-family:var(--font-mono);font-size:12px;color:var(--text2);}
+.code-label{font-size:10px;color:var(--text3);text-transform:uppercase;letter-spacing:.5px;}
+.code-wrap pre{margin:0!important;border-radius:0!important;max-height:480px;overflow-y:auto;}
+.code-wrap pre code{font-size:13px!important;font-family:var(--font-mono)!important;}
+
+/* ── PATTERN CARDS ── */
+.pattern-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin:16px 0;}
+.pattern-card{background:var(--bg2);border:1px solid var(--border);border-radius:10px;padding:16px 18px;cursor:pointer;transition:all .2s;}
+.pattern-card:hover{border-color:var(--accent);background:rgba(247,154,62,.04);}
+.pattern-card.open{border-color:var(--accent);background:rgba(247,154,62,.06);}
+.pattern-name{font-size:14px;font-weight:500;color:var(--text);margin-bottom:4px;display:flex;align-items:center;gap:8px;}
+.pattern-badge{font-size:10px;padding:2px 8px;border-radius:8px;background:rgba(121,192,255,.12);color:var(--accent3);border:1px solid rgba(121,192,255,.2);}
+.pattern-desc{font-size:12px;color:var(--text3);line-height:1.5;}
+.pattern-body{display:none;margin-top:12px;padding-top:12px;border-top:1px solid var(--border);}
+.pattern-card.open .pattern-body{display:block;}
+.pattern-reason{font-size:13px;color:var(--text2);}
+.why-tag{display:inline-block;font-size:11px;color:var(--green);background:rgba(86,211,100,.1);border:1px solid rgba(86,211,100,.25);border-radius:6px;padding:1px 8px;margin-bottom:8px;}
+.tradeoff-tag{display:inline-block;font-size:11px;color:var(--accent2);background:rgba(255,123,114,.1);border:1px solid rgba(255,123,114,.25);border-radius:6px;padding:1px 8px;margin-bottom:8px;margin-left:6px;}
+
+/* ── QA CARDS ── */
+.qa-list{display:flex;flex-direction:column;gap:10px;margin:16px 0;}
+.qa-card{background:var(--bg2);border:1px solid var(--border);border-radius:10px;overflow:hidden;}
+.qa-q{padding:14px 18px;font-size:14px;color:var(--text);cursor:pointer;display:flex;justify-content:space-between;align-items:center;gap:12px;}
+.qa-q:hover{background:var(--bg3);}
+.qa-q span{flex:1;}
+.qa-chevron{color:var(--text3);font-size:12px;transition:transform .2s;flex-shrink:0;}
+.qa-card.open .qa-chevron{transform:rotate(90deg);}
+.qa-a{display:none;padding:0 18px 14px;font-size:13px;color:var(--text2);line-height:1.7;}
+.qa-card.open .qa-a{display:block;}
+
+/* ── SOLID GRID ── */
+.solid-grid{display:grid;grid-template-columns:repeat(5,1fr);gap:10px;margin:16px 0;}
+.solid-item{background:var(--bg2);border:1px solid var(--border);border-radius:10px;padding:14px 12px;text-align:center;}
+.solid-letter{font-family:var(--font-display);font-size:28px;color:var(--accent);line-height:1;}
+.solid-word{font-size:9px;color:var(--text3);text-transform:uppercase;letter-spacing:.5px;margin:4px 0;}
+.solid-check{font-size:11px;color:var(--text2);line-height:1.4;}
+
+/* ── FLOW CHIP ── */
+.flow-row{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin:12px 0;}
+.flow-chip{background:var(--bg3);border:1px solid var(--border);border-radius:20px;padding:5px 14px;font-size:12px;color:var(--text2);}
+.flow-arrow{color:var(--text3);font-size:16px;}
+.flow-chip.hl{border-color:var(--accent);color:var(--accent);background:rgba(247,154,62,.08);}
+
+/* ── BADGE ROW ── */
+.badge-row{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:16px;}
+.badge{padding:3px 12px;border-radius:12px;font-size:11px;font-weight:500;text-transform:uppercase;letter-spacing:.4px;}
+.badge-g{background:rgba(86,211,100,.12);color:var(--green);border:1px solid rgba(86,211,100,.3);}
+.badge-b{background:rgba(121,192,255,.12);color:var(--accent3);border:1px solid rgba(121,192,255,.3);}
+.badge-o{background:rgba(247,154,62,.12);color:var(--accent);border:1px solid rgba(247,154,62,.3);}
+
+/* ── SCROLLBAR ── */
+#main::-webkit-scrollbar{width:4px;}
+#main::-webkit-scrollbar-thumb{background:var(--border2);border-radius:4px;}
+
+/* ── TABS ── */
+.tab-row{display:flex;gap:0;margin-bottom:0;border-bottom:1px solid var(--border);}
+.tab-btn{padding:8px 18px;font-size:13px;color:var(--text3);cursor:pointer;border-bottom:2px solid transparent;transition:all .15s;background:none;border-top:none;border-left:none;border-right:none;font-family:var(--font-body);}
+.tab-btn:hover{color:var(--text);}
+.tab-btn.active{color:var(--accent);border-bottom-color:var(--accent);}
+.tab-panel{display:none;padding-top:16px;}
+.tab-panel.active{display:block;}
+
+.infobox{background:rgba(121,192,255,.07);border:1px solid rgba(121,192,255,.2);border-radius:8px;padding:12px 16px;margin:12px 0;font-size:13px;color:var(--accent3);}
+.warnbox{background:rgba(247,154,62,.07);border:1px solid rgba(247,154,62,.2);border-radius:8px;padding:12px 16px;margin:12px 0;font-size:13px;color:var(--accent);}
+</style>
+</head>
+<body>
+
+<!-- SIDEBAR -->
+<nav id="sidebar" aria-label="Section navigation">
+  <div class="sidebar-header">
+    <div class="sidebar-logo">💸 Splitwise LLD</div>
+    <div class="sidebar-sub">Interview Prep Guide</div>
+  </div>
+  <div class="sidebar-nav">
+    <div class="nav-group">
+      <div class="nav-group-label">Foundation</div>
+      <div class="nav-item active" onclick="show('overview')"><span class="nav-dot"></span>Overview</div>
+      <div class="nav-item" onclick="show('requirements')"><span class="nav-dot"></span>Requirements</div>
+    </div>
+    <div class="nav-group">
+      <div class="nav-group-label">Design</div>
+      <div class="nav-item" onclick="show('entities')"><span class="nav-dot"></span>Core Entities</div>
+      <div class="nav-item" onclick="show('uml')"><span class="nav-dot"></span>Class Diagram (UML)</div>
+      <div class="nav-item" onclick="show('settlement')"><span class="nav-dot"></span>Settlement Algorithm</div>
+    </div>
+    <div class="nav-group">
+      <div class="nav-group-label">Patterns & Code</div>
+      <div class="nav-item" onclick="show('patterns')"><span class="nav-dot"></span>Design Patterns</div>
+      <div class="nav-item" onclick="show('code')"><span class="nav-dot"></span>Full Python Code</div>
+      <div class="nav-item" onclick="show('solid')"><span class="nav-dot"></span>SOLID Principles</div>
+    </div>
+    <div class="nav-group">
+      <div class="nav-group-label">Interview</div>
+      <div class="nav-item" onclick="show('flows')"><span class="nav-dot"></span>Key Flows</div>
+      <div class="nav-item" onclick="show('tradeoffs')"><span class="nav-dot"></span>Trade-offs</div>
+      <div class="nav-item" onclick="show('qa')"><span class="nav-dot"></span>Q&A Flashcards</div>
+    </div>
+  </div>
+</nav>
+
+<!-- MAIN -->
+<main id="main">
+
+<!-- ══════════════ OVERVIEW ══════════════ -->
+<div id="overview" class="section active">
+  <h1>Splitwise System</h1>
+  <p class="hero-meta">
+    <span class="hero-tag">LLD</span>
+    <span class="hero-tag">Python</span>
+    <span class="hero-tag">Design Patterns</span>
+    <span class="hero-tag">Interview Ready</span>
+  </p>
+  <p>Splitwise is an expense-sharing application. Friends go on a trip, someone pays for dinner, and the app figures out who owes whom — and how much. Designing it tests your ability to model <strong>real-world relationships</strong>, apply the right <strong>design patterns</strong>, and write a clean <strong>settlement algorithm</strong>.</p>
+
+  <h2>What This System Does</h2>
+  <div class="req-grid">
+    <div class="req-card">
+      <div class="req-card-title">Core Operations</div>
+      <ul>
+        <li>Create users and groups</li>
+        <li>Add expenses with flexible splits</li>
+        <li>Track who owes whom in a group</li>
+        <li>Generate a settlement plan (minimize transactions)</li>
+        <li>Settle debts (mark payments)</li>
+      </ul>
+    </div>
+    <div class="req-card">
+      <div class="req-card-title">Split Strategies</div>
+      <ul>
+        <li><strong>Equal</strong> — divide by number of members</li>
+        <li><strong>Exact</strong> — you specify each person's share</li>
+        <li><strong>Percentage</strong> — each person pays X% of total</li>
+        <li><strong>Adjustment</strong> — unequal base adjustments</li>
+      </ul>
+    </div>
+  </div>
+
+  <h2>Why This Problem is Great for Interviews</h2>
+  <p>It naturally exercises <strong>Strategy Pattern</strong> (multiple split algorithms), <strong>Observer Pattern</strong> (notify users of new expenses), <strong>Factory Pattern</strong> (creating split objects), and a <strong>greedy settlement algorithm</strong> — all in one coherent system. Interviewers can probe any layer.</p>
+
+  <div class="infobox">💡 <strong>Interview tip:</strong> Start by listing functional requirements, then immediately sketch the core entities: <code>User</code>, <code>Expense</code>, <code>Group</code>, <code>Split</code>. Interviewers love when you drive the conversation.</div>
+</div>
+
+<!-- ══════════════ REQUIREMENTS ══════════════ -->
+<div id="requirements" class="section">
+  <h1>Requirements</h1>
+
+  <h2>Functional Requirements</h2>
+  <div class="req-grid">
+    <div class="req-card">
+      <div class="req-card-title">Must Have</div>
+      <ul>
+        <li>Register users with name and email</li>
+        <li>Create groups, add/remove members</li>
+        <li>Add expense: who paid, how much, split type</li>
+        <li>View balance of a user in a group</li>
+        <li>Get settlement plan for a group</li>
+        <li>Record that a payment was made</li>
+      </ul>
+    </div>
+    <div class="req-card">
+      <div class="req-card-title">Split Types to Support</div>
+      <ul>
+        <li><strong>Equal Split</strong> — everyone pays 1/N</li>
+        <li><strong>Exact Split</strong> — amounts must sum to total</li>
+        <li><strong>Percentage Split</strong> — percentages must sum to 100</li>
+      </ul>
+    </div>
+  </div>
+
+  <h2>Non-Functional Requirements</h2>
+  <ul>
+    <li>Code must be <strong>extensible</strong> — adding a new split type shouldn't touch existing code</li>
+    <li>Settlement algorithm should <strong>minimize number of transactions</strong></li>
+    <li>System should enforce <strong>validation</strong> (percentages add to 100, amounts add to total)</li>
+    <li>Balances should always be <strong>consistent</strong> — if A owes B $10, B is owed $10 by A</li>
+  </ul>
+
+  <h2>Out of Scope (for LLD)</h2>
+  <ul>
+    <li>Persistent storage / database</li>
+    <li>REST API / HTTP layer</li>
+    <li>Authentication / authorization</li>
+    <li>Currency conversion</li>
+  </ul>
+</div>
+
+<!-- ══════════════ ENTITIES ══════════════ -->
+<div id="entities" class="section">
+  <h1>Core Entities</h1>
+  <p>These are the <strong>nouns</strong> of the system. Identifying them clearly is the first step in any LLD interview.</p>
+
+  <h3>User</h3>
+  <p>Represents a person. Has a unique <code>user_id</code>, name, and email. Users can belong to multiple groups.</p>
+
+  <h3>Group</h3>
+  <p>A collection of users sharing expenses (e.g., "Thailand Trip 2024"). Holds a list of members and a list of expenses. Also tracks the <strong>balance sheet</strong> — a <code>dict[user_id, dict[user_id, float]]</code> representing net amounts owed.</p>
+
+  <h3>Expense</h3>
+  <p>Represents one payment. Who paid (<code>paid_by</code>), the total amount, the split type, and the resulting <code>Split</code> objects for each participant.</p>
+
+  <h3>Split (abstract)</h3>
+  <p>Holds how much one user owes for a single expense. <code>EqualSplit</code>, <code>ExactSplit</code>, <code>PercentSplit</code> are concrete implementations. This is where the <strong>Strategy Pattern</strong> lives.</p>
+
+  <h3>Transaction</h3>
+  <p>Output of the settlement algorithm. A directional "A pays B $X" instruction.</p>
+
+  <div class="warnbox">⚠️ Common mistake: Don't confuse <code>Split</code> (a share per-person per-expense) with <code>Transaction</code> (a settlement payment). They are very different concepts.</div>
+
+  <h2>Relationships</h2>
+  <ul>
+    <li>A <code>User</code> can belong to many <code>Groups</code></li>
+    <li>A <code>Group</code> has many <code>Expenses</code></li>
+    <li>An <code>Expense</code> has one <code>paid_by</code> User and many <code>Splits</code></li>
+    <li>Each <code>Split</code> belongs to one <code>User</code> and one <code>Expense</code></li>
+  </ul>
+</div>
+
+<!-- ══════════════ UML ══════════════ -->
+<div id="uml" class="section">
+  <h1>Class Diagram</h1>
+  <p>Full UML showing all classes, their relationships, and design pattern locations.</p>
+
+  <div class="uml-wrap">
+    <svg width="100%" viewBox="0 0 860 780" role="img">
+      <title>Splitwise Class Diagram</title>
+      <defs>
+        <marker id="arrow" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+          <path d="M2 1L8 5L2 9" fill="none" stroke="#484f58" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+        </marker>
+        <marker id="arrowW" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+          <path d="M2 1L8 5L2 9" fill="none" stroke="#f79a3e" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+        </marker>
+        <marker id="diamond" viewBox="0 0 12 12" refX="6" refY="6" markerWidth="8" markerHeight="8" orient="auto-start-reverse">
+          <polygon points="6,2 10,6 6,10 2,6" fill="#484f58"/>
+        </marker>
+        <marker id="openTri" viewBox="0 0 12 10" refX="11" refY="5" markerWidth="8" markerHeight="8" orient="auto">
+          <path d="M1 1L11 5L1 9" fill="none" stroke="#bc8cff" stroke-width="1.5"/>
+        </marker>
+      </defs>
+      <style>
+        .uml-box{fill:#161b22;stroke:#30363d;stroke-width:1;}
+        .uml-head{fill:#21262d;stroke:#30363d;stroke-width:1;}
+        .uml-title{font-family:'DM Mono',monospace;font-size:12px;font-weight:500;fill:#e6edf3;}
+        .uml-stereo{font-family:'DM Mono',monospace;font-size:10px;fill:#8b949e;}
+        .uml-attr{font-family:'DM Mono',monospace;font-size:10px;fill:#8b949e;}
+        .uml-method{font-family:'DM Mono',monospace;font-size:10px;fill:#79c0ff;}
+        .badge-t{fill:rgba(188,140,255,0.15);stroke:rgba(188,140,255,0.3);stroke-width:0.5;}
+        .badge-txt{font-family:'DM Mono',monospace;font-size:9px;fill:#bc8cff;}
+        .rel-label{font-family:'DM Mono',monospace;font-size:9px;fill:#6e7681;}
+        .rel-line{stroke:#484f58;stroke-width:0.8;fill:none;}
+        .inh-line{stroke:#bc8cff;stroke-width:1;fill:none;stroke-dasharray:5,3;}
+        .comp-line{stroke:#f79a3e;stroke-width:0.8;fill:none;}
+      </style>
+
+      <!-- ── USER ── x=20,y=20 w=180 -->
+      <rect class="uml-box" x="20" y="20" width="180" height="140" rx="6"/>
+      <rect class="uml-head" x="20" y="20" width="180" height="36" rx="6"/>
+      <rect class="uml-head" x="20" y="44" width="180" height="12"/>
+      <text class="uml-title" x="110" y="38" text-anchor="middle">User</text>
+      <text class="uml-attr" x="30" y="68">- user_id: str</text>
+      <text class="uml-attr" x="30" y="82">- name: str</text>
+      <text class="uml-attr" x="30" y="96">- email: str</text>
+      <line x1="20" y1="104" x2="200" y2="104" class="rel-line"/>
+      <text class="uml-method" x="30" y="118">+ get_user_id(): str</text>
+      <text class="uml-method" x="30" y="132">+ get_name(): str</text>
+
+      <!-- ── GROUP ── x=280,y=20 w=220 -->
+      <rect class="uml-box" x="280" y="20" width="220" height="172" rx="6"/>
+      <rect class="uml-head" x="280" y="20" width="220" height="36" rx="6"/>
+      <rect class="uml-head" x="280" y="44" width="220" height="12"/>
+      <text class="uml-title" x="390" y="38" text-anchor="middle">Group</text>
+      <text class="uml-attr" x="290" y="68">- group_id: str</text>
+      <text class="uml-attr" x="290" y="82">- name: str</text>
+      <text class="uml-attr" x="290" y="96">- members: List[User]</text>
+      <text class="uml-attr" x="290" y="110">- expenses: List[Expense]</text>
+      <text class="uml-attr" x="290" y="124">- balances: Dict[str,Dict]</text>
+      <line x1="280" y1="132" x2="500" y2="132" class="rel-line"/>
+      <text class="uml-method" x="290" y="146">+ add_member(user)</text>
+      <text class="uml-method" x="290" y="160">+ add_expense(expense)</text>
+      <text class="uml-method" x="290" y="174">+ get_balance(user_id)</text>
+
+      <!-- ── EXPENSE ── x=580,y=20 w=200 -->
+      <rect class="uml-box" x="580" y="20" width="240" height="172" rx="6"/>
+      <rect class="uml-head" x="580" y="20" width="240" height="36" rx="6"/>
+      <rect class="uml-head" x="580" y="44" width="240" height="12"/>
+      <text class="uml-title" x="700" y="38" text-anchor="middle">Expense</text>
+      <text class="uml-attr" x="590" y="68">- expense_id: str</text>
+      <text class="uml-attr" x="590" y="82">- paid_by: User</text>
+      <text class="uml-attr" x="590" y="96">- amount: float</text>
+      <text class="uml-attr" x="590" y="110">- splits: List[Split]</text>
+      <text class="uml-attr" x="590" y="124">- description: str</text>
+      <line x1="580" y1="132" x2="820" y2="132" class="rel-line"/>
+      <text class="uml-method" x="590" y="146">+ get_paid_by(): User</text>
+      <text class="uml-method" x="590" y="160">+ get_splits(): List[Split]</text>
+      <text class="uml-method" x="590" y="174">+ get_amount(): float</text>
+
+      <!-- User --has-- Group (association) -->
+      <line x1="200" y1="80" x2="280" y2="80" class="rel-line" marker-end="url(#arrow)"/>
+      <text class="rel-label" x="228" y="73">belongs to</text>
+
+      <!-- Group --has-- Expense (composition) -->
+      <line x1="500" y1="80" x2="580" y2="80" class="comp-line" marker-end="url(#arrowW)"/>
+      <polygon points="502,80 510,76 518,80 510,84" fill="#f79a3e"/>
+      <text class="rel-label" x="524" y="73">contains</text>
+
+      <!-- ── SPLIT (abstract) ── x=580,y=260 w=240 -->
+      <rect class="uml-box" x="580" y="250" width="240" height="130" rx="6"/>
+      <rect class="uml-head" x="580" y="250" width="240" height="36" rx="6"/>
+      <rect class="uml-head" x="580" y="274" width="240" height="12"/>
+      <rect class="badge-t" x="590" y="257" width="80" height="13" rx="3"/>
+      <text class="badge-txt" x="630" y="267" text-anchor="middle">«abstract»</text>
+      <text class="uml-title" x="700" y="270" text-anchor="middle">Split</text>
+      <text class="uml-attr" x="590" y="300">- user: User</text>
+      <text class="uml-attr" x="590" y="314">- amount: float</text>
+      <line x1="580" y1="322" x2="820" y2="322" class="rel-line"/>
+      <text class="uml-method" x="590" y="336">+ get_amount(): float  «abstract»</text>
+      <text class="uml-method" x="590" y="350">+ validate(): bool  «abstract»</text>
+      <text class="uml-method" x="590" y="364">+ get_user(): User</text>
+
+      <!-- Expense ---composition--- Split -->
+      <line x1="700" y1="192" x2="700" y2="250" class="comp-line" marker-end="url(#arrowW)"/>
+      <polygon points="700,192 696,200 700,208 704,200" fill="#f79a3e"/>
+
+      <!-- ── EQUAL SPLIT ── x=460,y=450 -->
+      <rect class="uml-box" x="460" y="450" width="180" height="80" rx="6"/>
+      <rect class="uml-head" x="460" y="450" width="180" height="30" rx="6"/>
+      <rect class="uml-head" x="460" y="468" width="180" height="12"/>
+      <text class="uml-title" x="550" y="464" text-anchor="middle">EqualSplit</text>
+      <text class="uml-attr" x="470" y="497">- num_people: int</text>
+      <text class="uml-method" x="470" y="516">+ get_amount(): float</text>
+
+      <!-- ── EXACT SPLIT ── x=660,y=450 -->
+      <rect class="uml-box" x="660" y="450" width="180" height="80" rx="6"/>
+      <rect class="uml-head" x="660" y="450" width="180" height="30" rx="6"/>
+      <rect class="uml-head" x="660" y="468" width="180" height="12"/>
+      <text class="uml-title" x="750" y="464" text-anchor="middle">ExactSplit</text>
+      <text class="uml-attr" x="670" y="497">- exact_amount: float</text>
+      <text class="uml-method" x="670" y="516">+ get_amount(): float</text>
+
+      <!-- ── PERCENT SPLIT ── x=560,y=570 removed - fit 2 only ── -->
+
+      <!-- Inheritance lines Split -> EqualSplit, ExactSplit -->
+      <line x1="620" y1="380" x2="550" y2="450" class="inh-line" marker-end="url(#openTri)"/>
+      <line x1="730" y1="380" x2="750" y2="450" class="inh-line" marker-end="url(#openTri)"/>
+
+      <!-- ── EXPENSE MANAGER ── x=20,y=240 w=220 -->
+      <rect class="uml-box" x="20" y="240" width="230" height="172" rx="6"/>
+      <rect class="uml-head" x="20" y="240" width="230" height="36" rx="6"/>
+      <rect class="uml-head" x="20" y="264" width="230" height="12"/>
+      <rect class="badge-t" x="30" y="247" width="100" height="13" rx="3"/>
+      <text class="badge-txt" x="80" y="257" text-anchor="middle">«Facade»</text>
+      <text class="uml-title" x="135" y="262" text-anchor="middle">ExpenseManager</text>
+      <text class="uml-attr" x="30" y="290">- groups: Dict[str,Group]</text>
+      <text class="uml-attr" x="30" y="304">- users: Dict[str,User]</text>
+      <line x1="20" y1="312" x2="250" y2="312" class="rel-line"/>
+      <text class="uml-method" x="30" y="326">+ create_group(name): Group</text>
+      <text class="uml-method" x="30" y="340">+ add_expense(...): Expense</text>
+      <text class="uml-method" x="30" y="354">+ get_balances(gid): Dict</text>
+      <text class="uml-method" x="30" y="368">+ settle_up(gid): List[Txn]</text>
+      <text class="uml-method" x="30" y="382">+ record_payment(...)</text>
+
+      <!-- ── SPLIT FACTORY ── x=20,y=450 w=200 -->
+      <rect class="uml-box" x="20" y="450" width="220" height="110" rx="6"/>
+      <rect class="uml-head" x="20" y="450" width="220" height="36" rx="6"/>
+      <rect class="uml-head" x="20" y="474" width="220" height="12"/>
+      <rect class="badge-t" x="30" y="457" width="95" height="13" rx="3"/>
+      <text class="badge-txt" x="77" y="467" text-anchor="middle">«Factory»</text>
+      <text class="uml-title" x="130" y="472" text-anchor="middle">SplitFactory</text>
+      <text class="uml-method" x="30" y="502">+ create(type, user,</text>
+      <text class="uml-method" x="30" y="516">   amount, **kwargs): Split</text>
+      <text class="uml-attr" x="30" y="535">  type: EQUAL|EXACT|PERCENT</text>
+
+      <!-- ── SETTLEMENT ENGINE ── x=20,y=590 w=220 -->
+      <rect class="uml-box" x="20" y="590" width="230" height="120" rx="6"/>
+      <rect class="uml-head" x="20" y="590" width="230" height="36" rx="6"/>
+      <rect class="uml-head" x="20" y="614" width="230" height="12"/>
+      <rect class="badge-t" x="30" y="597" width="110" height="13" rx="3"/>
+      <text class="badge-txt" x="85" y="607" text-anchor="middle">«Strategy»</text>
+      <text class="uml-title" x="135" y="612" text-anchor="middle">SettlementEngine</text>
+      <text class="uml-method" x="30" y="640">+ minimize_transactions(</text>
+      <text class="uml-method" x="30" y="654">   balances): List[Txn]</text>
+      <text class="uml-attr" x="30" y="672">  Uses greedy heap approach</text>
+      <text class="uml-attr" x="30" y="686">  O(n log n) complexity</text>
+
+      <!-- ── OBSERVER ── x=280,y=240 w=220 -->
+      <rect class="uml-box" x="280" y="240" width="220" height="130" rx="6"/>
+      <rect class="uml-head" x="280" y="240" width="220" height="36" rx="6"/>
+      <rect class="uml-head" x="280" y="264" width="220" height="12"/>
+      <rect class="badge-t" x="290" y="247" width="100" height="13" rx="3"/>
+      <text class="badge-txt" x="340" y="257" text-anchor="middle">«Observer»</text>
+      <text class="uml-title" x="390" y="262" text-anchor="middle">ExpenseObserver</text>
+      <text class="uml-attr" x="290" y="290">«interface»</text>
+      <line x1="280" y1="297" x2="500" y2="297" class="rel-line"/>
+      <text class="uml-method" x="290" y="311">+ on_expense_added(expense)</text>
+      <text class="uml-method" x="290" y="325">+ on_payment_made(txn)</text>
+
+      <!-- ── NOTIFICATION ── x=280,y=400 w=220 -->
+      <rect class="uml-box" x="280" y="400" width="220" height="80" rx="6"/>
+      <rect class="uml-head" x="280" y="400" width="220" height="30" rx="6"/>
+      <rect class="uml-head" x="280" y="418" width="220" height="12"/>
+      <text class="uml-title" x="390" y="414" text-anchor="middle">NotificationService</text>
+      <text class="uml-attr" x="290" y="447">implements ExpenseObserver</text>
+      <text class="uml-method" x="290" y="465">+ notify_user(user, msg)</text>
+
+      <!-- Observer inh arrow -->
+      <line x1="390" y1="370" x2="390" y2="400" class="inh-line" marker-end="url(#openTri)"/>
+
+      <!-- ExpenseManager uses Group -->
+      <line x1="250" y1="290" x2="280" y2="90" class="rel-line" marker-end="url(#arrow)" stroke-dasharray="4,3"/>
+
+      <!-- Legend -->
+      <rect x="20" y="730" width="400" height="40" rx="4" fill="#161b22" stroke="#30363d" stroke-width="0.5"/>
+      <line x1="35" y1="750" x2="65" y2="750" stroke="#bc8cff" stroke-width="1" stroke-dasharray="5,3"/>
+      <text class="rel-label" x="70" y="754">inheritance</text>
+      <line x1="140" y1="750" x2="170" y2="750" stroke="#f79a3e" stroke-width="0.8"/>
+      <polygon points="142,750 150,746 158,750 150,754" fill="#f79a3e"/>
+      <text class="rel-label" x="175" y="754">composition</text>
+      <line x1="260" y1="750" x2="290" y2="750" stroke="#484f58" stroke-width="0.8" stroke-dasharray="4,3" marker-end="url(#arrow)"/>
+      <text class="rel-label" x="295" y="754">uses / dependency</text>
+    </svg>
+  </div>
+
+  <p>The diagram shows three major design pattern zones: <strong>Strategy</strong> (Split hierarchy), <strong>Factory</strong> (SplitFactory), <strong>Observer</strong> (ExpenseObserver), and <strong>Facade</strong> (ExpenseManager).</p>
+</div>
+
+<!-- ══════════════ SETTLEMENT ══════════════ -->
+<div id="settlement" class="section">
+  <h1>Settlement Algorithm</h1>
+  <p>This is the <strong>crown jewel</strong> of the system. The goal: given a group's net balances, produce the <strong>fewest possible transactions</strong> to settle all debts.</p>
+
+  <h2>The Core Idea</h2>
+  <p>Each person has a <strong>net balance</strong>: positive means they're owed money, negative means they owe money. The algorithm uses two heaps — one for creditors, one for debtors — and greedily matches the largest debtor with the largest creditor.</p>
+
+  <div class="flow-row">
+    <div class="flow-chip hl">Compute net balances</div>
+    <div class="flow-arrow">→</div>
+    <div class="flow-chip">Split into +creditors / −debtors</div>
+    <div class="flow-arrow">→</div>
+    <div class="flow-chip hl">Max-heap match</div>
+    <div class="flow-arrow">→</div>
+    <div class="flow-chip">Emit transactions</div>
+  </div>
+
+  <h3>Step-by-step Example</h3>
+  <p>Three people: Alice paid $90, Bob paid $30, Carol paid $0. Each should pay $40.</p>
+  <ul>
+    <li>Alice net: +$50 (owed $50)</li>
+    <li>Bob net: −$10 (owes $10)</li>
+    <li>Carol net: −$40 (owes $40)</li>
+  </ul>
+  <p>Algorithm: Carol pays Alice $40 → Alice now +$10. Bob pays Alice $10 → settled. <strong>Only 2 transactions</strong> instead of a naive 3+.</p>
+
+  <h3>Complexity</h3>
+  <ul>
+    <li><strong>Time:</strong> O(n log n) — each pop/push on a heap</li>
+    <li><strong>Space:</strong> O(n) — for the two heaps</li>
+    <li><strong>Transactions:</strong> At most n−1 for n people (optimal)</li>
+  </ul>
+
+  <div class="code-wrap">
+    <div class="code-header">
+      <span class="code-filename">settlement_engine.py</span>
+      <span class="code-label">Strategy Pattern</span>
+    </div>
+    <pre><code class="language-python">import heapq
+from dataclasses import dataclass
+
+@dataclass
+class Transaction:
+    payer: str      # user_id of who pays
+    payee: str      # user_id of who receives
+    amount: float
+
+class SettlementEngine:
+    """
+    Greedy settlement algorithm using max-heaps.
+    Minimizes the total number of transactions.
+    """
+
+    def minimize_transactions(
+        self,
+        net_balances: dict[str, float]
+    ) -> list[Transaction]:
+        """
+        net_balances: {user_id: net_amount}
+          positive = this person is owed money (creditor)
+          negative = this person owes money (debtor)
+        """
+        # Max-heap for creditors (negate for Python's min-heap)
+        creditors = []  # (-amount, user_id)
+        # Max-heap for debtors (negate to get largest debt first)
+        debtors = []    # (-amount_owed, user_id)
+
+        for user_id, balance in net_balances.items():
+            if balance > 0.001:      # creditor: owed money
+                heapq.heappush(creditors, (-balance, user_id))
+            elif balance < -0.001:   # debtor: owes money
+                heapq.heappush(debtors, (balance, user_id))
+            # near-zero balances are settled already
+
+        transactions = []
+
+        while creditors and debtors:
+            # Largest creditor
+            neg_credit, creditor_id = heapq.heappop(creditors)
+            credit = -neg_credit
+
+            # Largest debtor
+            neg_debt, debtor_id = heapq.heappop(debtors)
+            debt = -neg_debt  # debt is a positive value now
+
+            # Match them
+            settled = min(credit, debt)
+            transactions.append(Transaction(
+                payer=debtor_id,
+                payee=creditor_id,
+                amount=round(settled, 2)
+            ))
+
+            remaining_credit = credit - settled
+            remaining_debt = debt - settled
+
+            # Push back whoever still has a remainder
+            if remaining_credit > 0.001:
+                heapq.heappush(creditors, (-remaining_credit, creditor_id))
+            if remaining_debt > 0.001:
+                heapq.heappush(debtors, (-remaining_debt, debtor_id))
+
+        return transactions
+</code></pre>
+  </div>
+
+  <div class="infobox">💡 <strong>Interview tip:</strong> When asked "how do you minimize transactions?", say: "I compute net balance per user, then use a greedy two-heap approach — always match the biggest creditor with the biggest debtor. This gives at most n−1 transactions and runs in O(n log n)."</div>
+</div>
+
+<!-- ══════════════ PATTERNS ══════════════ -->
+<div id="patterns" class="section">
+  <h1>Design Patterns</h1>
+  <p>Four patterns work together in this system. Each is chosen for a specific reason — <strong>not applied formulaically</strong>.</p>
+
+  <div class="pattern-grid">
+
+    <div class="pattern-card" onclick="this.classList.toggle('open')">
+      <div class="pattern-name">Strategy Pattern <span class="pattern-badge">Creational-ish</span></div>
+      <div class="pattern-desc">Multiple interchangeable split algorithms</div>
+      <div class="pattern-body">
+        <div><span class="why-tag">✓ Why here</span><span class="tradeoff-tag">⚠ Trade-off</span></div>
+        <p class="pattern-reason">
+          The problem has three split types (Equal, Exact, Percent) that all do the same job — compute a user's share — but differently. Strategy lets us define a <code>Split</code> interface and swap implementations without touching the <code>Expense</code> class.<br><br>
+          <strong>Trade-off:</strong> A new split type requires a new class, but <em>never</em> modifies existing code (Open/Closed Principle). The slight increase in class count is worth it.
+        </p>
+      </div>
+    </div>
+
+    <div class="pattern-card" onclick="this.classList.toggle('open')">
+      <div class="pattern-name">Factory Pattern <span class="pattern-badge">Creational</span></div>
+      <div class="pattern-desc">Centralized Split object creation</div>
+      <div class="pattern-body">
+        <div><span class="why-tag">✓ Why here</span><span class="tradeoff-tag">⚠ Trade-off</span></div>
+        <p class="pattern-reason">
+          Callers shouldn't need to know which <code>Split</code> subclass to instantiate — they just say "give me a Percent split". <code>SplitFactory.create()</code> handles the if/else and validation. This is especially clean because each split type has different constructor params.<br><br>
+          <strong>Trade-off:</strong> Adding a new type requires updating the factory's mapping — one place, not scattered. Worth it.
+        </p>
+      </div>
+    </div>
+
+    <div class="pattern-card" onclick="this.classList.toggle('open')">
+      <div class="pattern-name">Observer Pattern <span class="pattern-badge">Behavioral</span></div>
+      <div class="pattern-desc">Decouple notifications from core logic</div>
+      <div class="pattern-body">
+        <div><span class="why-tag">✓ Why here</span><span class="tradeoff-tag">⚠ Trade-off</span></div>
+        <p class="pattern-reason">
+          When an expense is added, multiple systems may care: email notification, push notification, audit logger, analytics. Observer decouples this. <code>Group</code> fires an event; any number of subscribers listen. Core business logic never imports <code>NotificationService</code>.<br><br>
+          <strong>Trade-off:</strong> Harder to trace what runs when — debugging requires knowing all observers. For an interview, mention this explicitly.
+        </p>
+      </div>
+    </div>
+
+    <div class="pattern-card" onclick="this.classList.toggle('open')">
+      <div class="pattern-name">Facade Pattern <span class="pattern-badge">Structural</span></div>
+      <div class="pattern-desc">Single entry point for all operations</div>
+      <div class="pattern-body">
+        <div><span class="why-tag">✓ Why here</span><span class="tradeoff-tag">⚠ Trade-off</span></div>
+        <p class="pattern-reason">
+          <code>ExpenseManager</code> is the Facade. It hides the complexity of coordinating <code>Group</code>, <code>SplitFactory</code>, <code>SettlementEngine</code>, and observers. Callers use one clean API: <code>manager.add_expense(...)</code> — they don't know or care about the internals.<br><br>
+          <strong>Trade-off:</strong> The Facade can become a "god class" if it accumulates too much logic. Keep it thin — delegate everything to domain objects.
+        </p>
+      </div>
+    </div>
+
+  </div>
+
+  <h2>Pattern Interaction Diagram</h2>
+  <div class="uml-wrap">
+    <svg width="100%" viewBox="0 0 700 260" role="img">
+      <title>Pattern interaction flow</title>
+      <defs>
+        <marker id="arr2" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+          <path d="M2 1L8 5L2 9" fill="none" stroke="#484f58" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+        </marker>
+      </defs>
+      <style>
+        .pb{fill:#161b22;stroke:#30363d;stroke-width:1;rx:8;}
+        .ph{fill:#21262d;stroke:#30363d;stroke-width:1;}
+        .pt{font-family:'DM Mono',monospace;font-size:12px;fill:#e6edf3;font-weight:500;}
+        .ps{font-family:'DM Mono',monospace;font-size:10px;fill:#8b949e;}
+        .pal{font-family:'DM Mono',monospace;font-size:9px;fill:#f79a3e;}
+        .pl{stroke:#484f58;stroke-width:1;fill:none;}
+      </style>
+
+      <!-- Client -->
+      <rect class="pb" x="20" y="100" width="100" height="60" rx="8"/>
+      <rect class="ph" x="20" y="100" width="100" height="24" rx="8"/>
+      <rect class="ph" x="20" y="112" width="100" height="12"/>
+      <text class="pt" x="70" y="116" text-anchor="middle">Client</text>
+      <text class="ps" x="70" y="148" text-anchor="middle">your code</text>
+
+      <!-- ExpenseManager (Facade) -->
+      <rect class="pb" x="170" y="80" width="160" height="100" rx="8" style="stroke:#f79a3e;stroke-width:1.5;"/>
+      <rect class="ph" x="170" y="80" width="160" height="24" rx="8"/>
+      <rect class="ph" x="170" y="92" width="160" height="12"/>
+      <text class="pt" x="250" y="96" text-anchor="middle">ExpenseManager</text>
+      <text class="pal" x="250" y="118" text-anchor="middle">«Facade»</text>
+      <text class="ps" x="250" y="134" text-anchor="middle">add_expense()</text>
+      <text class="ps" x="250" y="148" text-anchor="middle">settle_up()</text>
+
+      <!-- SplitFactory -->
+      <rect class="pb" x="390" y="20" width="140" height="70" rx="8" style="stroke:#bc8cff;stroke-width:1;"/>
+      <rect class="ph" x="390" y="20" width="140" height="24" rx="8"/>
+      <rect class="ph" x="390" y="32" width="140" height="12"/>
+      <text class="pt" x="460" y="36" text-anchor="middle">SplitFactory</text>
+      <text class="pal" x="460" y="58" text-anchor="middle">«Factory»</text>
+      <text class="ps" x="460" y="74" text-anchor="middle">create(type, ...)</text>
+
+      <!-- Split Strategy -->
+      <rect class="pb" x="390" y="110" width="140" height="70" rx="8" style="stroke:#56d364;stroke-width:1;"/>
+      <rect class="ph" x="390" y="110" width="140" height="24" rx="8"/>
+      <rect class="ph" x="390" y="122" width="140" height="12"/>
+      <text class="pt" x="460" y="126" text-anchor="middle">Split</text>
+      <text class="pal" x="460" y="148" text-anchor="middle">«Strategy»</text>
+      <text class="ps" x="460" y="164" text-anchor="middle">get_amount()</text>
+
+      <!-- Observer -->
+      <rect class="pb" x="390" y="200" width="140" height="50" rx="8" style="stroke:#79c0ff;stroke-width:1;"/>
+      <rect class="ph" x="390" y="200" width="140" height="24" rx="8"/>
+      <rect class="ph" x="390" y="212" width="140" height="12"/>
+      <text class="pt" x="460" y="216" text-anchor="middle">Observers</text>
+      <text class="pal" x="460" y="236" text-anchor="middle">«Observer»</text>
+
+      <!-- SettlementEngine -->
+      <rect class="pb" x="570" y="100" width="110" height="70" rx="8"/>
+      <rect class="ph" x="570" y="100" width="110" height="24" rx="8"/>
+      <rect class="ph" x="570" y="112" width="110" height="12"/>
+      <text class="pt" x="625" y="116" text-anchor="middle" font-size="11">SettlementEng.</text>
+      <text class="ps" x="625" y="148" text-anchor="middle">greedy heap</text>
+
+      <!-- Arrows -->
+      <line x1="120" y1="130" x2="170" y2="130" class="pl" marker-end="url(#arr2)"/>
+      <line x1="330" y1="100" x2="390" y2="58" class="pl" marker-end="url(#arr2)"/>
+      <line x1="330" y1="130" x2="390" y2="140" class="pl" marker-end="url(#arr2)"/>
+      <line x1="330" y1="160" x2="390" y2="218" class="pl" marker-end="url(#arr2)"/>
+      <line x1="530" y1="135" x2="570" y2="135" class="pl" marker-end="url(#arr2)"/>
+
+      <text class="pal" x="133" y="124" font-size="9">calls</text>
+      <text class="ps" x="345" y="95" font-size="9">creates</text>
+      <text class="ps" x="345" y="126" font-size="9">uses</text>
+      <text class="ps" x="340" y="185" font-size="9">notifies</text>
+    </svg>
+  </div>
+</div>
+
+<!-- ══════════════ CODE ══════════════ -->
+<div id="code" class="section">
+  <h1>Full Python Implementation</h1>
+
+  <div class="tab-row">
+    <button class="tab-btn active" onclick="switchTab(this,'t-models')">Models</button>
+    <button class="tab-btn" onclick="switchTab(this,'t-splits')">Splits &amp; Factory</button>
+    <button class="tab-btn" onclick="switchTab(this,'t-group')">Group &amp; Observer</button>
+    <button class="tab-btn" onclick="switchTab(this,'t-manager')">ExpenseManager</button>
+    <button class="tab-btn" onclick="switchTab(this,'t-demo')">Demo Run</button>
+  </div>
+
+  <div id="t-models" class="tab-panel active">
+    <div class="code-wrap">
+      <div class="code-header">
+        <span class="code-filename">models.py</span>
+        <span class="code-label">Core Entities</span>
+      </div>
+      <pre><code class="language-python">from __future__ import annotations
+import uuid
+from dataclasses import dataclass, field
+from enum import Enum, auto
+
+
+class SplitType(Enum):
+    EQUAL = auto()
+    EXACT = auto()
+    PERCENT = auto()
+
+
+# ── User ────────────────────────────────────────────────────
+class User:
+    def __init__(self, name: str, email: str) -> None:
+        self._user_id = str(uuid.uuid4())[:8]
+        self._name = name
+        self._email = email
+
+    def get_user_id(self) -> str:
+        return self._user_id
+
+    def get_name(self) -> str:
+        return self._name
+
+    def get_email(self) -> str:
+        return self._email
+
+    def __repr__(self) -> str:
+        return f"User({self._name})"
+
+
+# ── Transaction (output of settlement) ──────────────────────
+@dataclass
+class Transaction:
+    payer_id: str
+    payee_id: str
+    amount: float
+
+    def describe(self, users: dict[str, User]) -> str:
+        payer = users[self.payer_id].get_name()
+        payee = users[self.payee_id].get_name()
+        return f"{payer} → {payee}  ${self.amount:.2f}"
+</code></pre>
+    </div>
+  </div>
+
+  <div id="t-splits" class="tab-panel">
+    <div class="code-wrap">
+      <div class="code-header">
+        <span class="code-filename">splits.py</span>
+        <span class="code-label">Strategy Pattern + Factory Pattern</span>
+      </div>
+      <pre><code class="language-python">from __future__ import annotations
+from abc import ABC, abstractmethod
+from models import User, SplitType
+
+
+# ── Abstract Split  (Strategy interface) ────────────────────
+class Split(ABC):
+    """
+    Strategy Pattern: each subclass is a different algorithm
+    for computing one user's share of an expense.
+    """
+
+    def __init__(self, user: User) -> None:
+        self._user = user
+
+    def get_user(self) -> User:
+        return self._user
+
+    @abstractmethod
+    def get_amount(self) -> float:
+        """Return the amount this user owes."""
+        ...
+
+    @abstractmethod
+    def validate(self) -> bool:
+        """Return True if this split is internally consistent."""
+        ...
+
+
+# ── Concrete Strategies ─────────────────────────────────────
+
+class EqualSplit(Split):
+    """
+    Each participant pays total / num_people.
+    Amount is set externally after dividing.
+    """
+
+    def __init__(self, user: User, amount: float) -> None:
+        super().__init__(user)
+        self._amount = amount
+
+    def get_amount(self) -> float:
+        return self._amount
+
+    def validate(self) -> bool:
+        return self._amount >= 0
+
+
+class ExactSplit(Split):
+    """
+    Caller specifies the exact dollar amount for this user.
+    Validation (that all exact splits sum to total) happens in factory.
+    """
+
+    def __init__(self, user: User, amount: float) -> None:
+        super().__init__(user)
+        self._amount = amount
+
+    def get_amount(self) -> float:
+        return self._amount
+
+    def validate(self) -> bool:
+        return self._amount >= 0
+
+
+class PercentSplit(Split):
+    """
+    Caller specifies a percentage. Amount derived from total.
+    """
+
+    def __init__(self, user: User, percent: float, total: float) -> None:
+        super().__init__(user)
+        self._percent = percent
+        self._amount = round((percent / 100) * total, 2)
+
+    def get_amount(self) -> float:
+        return self._amount
+
+    def get_percent(self) -> float:
+        return self._percent
+
+    def validate(self) -> bool:
+        return 0 < self._percent <= 100
+
+
+# ── Split Factory ────────────────────────────────────────────
+class SplitFactory:
+    """
+    Factory Pattern: centralises creation of Split objects.
+    Callers don't need to know which subclass to instantiate.
+    """
+
+    @staticmethod
+    def create_equal_splits(
+        users: list[User],
+        total: float
+    ) -> list[EqualSplit]:
+        share = round(total / len(users), 2)
+        # Adjust rounding error on last person
+        splits = [EqualSplit(u, share) for u in users]
+        diff = round(total - share * len(users), 2)
+        if diff:
+            splits[-1]._amount = round(splits[-1]._amount + diff, 2)
+        return splits
+
+    @staticmethod
+    def create_exact_splits(
+        user_amounts: dict[User, float],
+        total: float
+    ) -> list[ExactSplit]:
+        if abs(sum(user_amounts.values()) - total) > 0.01:
+            raise ValueError(
+                f"Exact amounts {sum(user_amounts.values()):.2f} "
+                f"must sum to total {total:.2f}"
+            )
+        return [ExactSplit(u, amt) for u, amt in user_amounts.items()]
+
+    @staticmethod
+    def create_percent_splits(
+        user_percents: dict[User, float],
+        total: float
+    ) -> list[PercentSplit]:
+        if abs(sum(user_percents.values()) - 100) > 0.01:
+            raise ValueError(
+                f"Percentages must sum to 100, got {sum(user_percents.values())}"
+            )
+        return [
+            PercentSplit(u, pct, total)
+            for u, pct in user_percents.items()
+        ]
+</code></pre>
+    </div>
+  </div>
+
+  <div id="t-group" class="tab-panel">
+    <div class="code-wrap">
+      <div class="code-header">
+        <span class="code-filename">group.py</span>
+        <span class="code-label">Group + Observer Pattern</span>
+      </div>
+      <pre><code class="language-python">from __future__ import annotations
+import uuid
+from abc import ABC, abstractmethod
+from models import User, Transaction
+from splits import Split
+
+
+# ── Observer Interface ────────────────────────────────────────
+class ExpenseObserver(ABC):
+    """
+    Observer Pattern: subscribe to expense events
+    without coupling to the Group/Expense internals.
+    """
+
+    @abstractmethod
+    def on_expense_added(self, group_name: str, expense: "Expense") -> None: ...
+
+    @abstractmethod
+    def on_payment_made(self, txn: Transaction, users: dict[str, User]) -> None: ...
+
+
+# ── Concrete Observer ─────────────────────────────────────────
+class NotificationService(ExpenseObserver):
+    """Prints notifications — in prod this would send push/email."""
+
+    def on_expense_added(self, group_name: str, expense: "Expense") -> None:
+        print(
+            f"[NOTIFY] New expense in '{group_name}': "
+            f"${expense.get_amount():.2f} by "
+            f"{expense.get_paid_by().get_name()} — {expense.get_description()}"
+        )
+
+    def on_payment_made(self, txn: Transaction, users: dict[str, User]) -> None:
+        print(f"[NOTIFY] Payment recorded: {txn.describe(users)}")
+
+
+# ── Expense ──────────────────────────────────────────────────
+class Expense:
+    def __init__(
+        self,
+        paid_by: User,
+        amount: float,
+        splits: list[Split],
+        description: str = ""
+    ) -> None:
+        self._expense_id = str(uuid.uuid4())[:8]
+        self._paid_by = paid_by
+        self._amount = amount
+        self._splits = splits
+        self._description = description
+
+    def get_expense_id(self) -> str:     return self._expense_id
+    def get_paid_by(self) -> User:       return self._paid_by
+    def get_amount(self) -> float:       return self._amount
+    def get_splits(self) -> list[Split]: return self._splits
+    def get_description(self) -> str:    return self._description
+
+
+# ── Group ────────────────────────────────────────────────────
+class Group:
+    """
+    Core aggregate. Maintains member list, expense list,
+    and the net balance sheet.
+
+    Observer Pattern: fires events to registered observers.
+    """
+
+    def __init__(self, name: str) -> None:
+        self._group_id = str(uuid.uuid4())[:8]
+        self._name = name
+        self._members: list[User] = []
+        self._expenses: list[Expense] = []
+        # balances[A][B] = amount A is owed by B  (positive = A is owed)
+        self._balances: dict[str, dict[str, float]] = {}
+        self._observers: list[ExpenseObserver] = []
+
+    # ── Observer management ──────────────────────────────────
+    def add_observer(self, obs: ExpenseObserver) -> None:
+        self._observers.append(obs)
+
+    def _notify_expense_added(self, expense: Expense) -> None:
+        for obs in self._observers:
+            obs.on_expense_added(self._name, expense)
+
+    def _notify_payment(self, txn: Transaction, users: dict[str, User]) -> None:
+        for obs in self._observers:
+            obs.on_payment_made(txn, users)
+
+    # ── Members ──────────────────────────────────────────────
+    def add_member(self, user: User) -> None:
+        if user not in self._members:
+            self._members.append(user)
+            uid = user.get_user_id()
+            self._balances.setdefault(uid, {})
+
+    def get_members(self) -> list[User]:
+        return list(self._members)
+
+    # ── Expenses ─────────────────────────────────────────────
+    def add_expense(self, expense: Expense) -> None:
+        self._expenses.append(expense)
+        self._update_balances(expense)
+        self._notify_expense_added(expense)
+
+    def _update_balances(self, expense: Expense) -> None:
+        """
+        After adding expense, update the net balance sheet.
+        paid_by gets +amount from each split participant.
+        Each split participant gets -amount from paid_by.
+        """
+        payer_id = expense.get_paid_by().get_user_id()
+
+        for split in expense.get_splits():
+            participant_id = split.get_user().get_user_id()
+            if participant_id == payer_id:
+                continue  # payer doesn't owe themselves
+
+            amt = split.get_amount()
+
+            # participant owes payer `amt`
+            self._balances.setdefault(participant_id, {})
+            self._balances.setdefault(payer_id, {})
+
+            # payer is owed `amt` by participant
+            self._balances[payer_id][participant_id] = (
+                self._balances[payer_id].get(participant_id, 0) + amt
+            )
+            # participant owes payer `amt`
+            self._balances[participant_id][payer_id] = (
+                self._balances[participant_id].get(payer_id, 0) - amt
+            )
+
+    def get_net_balances(self) -> dict[str, float]:
+        """Collapse the balance matrix into net per-user balance."""
+        net: dict[str, float] = {}
+        for uid, owed_dict in self._balances.items():
+            net[uid] = round(sum(owed_dict.values()), 2)
+        return net
+
+    def get_balance_for(self, user_id: str) -> dict[str, float]:
+        """Return what user_id owes/is owed from each member."""
+        return dict(self._balances.get(user_id, {}))
+
+    def record_payment(
+        self,
+        txn: Transaction,
+        users: dict[str, User]
+    ) -> None:
+        """When payer pays payee, reduce those balances."""
+        payer = txn.payer_id
+        payee = txn.payee_id
+        amt = txn.amount
+
+        self._balances.setdefault(payer, {})
+        self._balances.setdefault(payee, {})
+
+        self._balances[payer][payee] = (
+            self._balances[payer].get(payee, 0) + amt
+        )
+        self._balances[payee][payer] = (
+            self._balances[payee].get(payer, 0) - amt
+        )
+        self._notify_payment(txn, users)
+
+    # ── Getters ──────────────────────────────────────────────
+    def get_group_id(self) -> str: return self._group_id
+    def get_name(self) -> str:     return self._name
+</code></pre>
+    </div>
+  </div>
+
+  <div id="t-manager" class="tab-panel">
+    <div class="code-wrap">
+      <div class="code-header">
+        <span class="code-filename">expense_manager.py</span>
+        <span class="code-label">Facade Pattern + Settlement Engine</span>
+      </div>
+      <pre><code class="language-python">from __future__ import annotations
+import heapq
+from models import User, Transaction, SplitType
+from splits import SplitFactory
+from group import Group, Expense, ExpenseObserver, NotificationService
+
+
+# ── Settlement Engine (Strategy for algorithm) ────────────────
+class SettlementEngine:
+    """
+    Greedy two-heap algorithm.
+    O(n log n) time, minimises transaction count.
+    """
+
+    def minimize_transactions(
+        self,
+        net_balances: dict[str, float]
+    ) -> list[Transaction]:
+        creditors: list[tuple[float, str]] = []
+        debtors: list[tuple[float, str]] = []
+
+        for uid, balance in net_balances.items():
+            if balance > 0.001:
+                heapq.heappush(creditors, (-balance, uid))
+            elif balance < -0.001:
+                heapq.heappush(debtors, (balance, uid))
+
+        transactions: list[Transaction] = []
+
+        while creditors and debtors:
+            neg_credit, creditor_id = heapq.heappop(creditors)
+            credit = -neg_credit
+
+            neg_debt, debtor_id = heapq.heappop(debtors)
+            debt = -neg_debt
+
+            settled = min(credit, debt)
+            transactions.append(Transaction(
+                payer_id=debtor_id,
+                payee_id=creditor_id,
+                amount=round(settled, 2)
+            ))
+
+            if credit - settled > 0.001:
+                heapq.heappush(creditors, (-(credit - settled), creditor_id))
+            if debt - settled > 0.001:
+                heapq.heappush(debtors, (-(debt - settled), debtor_id))
+
+        return transactions
+
+
+# ── Expense Manager (Facade) ─────────────────────────────────
+class ExpenseManager:
+    """
+    Facade Pattern: single entry point for all Splitwise operations.
+    Coordinates Group, SplitFactory, SettlementEngine, and Observers.
+    """
+
+    def __init__(self) -> None:
+        self._users: dict[str, User] = {}
+        self._groups: dict[str, Group] = {}
+        self._engine = SettlementEngine()
+        self._default_observer = NotificationService()
+
+    # ── User Management ──────────────────────────────────────
+    def register_user(self, name: str, email: str) -> User:
+        user = User(name, email)
+        self._users[user.get_user_id()] = user
+        return user
+
+    # ── Group Management ─────────────────────────────────────
+    def create_group(self, name: str) -> Group:
+        group = Group(name)
+        group.add_observer(self._default_observer)
+        self._groups[group.get_group_id()] = group
+        return group
+
+    def add_member_to_group(self, group: Group, user: User) -> None:
+        group.add_member(user)
+
+    # ── Expense Management ───────────────────────────────────
+    def add_expense(
+        self,
+        group: Group,
+        paid_by: User,
+        amount: float,
+        split_type: SplitType,
+        description: str = "",
+        participants: list[User] | None = None,
+        exact_amounts: dict[User, float] | None = None,
+        percents: dict[User, float] | None = None,
+    ) -> Expense:
+        """
+        Facade hides the complexity of creating splits.
+        """
+        members = participants or group.get_members()
+
+        if split_type == SplitType.EQUAL:
+            splits = SplitFactory.create_equal_splits(members, amount)
+
+        elif split_type == SplitType.EXACT:
+            if not exact_amounts:
+                raise ValueError("Exact split requires exact_amounts dict")
+            splits = SplitFactory.create_exact_splits(exact_amounts, amount)
+
+        elif split_type == SplitType.PERCENT:
+            if not percents:
+                raise ValueError("Percent split requires percents dict")
+            splits = SplitFactory.create_percent_splits(percents, amount)
+
+        else:
+            raise ValueError(f"Unknown split type: {split_type}")
+
+        expense = Expense(paid_by, amount, splits, description)
+        group.add_expense(expense)
+        return expense
+
+    # ── Balances ─────────────────────────────────────────────
+    def get_balances(self, group: Group) -> dict[str, float]:
+        """Net balance per user: +means owed, -means owes."""
+        return group.get_net_balances()
+
+    def print_balances(self, group: Group) -> None:
+        net = self.get_balances(group)
+        print(f"\n── Balances in '{group.get_name()}' ──")
+        for uid, balance in net.items():
+            name = self._users[uid].get_name()
+            if balance > 0:
+                print(f"  {name} is owed  ${balance:.2f}")
+            elif balance < 0:
+                print(f"  {name} owes     ${abs(balance):.2f}")
+            else:
+                print(f"  {name} is settled")
+
+    # ── Settlement ───────────────────────────────────────────
+    def settle_up(self, group: Group) -> list[Transaction]:
+        """Generate minimum-transaction settlement plan."""
+        net = self.get_balances(group)
+        return self._engine.minimize_transactions(net)
+
+    def print_settlement(self, group: Group) -> None:
+        txns = self.settle_up(group)
+        print(f"\n── Settlement plan for '{group.get_name()}' ──")
+        if not txns:
+            print("  Already settled!")
+            return
+        for txn in txns:
+            print(f"  {txn.describe(self._users)}")
+
+    # ── Record Payment ───────────────────────────────────────
+    def record_payment(self, group: Group, txn: Transaction) -> None:
+        group.record_payment(txn, self._users)
+</code></pre>
+    </div>
+  </div>
+
+  <div id="t-demo" class="tab-panel">
+    <div class="code-wrap">
+      <div class="code-header">
+        <span class="code-filename">demo.py</span>
+        <span class="code-label">Running Example</span>
+      </div>
+      <pre><code class="language-python">from models import SplitType
+from expense_manager import ExpenseManager
+
+def main():
+    mgr = ExpenseManager()
+
+    # ── Step 1: Create users ────────────────────────────────
+    alice = mgr.register_user("Alice", "alice@example.com")
+    bob   = mgr.register_user("Bob",   "bob@example.com")
+    carol = mgr.register_user("Carol", "carol@example.com")
+
+    # ── Step 2: Create a group ──────────────────────────────
+    trip = mgr.create_group("Thailand Trip 2024")
+    for u in [alice, bob, carol]:
+        mgr.add_member_to_group(trip, u)
+
+    # ── Step 3: Add expenses ────────────────────────────────
+    # Alice pays $90 for dinner, split equally
+    mgr.add_expense(
+        group=trip,
+        paid_by=alice,
+        amount=90.0,
+        split_type=SplitType.EQUAL,
+        description="Dinner at Nahm"
+    )
+
+    # Bob pays $60 for hotel, with exact amounts
+    mgr.add_expense(
+        group=trip,
+        paid_by=bob,
+        amount=60.0,
+        split_type=SplitType.EXACT,
+        description="Hotel deposit",
+        exact_amounts={alice: 20.0, bob: 20.0, carol: 20.0}
+    )
+
+    # Carol pays $100 for tours, split by percentage
+    mgr.add_expense(
+        group=trip,
+        paid_by=carol,
+        amount=100.0,
+        split_type=SplitType.PERCENT,
+        description="Island tours",
+        percents={alice: 50, bob: 30, carol: 20}
+    )
+
+    # ── Step 4: View balances ───────────────────────────────
+    mgr.print_balances(trip)
+
+    # ── Step 5: Get settlement plan ─────────────────────────
+    mgr.print_settlement(trip)
+
+
+if __name__ == "__main__":
+    main()
+
+# ── Expected Output (approx) ─────────────────────────────────
+# [NOTIFY] New expense in 'Thailand Trip 2024': $90.00 by Alice — Dinner at Nahm
+# [NOTIFY] New expense in 'Thailand Trip 2024': $60.00 by Bob — Hotel deposit
+# [NOTIFY] New expense in 'Thailand Trip 2024': $100.00 by Carol — Island tours
+#
+# ── Balances in 'Thailand Trip 2024' ──
+#   Alice is owed  $20.00
+#   Bob owes       $10.00
+#   Carol owes     $10.00
+#
+# ── Settlement plan for 'Thailand Trip 2024' ──
+#   Bob → Alice  $10.00
+#   Carol → Alice  $10.00
+</code></pre>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════ SOLID ══════════════ -->
+<div id="solid" class="section">
+  <h1>SOLID Principles</h1>
+
+  <div class="solid-grid">
+    <div class="solid-item">
+      <div class="solid-letter">S</div>
+      <div class="solid-word">Single Responsibility</div>
+      <div class="solid-check"><code>Group</code> manages members + balances. <code>SettlementEngine</code> only computes settlements. Never mixed.</div>
+    </div>
+    <div class="solid-item">
+      <div class="solid-letter">O</div>
+      <div class="solid-word">Open / Closed</div>
+      <div class="solid-check">New split type? Add a new class. Never modify <code>Expense</code> or <code>SplitFactory</code> dispatch.</div>
+    </div>
+    <div class="solid-item">
+      <div class="solid-letter">L</div>
+      <div class="solid-word">Liskov Substitution</div>
+      <div class="solid-check"><code>EqualSplit</code>, <code>ExactSplit</code>, <code>PercentSplit</code> are all valid <code>Split</code> anywhere a <code>Split</code> is expected.</div>
+    </div>
+    <div class="solid-item">
+      <div class="solid-letter">I</div>
+      <div class="solid-word">Interface Segregation</div>
+      <div class="solid-check"><code>ExpenseObserver</code> is a thin interface. Implementors only define <code>on_expense_added</code> and <code>on_payment_made</code>.</div>
+    </div>
+    <div class="solid-item">
+      <div class="solid-letter">D</div>
+      <div class="solid-word">Dependency Inversion</div>
+      <div class="solid-check"><code>Group</code> depends on <code>ExpenseObserver</code> (abstract), not on <code>NotificationService</code> (concrete). Easily swappable.</div>
+    </div>
+  </div>
+
+  <h2>SOLID in Practice — Interview Q</h2>
+  <p><strong>Q: How does your design handle a new "Adjustment Split" type?</strong></p>
+  <ul>
+    <li>Create class <code>AdjustmentSplit(Split)</code> — implement <code>get_amount()</code></li>
+    <li>Add <code>create_adjustment_splits()</code> to <code>SplitFactory</code></li>
+    <li>Add <code>SplitType.ADJUSTMENT</code> to the enum</li>
+    <li>Add one <code>elif</code> branch in <code>ExpenseManager.add_expense()</code></li>
+    <li><strong>Zero changes</strong> to <code>Group</code>, <code>Expense</code>, <code>SettlementEngine</code>, or any existing split class</li>
+  </ul>
+  <div class="infobox">This is the Open/Closed Principle in action. The answer demonstrates you've thought about extensibility, not just the happy path.</div>
+</div>
+
+<!-- ══════════════ FLOWS ══════════════ -->
+<div id="flows" class="section">
+  <h1>Key Interaction Flows</h1>
+
+  <h2>Flow 1: Adding an Expense</h2>
+  <div class="flow-row">
+    <div class="flow-chip">Client calls<br><code>add_expense()</code></div>
+    <div class="flow-arrow">→</div>
+    <div class="flow-chip hl">ExpenseManager<br>(Facade)</div>
+    <div class="flow-arrow">→</div>
+    <div class="flow-chip">SplitFactory<br>creates splits</div>
+    <div class="flow-arrow">→</div>
+    <div class="flow-chip">Expense object<br>created</div>
+    <div class="flow-arrow">→</div>
+    <div class="flow-chip">Group updates<br>balances</div>
+    <div class="flow-arrow">→</div>
+    <div class="flow-chip hl">Observers<br>notified</div>
+  </div>
+
+  <h2>Flow 2: Settlement</h2>
+  <div class="flow-row">
+    <div class="flow-chip">Client calls<br><code>settle_up()</code></div>
+    <div class="flow-arrow">→</div>
+    <div class="flow-chip hl">ExpenseManager</div>
+    <div class="flow-arrow">→</div>
+    <div class="flow-chip">Group returns<br>net_balances</div>
+    <div class="flow-arrow">→</div>
+    <div class="flow-chip hl">SettlementEngine<br>(greedy heap)</div>
+    <div class="flow-arrow">→</div>
+    <div class="flow-chip">List[Transaction]<br>returned</div>
+  </div>
+
+  <h2>Flow 3: Recording a Payment</h2>
+  <div class="flow-row">
+    <div class="flow-chip">Client calls<br><code>record_payment()</code></div>
+    <div class="flow-arrow">→</div>
+    <div class="flow-chip hl">ExpenseManager</div>
+    <div class="flow-arrow">→</div>
+    <div class="flow-chip">Group adjusts<br>balances</div>
+    <div class="flow-arrow">→</div>
+    <div class="flow-chip hl">Observers<br>notified</div>
+  </div>
+
+  <h2>Balance Data Structure</h2>
+  <p>The balance sheet is a nested dict: <code>balances[A][B]</code> = how much A is owed by B. Positive = owed, negative = owes. The <code>get_net_balances()</code> method collapses this to a flat <code>dict[user_id, float]</code>.</p>
+  <div class="code-wrap">
+    <div class="code-header">
+      <span class="code-filename">balance_example.py</span>
+      <span class="code-label">Mental Model</span>
+    </div>
+    <pre><code class="language-python"># After Alice pays $90 split equally (3 people, $30 each):
+balances = {
+    "alice_id": {"bob_id": +30.0, "carol_id": +30.0},  # Alice is owed
+    "bob_id":   {"alice_id": -30.0},                    # Bob owes Alice
+    "carol_id": {"alice_id": -30.0},                    # Carol owes Alice
+}
+
+# net_balances (collapsed):
+net = {
+    "alice_id": +60.0,   # owed $60 total
+    "bob_id":   -30.0,   # owes $30
+    "carol_id": -30.0,   # owes $30
+}
+</code></pre>
+  </div>
+</div>
+
+<!-- ══════════════ TRADEOFFS ══════════════ -->
+<div id="tradeoffs" class="section">
+  <h1>Trade-offs &amp; Extensions</h1>
+
+  <h2>Design Decisions &amp; Alternatives</h2>
+
+  <div class="req-grid">
+    <div class="req-card">
+      <div class="req-card-title">Balance storage: nested dict</div>
+      <ul>
+        <li><strong>Chosen:</strong> <code>dict[uid][uid] → float</code></li>
+        <li><strong>Why:</strong> O(1) lookup, easy to update incrementally</li>
+        <li><strong>Alternative:</strong> Recompute from expense list each time — simpler but O(expenses × members)</li>
+        <li><strong>Trade-off:</strong> Consistency burden — must update both directions on each expense</li>
+      </ul>
+    </div>
+    <div class="req-card">
+      <div class="req-card-title">Settlement algorithm</div>
+      <ul>
+        <li><strong>Chosen:</strong> Greedy two-heap</li>
+        <li><strong>Why:</strong> O(n log n), provably minimal transactions</li>
+        <li><strong>Alternative:</strong> Simple pairwise — O(n²), easy to understand</li>
+        <li><strong>Alternative:</strong> Graph-based flow network — can be optimal but harder to explain in 30 min</li>
+      </ul>
+    </div>
+    <div class="req-card">
+      <div class="req-card-title">Observer vs direct call</div>
+      <ul>
+        <li><strong>Chosen:</strong> Observer (interface + register)</li>
+        <li><strong>Why:</strong> Decouples Group from notification details</li>
+        <li><strong>Alternative:</strong> Inject <code>NotificationService</code> directly into <code>Group</code></li>
+        <li><strong>Trade-off:</strong> Observer is slightly harder to trace at runtime</li>
+      </ul>
+    </div>
+    <div class="req-card">
+      <div class="req-card-title">Split creation: Factory vs Enum dispatch</div>
+      <ul>
+        <li><strong>Chosen:</strong> Separate <code>create_*</code> methods per type</li>
+        <li><strong>Why:</strong> Each type has different params — a single <code>create(type, **kwargs)</code> would hide required args</li>
+        <li><strong>Alternative:</strong> Registry dict <code>{"EQUAL": EqualSplit, ...}</code> + dynamic dispatch</li>
+      </ul>
+    </div>
+  </div>
+
+  <h2>Possible Extensions</h2>
+  <ul>
+    <li><strong>Currency support:</strong> Add a <code>Currency</code> field to <code>Expense</code>; inject a <code>CurrencyConverter</code> into <code>SettlementEngine</code></li>
+    <li><strong>Recurring expenses:</strong> Add a <code>RecurringExpense</code> subclass with a <code>Scheduler</code> that fires <code>ExpenseManager.add_expense()</code> on a schedule</li>
+    <li><strong>Expense categories:</strong> Add <code>Category</code> enum to <code>Expense</code>; queries become easy</li>
+    <li><strong>Audit log:</strong> Add an <code>AuditObserver</code> that persists all events — zero changes to core classes</li>
+    <li><strong>Multiple settlement strategies:</strong> Wrap <code>SettlementEngine</code> in an interface, inject via constructor — different algorithms at runtime</li>
+  </ul>
+</div>
+
+<!-- ══════════════ Q&A ══════════════ -->
+<div id="qa" class="section">
+  <h1>Interview Q&amp;A Flashcards</h1>
+  <p>Click any question to reveal the answer. Practice saying it out loud.</p>
+
+  <div class="qa-list">
+
+    <div class="qa-card" onclick="this.classList.toggle('open')">
+      <div class="qa-q"><span>What design patterns did you use and why?</span><span class="qa-chevron">▶</span></div>
+      <div class="qa-a">Four patterns, each chosen for a specific reason:<br><br>
+        <strong>Strategy</strong> — for split types. Each split is a different algorithm for computing a share. Swapping algorithms without touching Expense.<br>
+        <strong>Factory</strong> — for creating split objects. Each type has different constructor params; factory hides that complexity.<br>
+        <strong>Observer</strong> — for notifications. Group fires events; notification/audit systems subscribe. Core logic stays clean.<br>
+        <strong>Facade</strong> — ExpenseManager is the single entry point. Hides coordination between Group, SplitFactory, SettlementEngine.
+      </div>
+    </div>
+
+    <div class="qa-card" onclick="this.classList.toggle('open')">
+      <div class="qa-q"><span>How does the settlement algorithm work?</span><span class="qa-chevron">▶</span></div>
+      <div class="qa-a">I compute each person's net balance (positive = owed, negative = owes). Then I use two max-heaps — one for creditors, one for debtors. Each iteration: pop the largest creditor and largest debtor, have the debtor pay the creditor the minimum of (what creditor is owed, what debtor owes). Push back any remainder. This produces at most n−1 transactions and runs in O(n log n).</div>
+    </div>
+
+    <div class="qa-card" onclick="this.classList.toggle('open')">
+      <div class="qa-q"><span>How would you add a new split type, say "Adjustment Split"?</span><span class="qa-chevron">▶</span></div>
+      <div class="qa-a">1. Create <code>AdjustmentSplit(Split)</code> — implement <code>get_amount()</code>.<br>
+        2. Add <code>SplitType.ADJUSTMENT</code> to the enum.<br>
+        3. Add <code>SplitFactory.create_adjustment_splits()</code>.<br>
+        4. Add one elif branch in <code>ExpenseManager.add_expense()</code>.<br><br>
+        No changes to <code>Group</code>, <code>Expense</code>, <code>SettlementEngine</code>, or existing split classes. This is the Open/Closed Principle.
+      </div>
+    </div>
+
+    <div class="qa-card" onclick="this.classList.toggle('open')">
+      <div class="qa-q"><span>How do you keep balances consistent?</span><span class="qa-chevron">▶</span></div>
+      <div class="qa-a">The balance sheet is a nested dict updated in <code>Group._update_balances()</code> every time an expense is added. For each split, I update both directions atomically in the same method: balances[payer][participant] += amount AND balances[participant][payer] -= amount. This invariant means if A is owed $10 by B, then B owes $10 to A — always. Record payment does the same in reverse.</div>
+    </div>
+
+    <div class="qa-card" onclick="this.classList.toggle('open')">
+      <div class="qa-q"><span>What's the difference between Split and Transaction?</span><span class="qa-chevron">▶</span></div>
+      <div class="qa-a">A <code>Split</code> represents one person's share of a single expense. It's created when an expense is added. A <code>Transaction</code> is the output of the settlement algorithm — it says "Person A should pay Person B $X" to settle accumulated debts across all expenses. One expense creates many Splits; many expenses together produce a few Transactions.</div>
+    </div>
+
+    <div class="qa-card" onclick="this.classList.toggle('open')">
+      <div class="qa-q"><span>Why is ExpenseManager a Facade and not just a utility class?</span><span class="qa-chevron">▶</span></div>
+      <div class="qa-a">A utility class is a grab-bag of static helpers. A Facade is a deliberate design: it provides a simplified interface to a complex subsystem and hides the internal coordination. ExpenseManager does exactly that — callers don't know about SplitFactory, SettlementEngine, or how observers are wired. The Facade is thin: it delegates, it doesn't implement domain logic itself.</div>
+    </div>
+
+    <div class="qa-card" onclick="this.classList.toggle('open')">
+      <div class="qa-q"><span>How would you support currency conversion?</span><span class="qa-chevron">▶</span></div>
+      <div class="qa-a">Add a <code>Currency</code> field to <code>Expense</code>. Define a <code>CurrencyConverter</code> interface with a <code>convert(amount, from_currency, to_currency)</code> method. Inject it into <code>SettlementEngine</code>. When computing net balances, convert all amounts to a base currency before summing. In tests, inject a mock converter. This follows Dependency Inversion — SettlementEngine depends on the abstract converter, not a real FX feed.</div>
+    </div>
+
+    <div class="qa-card" onclick="this.classList.toggle('open')">
+      <div class="qa-q"><span>How does the Observer pattern help here vs just calling a method?</span><span class="qa-chevron">▶</span></div>
+      <div class="qa-a">If Group directly called NotificationService.notify(), it would depend on that concrete class. Tomorrow you'd also need an AuditLogger, then an AnalyticsService — Group's constructor would grow. With Observer, Group only knows about the ExpenseObserver interface. New subscribers are added by registering them, zero changes to Group. The core domain object stays stable; the surrounding infrastructure is hot-swappable.</div>
+    </div>
+
+  </div>
+</div>
+
+</main>
+
+<script>
+function show(id) {
+  document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
+  document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+  event.currentTarget.classList.add('active');
+  document.getElementById('main').scrollTo({top:0,behavior:'smooth'});
+}
+
+function switchTab(btn, panelId) {
+  btn.closest('.section').querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+  btn.closest('.section').querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
+  btn.classList.add('active');
+  document.getElementById(panelId).classList.add('active');
+}
+
+document.addEventListener('DOMContentLoaded', () => {
+  hljs.highlightAll();
+});
+</script>
+</body>
+</html>

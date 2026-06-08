@@ -1,0 +1,1242 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>File System LLD — Extensive Why Edition</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Serif:ital,wght@0,400;0,600;1,400&family=JetBrains+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+:root {
+  --orange: #1a5c8f; --orange2: #2176ae; --orange-bg: #f0f7ff; --orange-border: #b3d4f0;
+  --bg: #f7f9fc; --surface: #ffffff; --surface2: #f0f4f8; --surface3: #e2e8f0;
+  --border: #d9e2ec; --text: #1a202c; --text2: #4a5568; --text3: #8898aa;
+  --green: #276749; --green-bg: #edf7f2; --green-border: #b7dfc8;
+  --red: #9b1c1c; --red-bg: #fef2f2; --red-border: #fcc;
+  --blue: #1a4480; --blue-bg: #eff6ff; --blue-border: #bfdbfe;
+  --amber: #92400e; --amber-bg: #fffbeb; --amber-border: #fde68a;
+  --purple: #5b21b6; --purple-bg: #f5f3ff; --purple-border: #ddd6fe;
+  --mono: 'JetBrains Mono', monospace;
+  --sans: 'IBM Plex Sans', sans-serif;
+  --serif: 'IBM Plex Serif', serif;
+  --sidebar-w: 250px;
+  --r: 8px;
+}
+body { font-family: var(--sans); background: var(--bg); color: var(--text); display: flex; min-height: 100vh; }
+
+/* ---- SIDEBAR ---- */
+.sidebar {
+  width: var(--sidebar-w); position: fixed; top: 0; left: 0; bottom: 0;
+  background: var(--surface); border-right: 2px solid var(--border);
+  overflow-y: auto; z-index: 100; display: flex; flex-direction: column;
+}
+.logo-wrap { padding: 22px 18px 18px; border-bottom: 1px solid var(--border); }
+.logo { display: flex; align-items: center; gap: 10px; }
+.logo-icon { width: 36px; height: 36px; border-radius: 8px; background: var(--orange2); display: flex; align-items: center; justify-content: center; font-size: 18px; }
+.logo-name { font-size: 16px; font-weight: 600; font-family: var(--serif); }
+.logo-tag { font-size: 11px; color: var(--text3); margin-top: 3px; letter-spacing: 0.03em; }
+.nav-group { padding: 14px 18px 4px; font-size: 9px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.1em; color: var(--text3); }
+.nav-item { display: flex; align-items: center; gap: 9px; padding: 9px 18px; font-size: 13px; color: var(--text2); cursor: pointer; border-left: 3px solid transparent; transition: all 0.12s; }
+.nav-item:hover { background: var(--surface2); color: var(--text); }
+.nav-item.active { border-left-color: var(--orange2); background: var(--orange-bg); color: var(--orange); font-weight: 500; }
+.nav-item i { width: 15px; text-align: center; font-size: 12px; }
+.nav-item .step-num { font-size: 9px; font-weight: 700; background: var(--surface3); border-radius: 3px; padding: 1px 5px; margin-left: auto; color: var(--text3); }
+.nav-item.active .step-num { background: var(--orange-border); color: var(--orange); }
+
+/* ---- MAIN ---- */
+.main { margin-left: var(--sidebar-w); padding: 52px 60px; max-width: 920px; width: 100%; }
+.section { display: none; }
+.section.active { display: block; }
+
+/* ---- SECTION HEADER ---- */
+.sec-eyebrow { font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.1em; color: var(--orange2); margin-bottom: 10px; }
+.sec-title { font-family: var(--serif); font-size: 30px; font-weight: 600; line-height: 1.2; margin-bottom: 10px; }
+.sec-intro { font-size: 15px; color: var(--text2); line-height: 1.8; margin-bottom: 36px; border-left: 3px solid var(--border); padding-left: 16px; }
+
+/* ---- DIVIDERS / HEADINGS ---- */
+h3 { font-family: var(--serif); font-size: 19px; font-weight: 600; margin: 40px 0 14px; padding-top: 16px; border-top: 1px solid var(--border); color: var(--text); }
+h4 { font-size: 13px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.06em; margin: 18px 0 8px; color: var(--text3); }
+p { font-size: 14px; color: var(--text2); line-height: 1.8; margin: 10px 0; }
+
+/* ---- CALLOUT ---- */
+.prompt-box { background: var(--surface2); border: 1px solid var(--border); border-radius: var(--r); padding: 16px 20px; margin: 20px 0; }
+.prompt-box .plabel { font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.08em; color: var(--text3); margin-bottom: 7px; }
+.prompt-box .ptext { font-family: var(--serif); font-size: 16px; font-style: italic; color: var(--text); line-height: 1.6; }
+
+/* ---- DIALOGUE ---- */
+.dialogue { border: 1px solid var(--border); border-radius: var(--r); overflow: hidden; margin: 20px 0; }
+.d-row { padding: 14px 18px; border-bottom: 1px solid var(--border); font-size: 14px; line-height: 1.7; }
+.d-row:last-child { border-bottom: none; }
+.d-row.you { background: var(--surface); }
+.d-row.iv { background: var(--surface2); }
+.d-speaker { font-size: 9px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.09em; margin-bottom: 5px; }
+.d-row.you .d-speaker { color: var(--orange2); }
+.d-row.iv .d-speaker { color: var(--text3); }
+.why-inline {
+  margin-top: 12px; padding: 12px 14px;
+  background: var(--amber-bg); border-left: 3px solid #f59e0b;
+  border-radius: 0 6px 6px 0; font-size: 13px; color: var(--amber); line-height: 1.7;
+}
+.why-inline b { font-weight: 600; }
+.why-inline code { font-family: var(--mono); font-size: 11px; background: rgba(0,0,0,0.06); padding: 1px 5px; border-radius: 3px; }
+
+/* ---- ANNOTATED CODE ---- */
+.ann-wrap { margin: 22px 0; border: 1px solid var(--border); border-radius: var(--r); overflow: hidden; }
+.ann-header { background: #181825; padding: 10px 18px; display: flex; align-items: center; gap: 10px; border-bottom: 1px solid #2a2a3e; }
+.ann-header span { font-family: var(--mono); font-size: 12px; color: #6c7086; }
+.ann-row { display: grid; grid-template-columns: 46% 54%; border-bottom: 1px solid #2a2a3e; }
+.ann-row:last-child { border-bottom: none; }
+.ann-code { background: #1e1e2e; padding: 14px 18px; font-family: var(--mono); font-size: 12.5px; line-height: 1.75; color: #cdd6f4; overflow-x: auto; white-space: pre; }
+.ann-why { background: var(--surface2); padding: 14px 16px; border-left: 1px solid var(--border); font-size: 13px; line-height: 1.7; color: var(--text2); display: flex; flex-direction: column; gap: 6px; }
+.ann-why .wlabel { font-size: 9px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.09em; color: var(--orange2); }
+.ann-why .wmain { color: var(--text2); }
+.ann-why .wfail { background: var(--red-bg); border: 1px solid var(--red-border); border-radius: 5px; padding: 8px 10px; font-size: 12px; color: var(--red); }
+.ann-why .wfail b { font-weight: 600; }
+.ann-why .wfix { background: var(--green-bg); border: 1px solid var(--green-border); border-radius: 5px; padding: 8px 10px; font-size: 12px; color: var(--green); }
+.ann-why .wfix b { font-weight: 600; }
+
+/* ---- SYNTAX HIGHLIGHT ---- */
+.kw { color: #cba6f7; } .cls { color: #a6e3a1; font-weight: 500; }
+.cm { color: #585b70; font-style: italic; } .st { color: #f38ba8; }
+.nm { color: #89b4fa; } .dn { color: #fab387; }
+
+/* ---- PLAIN CODE ---- */
+.code-block { background: #1e1e2e; border-radius: var(--r); padding: 18px 20px; font-family: var(--mono); font-size: 13px; line-height: 1.8; overflow-x: auto; margin: 14px 0; color: #cdd6f4; white-space: pre; }
+
+/* ---- WHY BOX ---- */
+.why-box { background: var(--surface); border: 1px solid var(--border); border-radius: var(--r); padding: 18px 20px; margin: 18px 0; }
+.why-box .wl { display: flex; align-items: center; gap: 8px; font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.09em; color: var(--orange2); margin-bottom: 10px; }
+.why-box p { margin: 6px 0; }
+
+/* ---- ENTITY TABLE ---- */
+.etable { width: 100%; border-collapse: collapse; margin: 18px 0; font-size: 13.5px; }
+.etable th { text-align: left; padding: 10px 14px; background: var(--surface2); font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.07em; color: var(--text3); border-bottom: 2px solid var(--border); }
+.etable td { padding: 14px 14px; border-bottom: 1px solid var(--border); vertical-align: top; line-height: 1.7; color: var(--text2); }
+.etable td:first-child { font-weight: 500; color: var(--text); white-space: nowrap; }
+.etable tr:last-child td { border-bottom: none; }
+.etable tr:hover td { background: var(--surface2); }
+.badge { display: inline-block; font-size: 9px; font-weight: 700; padding: 2px 7px; border-radius: 20px; margin-right: 6px; text-transform: uppercase; letter-spacing: 0.05em; }
+.bk { background: var(--green-bg); color: var(--green); }
+.bs { background: var(--red-bg); color: var(--red); }
+
+/* ---- REQ LISTS ---- */
+.req-box { background: var(--surface2); border: 1px solid var(--border); border-radius: var(--r); padding: 18px 20px; margin: 14px 0; }
+.req-list { list-style: none; }
+.req-list li { font-size: 14px; color: var(--text2); padding: 6px 0; display: flex; gap: 10px; align-items: flex-start; line-height: 1.7; }
+.req-list li::before { font-weight: 700; flex-shrink: 0; margin-top: 1px; }
+.req-list li::before { content: "✓"; color: var(--green); }
+.req-list.out li::before { content: "✗"; color: var(--red); }
+
+/* ---- STATE PILLS ---- */
+.state-row { display: flex; align-items: center; flex-wrap: wrap; gap: 6px; margin: 18px 0; }
+.sp { padding: 6px 14px; border-radius: 20px; font-size: 11px; font-weight: 600; border: 1px solid; }
+.sarrow { color: var(--text3); font-size: 12px; }
+.sg { background:#f3f2ef; border-color:#d0cdc7; color:#4a4845; }
+.sb { background:#eff6ff; border-color:#bfdbfe; color:#1a4480; }
+.spu{ background:#f5f3ff; border-color:#ddd6fe; color:#5b21b6; }
+.sam{ background:#fffbeb; border-color:#fde68a; color:#92400e; }
+.sco{ background:#fef2f2; border-color:#fecaca; color:#991b1b; }
+.ste{ background:#ecfdf5; border-color:#a7f3d0; color:#065f46; }
+.srd{ background:#fef2f2; border-color:#fca5a5; color:#7f1d1d; }
+
+/* ---- COMPARE ---- */
+.compare-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin: 14px 0; }
+.cb { background: var(--red-bg); border: 1px solid var(--red-border); border-radius: var(--r); padding: 14px 16px; }
+.cg { background: var(--green-bg); border: 1px solid var(--green-border); border-radius: var(--r); padding: 14px 16px; }
+.clabel { font-size: 9px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 9px; }
+.cb .clabel { color: var(--red); } .cg .clabel { color: var(--green); }
+.cb pre, .cg pre { font-family: var(--mono); font-size: 12px; line-height: 1.7; white-space: pre-wrap; }
+.cb pre { color: #7f1d1d; } .cg pre { color: #1a4731; }
+.cexplain { font-size: 13px; color: var(--text2); margin-top: 10px; line-height: 1.65; }
+
+/* ---- PATTERN CARD ---- */
+.pcard { border: 1px solid var(--border); border-radius: var(--r); padding: 20px 22px; margin: 16px 0; background: var(--surface); }
+.ptitle { font-family: var(--serif); font-size: 17px; font-weight: 600; margin-bottom: 4px; display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+.ptag { font-size: 10px; background: var(--surface2); border-radius: 20px; padding: 2px 9px; font-weight: 500; color: var(--text3); font-family: var(--sans); }
+.pcard p { margin: 8px 0; }
+.pcard b { font-weight: 600; color: var(--text); }
+
+/* ---- SOLID ---- */
+.solid-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin: 14px 0; }
+.solid-card { border: 1px solid var(--border); border-radius: var(--r); padding: 18px 20px; background: var(--surface); }
+.solid-letter { font-family: var(--serif); font-size: 32px; font-weight: 600; color: var(--orange2); line-height: 1; margin-bottom: 4px; }
+.solid-name { font-size: 13px; font-weight: 600; margin-bottom: 10px; }
+.solid-def { font-size: 13px; color: var(--text3); margin-bottom: 10px; font-style: italic; line-height: 1.6; }
+.solid-full { grid-column: 1 / -1; }
+.vbox { background: var(--red-bg); border: 1px solid var(--red-border); border-radius: 6px; padding: 11px 13px; margin: 8px 0; font-size: 12.5px; color: var(--red); line-height: 1.65; }
+.fbox { background: var(--green-bg); border: 1px solid var(--green-border); border-radius: 6px; padding: 11px 13px; margin: 8px 0; font-size: 12.5px; color: var(--green); line-height: 1.65; }
+.vbox b, .fbox b { font-weight: 600; }
+
+/* ---- TRADEOFF ---- */
+.tsec { margin: 24px 0; border: 1px solid var(--border); border-radius: var(--r); overflow: hidden; }
+.thead { padding: 13px 18px; background: var(--surface2); border-bottom: 1px solid var(--border); font-size: 15px; font-weight: 600; font-family: var(--serif); }
+.tbody { padding: 16px 18px; }
+.scenario { background: var(--amber-bg); border-left: 3px solid #f59e0b; border-radius: 0 6px 6px 0; padding: 12px 15px; margin: 10px 0; font-size: 13px; color: var(--amber); line-height: 1.7; }
+.scenario b { font-weight: 600; }
+.td-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin: 12px 0; }
+.tpro { background: var(--green-bg); border: 1px solid var(--green-border); border-radius: 6px; padding: 13px 15px; font-size: 13px; color: var(--green); line-height: 1.65; }
+.tcon { background: var(--amber-bg); border: 1px solid var(--amber-border); border-radius: 6px; padding: 13px 15px; font-size: 13px; color: var(--amber); line-height: 1.65; }
+.tlabel { font-size: 9px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 7px; display: block; }
+
+/* ---- Q&A ---- */
+.qa { border: 1px solid var(--border); border-radius: var(--r); overflow: hidden; margin: 12px 0; }
+.qa-q { padding: 15px 18px; cursor: pointer; font-size: 14px; font-weight: 500; display: flex; justify-content: space-between; align-items: center; background: var(--surface); user-select: none; gap: 12px; }
+.qa-q:hover { background: var(--surface2); }
+.qa-q i { color: var(--text3); transition: transform 0.2s; font-size: 11px; flex-shrink: 0; }
+.qa-q.open i { transform: rotate(180deg); }
+.qa-a { display: none; padding: 18px 20px; font-size: 14px; line-height: 1.85; color: var(--text2); background: var(--surface2); border-top: 1px solid var(--border); }
+.qa-a.show { display: block; }
+.qa-a h4 { margin-top: 16px; }
+.qa-a code { font-family: var(--mono); font-size: 12px; background: var(--surface3); padding: 1px 6px; border-radius: 4px; color: var(--text); }
+.qa-a .code-block { margin: 12px 0; font-size: 12px; }
+
+code { font-family: var(--mono); font-size: 12px; background: var(--surface2); padding: 1px 5px; border-radius: 4px; color: var(--orange); border: 1px solid var(--border); }
+
+::-webkit-scrollbar { width: 5px; height: 5px; }
+::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+</style>
+</head>
+<body>
+
+<nav class="sidebar">
+  <div class="logo-wrap">
+    <div class="logo"><div class="logo-icon">🗂️</div><div><div class="logo-name">File System LLD</div><div class="logo-tag">Extensive Whys Edition</div></div></div>
+  </div>
+  <div class="nav-group">Foundations</div>
+  <div class="nav-item active" onclick="show('req',this)"><i class="fa-solid fa-list-check"></i> Requirements <span class="step-num">01</span></div>
+  <div class="nav-item" onclick="show('ent',this)"><i class="fa-solid fa-diagram-project"></i> Core Entities <span class="step-num">02</span></div>
+  <div class="nav-group">Implementation</div>
+  <div class="nav-item" onclick="show('cls',this)"><i class="fa-solid fa-code"></i> Class Design <span class="step-num">03</span></div>
+  <div class="nav-item" onclick="show('flow',this)"><i class="fa-solid fa-arrow-right-arrow-left"></i> Key Flows <span class="step-num">04</span></div>
+  <div class="nav-group">Deep Dives</div>
+  <div class="nav-item" onclick="show('pat',this)"><i class="fa-solid fa-puzzle-piece"></i> Design Patterns <span class="step-num">05</span></div>
+  <div class="nav-item" onclick="show('sol',this)"><i class="fa-solid fa-layer-group"></i> SOLID Principles <span class="step-num">06</span></div>
+  <div class="nav-item" onclick="show('trd',this)"><i class="fa-solid fa-scale-balanced"></i> Trade-offs <span class="step-num">07</span></div>
+  <div class="nav-item" onclick="show('qa',this)"><i class="fa-solid fa-circle-question"></i> Interview Q&amp;A <span class="step-num">08</span></div>
+</nav>
+
+<main class="main">
+
+<!-- ======== SECTION 1: REQUIREMENTS ======== -->
+<div class="section active" id="s-req">
+  <div class="sec-eyebrow">Step 1 · ~5 minutes</div>
+  <div class="sec-title">Requirements &amp; Clarifications</div>
+  <div class="sec-intro">The interviewer gives you a vague sentence. Your first job is <em>not</em> to design — it is to interrogate. Every question you ask is a bug you're preventing before you write a single class. Interviewers expect you to shape an ambiguous prompt into a concrete scope. A file system prompt especially looks simple on the surface but hides many decisions that change your entire class diagram.</div>
+
+  <div class="prompt-box">
+    <div class="plabel">The prompt you'll receive</div>
+    <div class="ptext">"Design a file system. It should support creating, reading, updating, and deleting files and directories."</div>
+  </div>
+
+  <p>Four verbs. That's it. But behind those four verbs lie: a permission model, a path resolution algorithm, hard links vs soft links, metadata tracking, concurrency semantics, and the entire Composite pattern. Each answer you get from the interviewer eliminates a class or forces you to add one. Start asking.</p>
+
+  <h3>Clarifying Questions — with deep reasoning</h3>
+  <div class="dialogue">
+
+    <div class="d-row you">
+      <div class="d-speaker">You</div>
+      "Does this need to support multiple users with separate ownership and permissions, or is it a single-user system?"
+      <div class="why-inline">
+        <b>Why this question defines two completely different designs:</b> A single-user system has no permission model — every operation succeeds or fails based purely on whether the path exists. A multi-user system needs a <code>Permission</code> class, an <code>owner_id</code> field on every node, a <code>check_permission(user, node, operation)</code> method, and a <code>User</code> class. That's potentially 3–4 extra classes and a permission check on every single operation. If you design for single-user and the interviewer meant multi-user, you will have to tear out your <code>FileSystem</code> methods and re-thread user context through every call. Ask first.
+      </div>
+    </div>
+    <div class="d-row iv"><div class="d-speaker">Interviewer</div>"Support multiple users. Each file/directory has an owner. Permissions are read, write, execute — like Unix."</div>
+
+    <div class="d-row you">
+      <div class="d-speaker">You</div>
+      "Should the system support hard links and symbolic (soft) links, or just regular files and directories?"
+      <div class="why-inline">
+        <b>Why this changes the entire node model:</b> In a plain design, every path maps to exactly one node object. With hard links, multiple paths can point to the same underlying file data — a single <code>File</code> object can be referenced from two completely different directory locations. This means you cannot store the path inside the file object (because it has two paths). It also means deletion becomes tricky: deleting one path should not delete the data if another path still references it — you need a reference count. Symbolic links are even more complex: a symlink is itself a separate file whose content is a path string, and you need to handle dangling symlinks (pointing to deleted targets). If you skip this question and start designing, you'll build a simpler model that cannot support either concept.
+      </div>
+    </div>
+    <div class="d-row iv"><div class="d-speaker">Interviewer</div>"Support symbolic links. Skip hard links to keep scope manageable."</div>
+
+    <div class="d-row you">
+      <div class="d-speaker">You</div>
+      "Should we support file metadata — creation time, last modified time, file size? And do we track the actual file content, or just the structure?"
+      <div class="why-inline">
+        <b>Why the content question determines one of the most important design decisions:</b> If you track actual content (strings, bytes), then files have a <code>content</code> field and methods like <code>read()</code> and <code>write(data)</code>. If you only model structure (paths, names, metadata), files are lightweight metadata objects with no content. The former is needed for a realistic in-memory file system. The latter is enough if the interviewer wants to focus on directory traversal and search. The size field also matters: if you store content, size is derived from <code>len(content)</code>. If you store only metadata, size is an explicit integer field. Getting this wrong means your method signatures are either too rich or too shallow.
+      </div>
+    </div>
+    <div class="d-row iv"><div class="d-speaker">Interviewer</div>"Track content as strings (in-memory). Track creation time, modified time, and size. Size should update automatically when content changes."</div>
+
+    <div class="d-row you">
+      <div class="d-speaker">You</div>
+      "Should we support directory size — meaning the total size of all files inside a directory recursively?"
+      <div class="why-inline">
+        <b>Why this one question unlocks the Composite pattern:</b> If yes, then both <code>File</code> and <code>Directory</code> need a <code>get_size()</code> method that returns an integer. A file returns its own content size. A directory returns the sum of <code>get_size()</code> on all its children. This is exactly the Composite pattern — a uniform interface on leaf and container objects. If no, you only need <code>size</code> on File. Ask before you decide whether to use Composite, because the interviewer is often specifically testing whether you'll reach for it.
+      </div>
+    </div>
+    <div class="d-row iv"><div class="d-speaker">Interviewer</div>"Yes — get_size() should work recursively for directories."</div>
+
+    <div class="d-row you">
+      <div class="d-speaker">You</div>
+      "Do we need to support search — finding all files matching a name pattern or extension within a directory tree?"
+      <div class="why-inline">
+        <b>Why this tests your Iterator/Visitor pattern knowledge:</b> A search over a directory tree is a tree traversal. If you embed the search logic directly in the <code>Directory</code> class, you have tight coupling: changing the traversal order or adding a new filter type requires modifying <code>Directory</code>. The clean design is a separate <code>FileSearcher</code> or <code>FindVisitor</code> that traverses the tree independently. If the interviewer says yes to search, you have a natural opening to introduce either DFS/BFS traversal or the Visitor pattern — both are impressive additions in an LLD interview.
+      </div>
+    </div>
+    <div class="d-row iv"><div class="d-speaker">Interviewer</div>"Yes — support search by name and by extension."</div>
+
+    <div class="d-row you">
+      <div class="d-speaker">You</div>
+      "Should we handle concurrency — multiple threads reading/writing the same file or directory simultaneously?"
+      <div class="why-inline">
+        <b>Why this is the last thing to scope, not the first:</b> Thread safety in a file system involves reader-writer locks: multiple readers can hold a file simultaneously (reading doesn't corrupt state), but writers must be exclusive (two simultaneous writes produce garbage). If in scope, every <code>File</code> and <code>Directory</code> needs a <code>threading.RLock</code> or <code>threading.Lock</code>, and every method that mutates state must acquire the lock. This is a significant implementation complexity. Ask the interviewer explicitly. For most 45-minute interviews, they will say "acknowledge it but keep the main design thread-safe via locks, don't implement the full lock protocol." Knowing to ask signals maturity.
+      </div>
+    </div>
+    <div class="d-row iv"><div class="d-speaker">Interviewer</div>"Acknowledge it in the design. Show where you'd add locks. Don't implement the full protocol."</div>
+
+  </div>
+
+  <h3>In Scope vs Out of Scope</h3>
+  <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin: 14px 0;">
+    <div class="req-box">
+      <div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.07em;color:var(--green);margin-bottom:10px;">In Scope</div>
+      <ul class="req-list">
+        <li>Create, read, write, delete files and directories</li>
+        <li>Multi-user ownership with Unix-style permissions (rwx)</li>
+        <li>Symbolic links with dangling link detection</li>
+        <li>Recursive <code>get_size()</code> via Composite pattern</li>
+        <li>File metadata: creation time, modified time, size</li>
+        <li>Search by name or extension across directory tree</li>
+        <li>Absolute path resolution from root</li>
+        <li>Thread-safety acknowledgement with lock placement</li>
+      </ul>
+    </div>
+    <div class="req-box">
+      <div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.07em;color:var(--red);margin-bottom:10px;">Out of Scope</div>
+      <ul class="req-list out">
+        <li>Hard links (reference-counted inodes)</li>
+        <li>Disk persistence (on-disk format, inodes, blocks)</li>
+        <li>Full reader-writer lock protocol implementation</li>
+        <li>File compression or encryption</li>
+        <li>Network file system (NFS) semantics</li>
+        <li>File watching / change notification events</li>
+      </ul>
+    </div>
+  </div>
+</div>
+
+<!-- ======== SECTION 2: CORE ENTITIES ======== -->
+<div class="section" id="s-ent">
+  <div class="sec-eyebrow">Step 2 · ~5 minutes</div>
+  <div class="sec-title">Core Entities — What Exists and Why</div>
+  <div class="sec-intro">Before writing a single class, name your entities and justify each one. The key question is: <em>"Is this a class, or is it just a field on another class?"</em> An entity becomes a class when it has its own rules to enforce or its own behaviour that would be wrong to put elsewhere. Pure data with no behaviour stays as a simple dataclass or attribute.</div>
+
+  <table class="etable">
+    <thead>
+      <tr><th>Entity</th><th>Class or Dataclass?</th><th>Why it exists and what it owns</th></tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td>FileSystemNode</td>
+        <td><span class="badge bk">Abstract Class</span></td>
+        <td>The root of the Composite hierarchy. Both <code>File</code> and <code>Directory</code> share: a name, owner, permissions, timestamps, and the <code>get_size()</code> interface. Making this abstract forces every node type to implement <code>get_size()</code> — the compiler/type-checker enforces it. Without this, you'd have duplicated fields in both <code>File</code> and <code>Directory</code> and no guarantee both classes support the same interface.</td>
+      </tr>
+      <tr>
+        <td>File</td>
+        <td><span class="badge bk">Class</span></td>
+        <td>A leaf node. Has behaviour: <code>read()</code> and <code>write(data)</code> enforce rules — write updates both <code>content</code> and <code>modified_at</code> and recalculates <code>size</code>. If you stored these as a plain struct, nothing would stop <code>content</code> and <code>size</code> drifting apart. The rule "size is always the length of content" must be enforced by the class.</td>
+      </tr>
+      <tr>
+        <td>Directory</td>
+        <td><span class="badge bk">Class</span></td>
+        <td>A composite node. Owns a <code>children: dict[str, FileSystemNode]</code>. Has rules: no two children with the same name, only the directory's owner or a superuser can add/remove children, deletion must be recursive or checked for emptiness. These rules must live on <code>Directory</code>, not on the caller.</td>
+      </tr>
+      <tr>
+        <td>SymbolicLink</td>
+        <td><span class="badge bk">Class</span></td>
+        <td>A special leaf that holds a <code>target_path: str</code> instead of content. Behaves like a node in the tree but redirects all real operations to its target. Deserves its own class because its resolution logic (follow the path, detect cycles, detect dangling links) is non-trivial and completely unlike <code>File</code> or <code>Directory</code> behaviour.</td>
+      </tr>
+      <tr>
+        <td>Permission</td>
+        <td><span class="badge bk">Class / Enum flags</span></td>
+        <td>Encodes read/write/execute for owner, group, and others — the Unix 9-bit model. Has a method <code>can(user, operation) → bool</code> that checks whether a given user has permission. Permission checking logic must not be scattered across every operation — it lives here and is called centrally.</td>
+      </tr>
+      <tr>
+        <td>User</td>
+        <td><span class="badge bk">Class</span></td>
+        <td>Has a <code>user_id</code>, a <code>username</code>, and a <code>groups: set[str]</code>. Permission checks need to know both the user's direct identity and their group memberships. A plain string <code>user_id</code> field cannot express group membership. A class is needed.</td>
+      </tr>
+      <tr>
+        <td>FileSystem</td>
+        <td><span class="badge bk">Class (Orchestrator)</span></td>
+        <td>The single entry point. Owns the root directory, the user registry, and all cross-entity operations like path resolution and search. External code should only call <code>FileSystem</code> — never <code>Directory.add_child()</code> directly. This is the Facade pattern.</td>
+      </tr>
+      <tr>
+        <td>FileMetadata</td>
+        <td><span class="badge bs">Dataclass (fields, not class)</span></td>
+        <td>Creation time, modified time, size — pure data with no behaviour. These are fields directly on <code>FileSystemNode</code>, not a separate class. There is no rule to enforce on metadata in isolation — <code>size</code>'s rule ("stay in sync with content") is enforced by <code>File.write()</code>, not by a metadata object.</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <div class="why-box">
+    <div class="wl"><i class="fa-solid fa-lightbulb"></i> Why FileSystem is an orchestrator, not just a helper</div>
+    <p>Beginners often make <code>Directory</code> responsible for path resolution — put <code>resolve_path("/a/b/c")</code> on the root directory. But path resolution needs to traverse multiple directories, and when it hits a <code>SymbolicLink</code>, it needs to start the resolution from the root again. That means <code>Directory.resolve_path()</code> would need a reference back to the root — a circular dependency. <code>FileSystem</code> owns the root and therefore is the only entity that can resolve absolute paths correctly. Orchestrators exist precisely because some operations cannot be owned by any single domain object.</p>
+  </div>
+
+  <div class="why-box">
+    <div class="wl"><i class="fa-solid fa-lightbulb"></i> The Composite insight — the most important pattern in this problem</div>
+    <p>A directory can contain files and other directories. That's a tree. The genius of the Composite pattern is: treat all nodes uniformly. <code>get_size()</code> on a <code>File</code> returns its content length. <code>get_size()</code> on a <code>Directory</code> returns the sum of <code>get_size()</code> on all children. The caller doesn't need to know what type of node they have — they just call <code>get_size()</code>. Without Composite, every tree traversal becomes a mess of <code>if isinstance(node, File): ... elif isinstance(node, Directory): ...</code> spread across the codebase. Say this to the interviewer before you start coding.</p>
+  </div>
+</div>
+
+<!-- ======== SECTION 3: CLASS DESIGN ======== -->
+<div class="section" id="s-cls">
+  <div class="sec-eyebrow">Step 3 · ~15 minutes</div>
+  <div class="sec-title">Class Design — Every Line Justified</div>
+  <div class="sec-intro">Design top-down: start with the abstract base (the Composite root), then the leaf nodes, then the orchestrator. For every field: "what breaks if this field doesn't exist?" For every method: "who else would own this logic if I removed it from here?"</div>
+
+  <h3>FileSystemNode — The Composite Abstract Base</h3>
+  <p>The abstract base class that both <code>File</code> and <code>Directory</code> inherit from. Every field here is shared by both. Every abstract method here is a promise that all node types must keep.</p>
+
+  <div class="ann-wrap">
+    <div class="ann-header"><span>FileSystemNode — shared fields and abstract interface</span></div>
+
+    <div class="ann-row">
+      <div class="ann-code"><span class="kw">from</span> abc <span class="kw">import</span> ABC, abstractmethod
+<span class="kw">from</span> datetime <span class="kw">import</span> datetime
+<span class="kw">from</span> uuid <span class="kw">import</span> uuid4
+
+<span class="kw">class</span> <span class="cls">FileSystemNode</span>(ABC):
+    <span class="kw">def</span> <span class="nm">__init__</span>(self, name, owner):
+        self.node_id = str(uuid4())
+        self.name = name
+        self.owner_id = owner.user_id
+        self.permissions = Permission.default()
+        self.created_at = datetime.now()
+        self.modified_at = datetime.now()
+        self._lock = threading.RLock()</div>
+      <div class="ann-why">
+        <span class="wlabel">Why ABC and not a regular base class?</span>
+        <span class="wmain">If <code>FileSystemNode</code> is a regular class, nothing stops someone from instantiating it directly — <code>node = FileSystemNode("x", user)</code>. This object has no <code>get_size()</code> implementation and no <code>children</code>. It's a broken phantom object. <code>ABC</code> makes instantiation of the base class a <code>TypeError</code>. The abstract methods are a contract: you cannot create a <code>FileSystemNode</code> unless you implement <code>get_size()</code>. The design is enforced at the language level.</span>
+        <div class="wfail"><b>Without ABC:</b> A developer accidentally creates a raw <code>FileSystemNode</code>. Calling <code>get_size()</code> either raises <code>AttributeError</code> or returns a wrong value. The bug surfaces during traversal, far from where the object was created.</div>
+        <div class="wfix"><b>With ABC:</b> The attempt to instantiate <code>FileSystemNode</code> directly raises <code>TypeError: Can't instantiate abstract class</code> immediately, at the line where the mistake was made.</div>
+      </div>
+    </div>
+
+    <div class="ann-row">
+      <div class="ann-code">  self.node_id = str(uuid4())</div>
+      <div class="ann-why">
+        <span class="wlabel">Why a UUID node_id when we already have a name?</span>
+        <span class="wmain">Names are mutable — a file can be renamed. If other parts of the system reference a node by its name and the name changes, those references break. A UUID is stable for the lifetime of the node. It also makes hard links easy to model later: two directory entries (two names/paths) both pointing to the same <code>node_id</code>. Without a stable ID, you'd have no way to know two paths refer to the same underlying data.</span>
+      </div>
+    </div>
+
+    <div class="ann-row">
+      <div class="ann-code">  self._lock = threading.RLock()</div>
+      <div class="ann-why">
+        <span class="wlabel">Why RLock (re-entrant lock) and not a plain Lock?</span>
+        <span class="wmain">A plain <code>Lock</code> deadlocks if the same thread tries to acquire it twice. This happens naturally in a file system: <code>Directory.get_size()</code> acquires the directory's lock, then calls <code>child.get_size()</code> which also acquires the child's lock. If the child were the same object (a directory containing itself — a cycle), a plain <code>Lock</code> would deadlock. <code>RLock</code> (re-entrant lock) allows the same thread to acquire it multiple times without deadlocking. For a tree structure, this is the safe default.</span>
+      </div>
+    </div>
+
+    <div class="ann-row">
+      <div class="ann-code">  @abstractmethod
+  def get_size(self) -> int: ...</div>
+      <div class="ann-why">
+        <span class="wlabel">Why is get_size() abstract here?</span>
+        <span class="wmain">This is the Composite pattern's key method. The abstract declaration says: "I don't know how to compute size — each subclass knows its own rule." File returns content length. Directory returns recursive sum. SymbolicLink returns size of its target (or 0 if dangling). By making it abstract on the base class, every caller in the system can simply call <code>node.get_size()</code> without caring what type of node they have. The polymorphism does the work.</span>
+      </div>
+    </div>
+  </div>
+
+  <h3>File — the Leaf Node with Write Rules</h3>
+
+  <div class="ann-wrap">
+    <div class="ann-header"><span>File — content management and metadata sync</span></div>
+
+    <div class="ann-row">
+      <div class="ann-code"><span class="kw">class</span> <span class="cls">File</span>(FileSystemNode):
+    <span class="kw">def</span> <span class="nm">__init__</span>(self, name, owner):
+        super().__init__(name, owner)
+        self._content: str = <span class="st">""</span>
+        self.size: int = <span class="dn">0</span></div>
+      <div class="ann-why">
+        <span class="wlabel">Why store content as a private field _content?</span>
+        <span class="wmain">Content and size must always be consistent: <code>size == len(content)</code> is a class invariant. If <code>content</code> is public, any external code can do <code>file.content = "hello"</code> and <code>size</code> silently becomes stale. The underscore prefix signals "use the methods, not this field directly." Methods <code>read()</code> and <code>write()</code> are the public interface — they enforce the invariant.</span>
+      </div>
+    </div>
+
+    <div class="ann-row">
+      <div class="ann-code">  def read(self, user) -> str:
+    perm.check(user, self, READ)
+    with self._lock:
+        return self._content</div>
+      <div class="ann-why">
+        <span class="wlabel">Why check permission before acquiring the lock?</span>
+        <span class="wmain">Permission checking is a pure read on the permission object — it doesn't mutate anything and is very fast. Acquiring a lock is potentially a blocking wait. If the user has no permission, there is no point waiting for the lock — fail fast and fail early. The pattern is: validate first, mutate second. The same principle as the two-phase validation in <code>place_order()</code>: check everything before touching any shared resource.</span>
+      </div>
+    </div>
+
+    <div class="ann-row">
+      <div class="ann-code">  def write(self, user, data: str):
+    perm.check(user, self, WRITE)
+    with self._lock:
+        self._content = data
+        self.size = len(data)
+        self.modified_at = datetime.now()</div>
+      <div class="ann-why">
+        <span class="wlabel">Why update three things atomically inside the lock?</span>
+        <span class="wmain">These three fields (<code>content</code>, <code>size</code>, <code>modified_at</code>) are the write's observable effects. They must all update together or not at all — there must never be a moment where <code>_content</code> is updated but <code>size</code> still reflects the old length. The <code>with self._lock</code> block ensures no other thread can read this file between the three assignments. This is the same reasoning as database transactions: all-or-nothing atomicity.</span>
+        <div class="wfail"><b>Without the lock:</b> Thread A starts writing. It updates <code>_content</code> to "hello world". Before it updates <code>size</code>, Thread B reads. Thread B sees <code>_content = "hello world"</code> (length 11) but <code>size = 0</code>. Inconsistent state. Any code using <code>size</code> for allocation or display is now wrong.</div>
+      </div>
+    </div>
+
+    <div class="ann-row">
+      <div class="ann-code">  def get_size(self) -> int:
+    return self.size</div>
+      <div class="ann-why">
+        <span class="wlabel">Why return self.size instead of len(self._content)?</span>
+        <span class="wmain">Both are equivalent because <code>write()</code> keeps them in sync. But <code>size</code> is an O(1) field read. <code>len(self._content)</code> on a very large file is also O(1) in Python, but in a language with different string models it could be O(n). More importantly: <code>size</code> is the canonical public field. Returning it here reinforces that <code>size</code> is the truth. <code>_content</code> is private. External code (including Directory's recursive sum) should never reach into <code>_content</code>.</span>
+      </div>
+    </div>
+  </div>
+
+  <h3>Directory — the Composite Node</h3>
+
+  <div class="ann-wrap">
+    <div class="ann-header"><span>Directory — children management and recursive operations</span></div>
+
+    <div class="ann-row">
+      <div class="ann-code"><span class="kw">class</span> <span class="cls">Directory</span>(FileSystemNode):
+    <span class="kw">def</span> <span class="nm">__init__</span>(self, name, owner):
+        super().__init__(name, owner)
+        self._children: dict[str, FileSystemNode] = {}</div>
+      <div class="ann-why">
+        <span class="wlabel">Why dict[str, FileSystemNode] and not list[FileSystemNode]?</span>
+        <span class="wmain">Lookup by name is the most common operation in any directory: "does a file named 'x' exist in this directory?" With a dict, that's O(1). With a list, it's O(n) — scan every child. A directory with 10,000 entries would scan all 10,000 entries on every path component resolution. Directories in real file systems use hash tables internally for exactly this reason. Use a dict unless you have a specific reason not to.</span>
+      </div>
+    </div>
+
+    <div class="ann-row">
+      <div class="ann-code">  def add_child(self, user,
+                 node: FileSystemNode):
+    perm.check(user, self, WRITE)
+    with self._lock:
+        if node.name in self._children:
+            raise DuplicateNameError(node.name)
+        self._children[node.name] = node</div>
+      <div class="ann-why">
+        <span class="wlabel">Why raise DuplicateNameError instead of silently overwriting?</span>
+        <span class="wmain">Silent overwriting destroys data. If a directory already has <code>report.txt</code> and you add another file named <code>report.txt</code>, the original file's data disappears permanently with no warning. Real file systems raise errors and require the caller to explicitly delete or rename first. The loud failure principle: never silently discard data. A lost file is far harder to debug than a clear <code>DuplicateNameError</code> at the point of insertion.</span>
+        <div class="wfail"><b>With silent overwrite:</b> A script creates a file, processes data, then creates another file with the same name (a bug). The original file is gone. No error, no trace. The developer spends hours wondering why their output file is always empty.</div>
+      </div>
+    </div>
+
+    <div class="ann-row">
+      <div class="ann-code">  def remove_child(self, user,
+                    name: str):
+    perm.check(user, self, WRITE)
+    with self._lock:
+        if name not in self._children:
+            raise FileNotFoundError(name)
+        child = self._children[name]
+        if isinstance(child, Directory) \
+           and child._children:
+            raise DirectoryNotEmptyError(name)
+        del self._children[name]</div>
+      <div class="ann-why">
+        <span class="wlabel">Why refuse to delete a non-empty directory?</span>
+        <span class="wmain">This matches Unix <code>rmdir</code> semantics — you must explicitly delete contents before removing the directory, or use a force-recursive delete (<code>rm -rf</code>). The reason: recursively deleting a directory with thousands of files is irreversible and potentially catastrophic. By requiring an explicit choice — "I know this is non-empty and I'm choosing to delete everything" — you prevent accidents. The FileSystem's <code>delete()</code> method can offer a <code>recursive=True</code> flag for intentional bulk deletion, but the Directory itself refuses by default.</span>
+      </div>
+    </div>
+
+    <div class="ann-row">
+      <div class="ann-code">  def get_size(self) -> int:
+    with self._lock:
+        return sum(
+            child.get_size()
+            for child in self._children.values()
+        )</div>
+      <div class="ann-why">
+        <span class="wlabel">Why does this look so simple?</span>
+        <span class="wmain">This is the Composite pattern paying off. Each child (whether <code>File</code>, <code>Directory</code>, or <code>SymbolicLink</code>) knows how to compute its own size. The directory just asks each child and sums. There is no <code>isinstance</code> check, no special casing, no branching. A 10-deep nested directory structure is handled by this one line through recursive polymorphism. If you had not declared <code>get_size()</code> abstract on the base class, this clean delegation would be impossible — you would be writing <code>if isinstance(child, File): ... elif isinstance(child, Directory): ...</code> here.</span>
+      </div>
+    </div>
+  </div>
+
+  <h3>SymbolicLink — the Redirecting Node</h3>
+
+  <div class="ann-wrap">
+    <div class="ann-header"><span>SymbolicLink — target path and dangling detection</span></div>
+
+    <div class="ann-row">
+      <div class="ann-code"><span class="kw">class</span> <span class="cls">SymbolicLink</span>(FileSystemNode):
+    <span class="kw">def</span> <span class="nm">__init__</span>(self, name, owner,
+                 target_path: str):
+        super().__init__(name, owner)
+        self.target_path = target_path</div>
+      <div class="ann-why">
+        <span class="wlabel">Why store target_path as a string, not a reference to the target node?</span>
+        <span class="wmain">A symbolic link stores a <em>path string</em>, not a direct object reference. This is the defining property of symlinks. The path is resolved at the time of use, not at creation time. This means: (1) you can create a symlink pointing to a path that doesn't exist yet — it becomes valid when the target is created; (2) if the target is deleted, the symlink becomes dangling, and that's detectable by resolution failure; (3) you can have symlinks that cross directory boundaries freely. A direct object reference would break all three of these behaviours.</span>
+      </div>
+    </div>
+
+    <div class="ann-row">
+      <div class="ann-code">  def resolve(self,
+              fs: 'FileSystem'
+             ) -> FileSystemNode | None:
+    visited = set()
+    path = self.target_path
+    while True:
+        node = fs.get_node(path)
+        if node is None:
+            return None  # dangling
+        if not isinstance(node, SymbolicLink):
+            return node
+        if node.node_id in visited:
+            raise SymlinkCycleError()
+        visited.add(node.node_id)
+        path = node.target_path</div>
+      <div class="ann-why">
+        <span class="wlabel">Why does resolution need cycle detection?</span>
+        <span class="wmain">Without cycle detection, a symlink loop causes infinite recursion and a stack overflow. It is trivially easy to create: <code>link_a → /b/link_b</code>, <code>link_b → /a/link_a</code>. Without the <code>visited</code> set, resolving <code>link_a</code> calls <code>link_b</code>'s resolve, which calls <code>link_a</code>'s resolve, forever. The visited set of <code>node_id</code>s detects the cycle the moment we'd visit an already-seen node. Real Linux kernels have a maximum symlink resolution depth (40) for the same reason — they bound rather than detect.</span>
+        <div class="wfail"><b>Without cycle detection:</b> A user creates two symlinks pointing to each other. Any operation that resolves them — <code>get_size()</code>, <code>read()</code> — crashes the interpreter with <code>RecursionError</code>. In production, this kills the entire file system service, not just the offending call.</div>
+      </div>
+    </div>
+
+    <div class="ann-row">
+      <div class="ann-code">  def get_size(self) -> int:
+    node = self.resolve(self._fs_ref)
+    return node.get_size() if node else <span class="dn">0</span></div>
+      <div class="ann-why">
+        <span class="wlabel">Why return 0 for a dangling symlink instead of raising?</span>
+        <span class="wmain">This is a design decision with tradeoffs. Returning 0 means <code>Directory.get_size()</code> can sum all children including dangling symlinks without crashing. The directory's reported size is technically "wrong" (it excludes the dangling link's target), but the operation completes. Raising would mean any directory containing a dangling symlink can never report its size — that seems too harsh. The alternative is to log the dangling link as a warning and exclude it from the sum. In an interview, mention both options and state your choice explicitly.</span>
+      </div>
+    </div>
+  </div>
+
+  <h3>Permission — Unix-Style Access Control</h3>
+
+  <div class="ann-wrap">
+    <div class="ann-header"><span>Permission — the 9-bit Unix model in Python</span></div>
+
+    <div class="ann-row">
+      <div class="ann-code"><span class="kw">from</span> enum <span class="kw">import</span> Flag, auto
+
+<span class="kw">class</span> <span class="cls">PermBit</span>(Flag):
+    READ    = auto()  <span class="cm"># 4</span>
+    WRITE   = auto()  <span class="cm"># 2</span>
+    EXECUTE = auto()  <span class="cm"># 1</span>
+
+<span class="kw">class</span> <span class="cls">Permission</span>:
+    <span class="kw">def</span> <span class="nm">__init__</span>(self,
+        owner: PermBit,
+        group: PermBit,
+        others: PermBit,
+        group_name: str):
+        self.owner = owner
+        self.group = group
+        self.others = others
+        self.group_name = group_name</div>
+      <div class="ann-why">
+        <span class="wlabel">Why Flag enum instead of three plain booleans per role?</span>
+        <span class="wmain">Three booleans per role (<code>owner_can_read</code>, <code>owner_can_write</code>, <code>owner_can_execute</code>) would give you 9 separate fields per permission object — verbose and error-prone. <code>Flag</code> enums support bitwise combination: <code>PermBit.READ | PermBit.WRITE</code> is a single value meaning "can read and write." You can check <code>PermBit.READ in node.permissions.owner</code> cleanly. This also makes it trivial to translate to/from Unix octal notation (755, 644) in an interview. Interviewers who know Unix are impressed when you reach for <code>Flag</code>.</span>
+      </div>
+    </div>
+
+    <div class="ann-row">
+      <div class="ann-code">  def check(self, user: User,
+            node: FileSystemNode,
+            op: PermBit) -> None:
+    if user.is_superuser:
+        return
+    if user.user_id == node.owner_id:
+        bits = self.owner
+    elif self.group_name in user.groups:
+        bits = self.group
+    else:
+        bits = self.others
+    if op not in bits:
+        raise PermissionDeniedError(
+            f"{user.username} cannot "
+            f"{op.name} {node.name}"
+        )</div>
+      <div class="ann-why">
+        <span class="wlabel">Why raise PermissionDeniedError instead of returning False?</span>
+        <span class="wmain">Every single file operation — <code>read()</code>, <code>write()</code>, <code>add_child()</code> — calls <code>permission.check()</code>. If check returns <code>False</code>, every caller must remember to handle it: <code>if not perm.check(...): raise PermissionDeniedError()</code>. With 10 operations, that's 10 places to forget. By raising inside <code>check()</code>, permission denial is never silently ignored — it propagates up automatically. The calling code needs zero boilerplate. One consistent failure mode across the entire system.</span>
+      </div>
+    </div>
+
+    <div class="ann-row">
+      <div class="ann-code">  @classmethod
+  def default(cls) -> 'Permission':
+    <span class="cm"># 644: owner rw, group r, others r</span>
+    return cls(
+        owner=READ|WRITE,
+        group=READ,
+        others=READ,
+        group_name=<span class="st">"users"</span>
+    )</div>
+      <div class="ann-why">
+        <span class="wlabel">Why a factory classmethod for the default permission?</span>
+        <span class="wmain">Every new file needs a sensible default permission. Without this, every caller of <code>File("name", user)</code> must remember to also set permissions manually — and "remember" is the enemy of correct code. The default (644 in Unix notation: owner read/write, group read, others read) is a well-known safe starting point. By encoding it once as a factory method, you make the right thing the easy thing. Any change to the default (e.g., change to 640 for security) requires updating one place.</span>
+      </div>
+    </div>
+  </div>
+
+  <h3>FileSystem — the Single Entry Point (Orchestrator)</h3>
+
+  <div class="ann-wrap">
+    <div class="ann-header"><span>FileSystem — path resolution, CRUD, search</span></div>
+
+    <div class="ann-row">
+      <div class="ann-code"><span class="kw">class</span> <span class="cls">FileSystem</span>:
+    <span class="kw">def</span> <span class="nm">__init__</span>(self):
+        superuser = User(<span class="st">"root"</span>,
+                         is_superuser=<span class="nm">True</span>)
+        self.root = Directory(<span class="st">"/"</span>, superuser)
+        self._users: dict[str, User] = {
+            superuser.user_id: superuser
+        }</div>
+      <div class="ann-why">
+        <span class="wlabel">Why does FileSystem own the root Directory?</span>
+        <span class="wmain">Path resolution always starts at root. If the root were stored elsewhere, every call to <code>resolve_path("/a/b")</code> would need to locate the root first — adding another level of indirection. <code>FileSystem</code> is the natural owner because it is the single entity with visibility into the whole tree. It's also the only entity that can re-start symlink resolution from the root when following a symlink that points to an absolute path.</span>
+      </div>
+    </div>
+
+    <div class="ann-row">
+      <div class="ann-code">  def resolve_path(self,
+                     path: str
+                    ) -> FileSystemNode | None:
+    if not path.startswith("/"):
+        raise InvalidPathError(path)
+    parts = [p for p in path.split("/")
+             if p]
+    node: FileSystemNode = self.root
+    for part in parts:
+        if not isinstance(node, Directory):
+            return None  # path through a file
+        child = node._children.get(part)
+        if child is None:
+            return None
+        if isinstance(child, SymbolicLink):
+            child = child.resolve(self)
+            if child is None:
+                return None  # dangling
+        node = child
+    return node</div>
+      <div class="ann-why">
+        <span class="wlabel">Why does resolve_path live on FileSystem, not Directory?</span>
+        <span class="wmain">Absolute path resolution requires the root. When you traverse "/a/symlink/b", and <code>symlink</code> points to "/x/y", the resolution must restart from root ("/") to evaluate "/x/y". A <code>Directory.resolve()</code> method would need a reference back to the root — which means Directory holds a reference to FileSystem — a circular dependency. FileSystem owns the root, so FileSystem resolves paths. Clean separation, no cycles.</span>
+        <div class="wfail"><b>If Directory owned resolution:</b> When a symlink is followed, Directory would need <code>self.filesystem.root</code> to restart. Now Directory depends on FileSystem and FileSystem depends on Directory — a circular import in Python. The program won't even start.</div>
+      </div>
+    </div>
+
+    <div class="ann-row">
+      <div class="ann-code">  def create_file(self, user,
+                  parent_path: str,
+                  name: str) -> File:
+    parent = self._get_dir(parent_path)
+    new_file = File(name, user)
+    parent.add_child(user, new_file)
+    return new_file</div>
+      <div class="ann-why">
+        <span class="wlabel">Why resolve parent before creating the File object?</span>
+        <span class="wmain">Same principle as <code>place_order()</code>'s two-phase design: validate before mutating. If <code>parent_path</code> doesn't exist, raise immediately — don't create a <code>File</code> object that will never be inserted anywhere. Creating the file first and then failing on parent lookup leaves an orphan File object that will be garbage collected but adds confusion. Check everything first; create only if the path is valid. Guard ordering matters.</span>
+      </div>
+    </div>
+
+    <div class="ann-row">
+      <div class="ann-code">  def delete(self, user, path: str,
+             recursive: bool = False):
+    parts = path.rsplit("/", 1)
+    parent = self._get_dir(parts[0] or "/")
+    name = parts[1]
+    child = parent.get_child(name)
+    if isinstance(child, Directory) \
+       and child._children \
+       and not recursive:
+        raise DirectoryNotEmptyError(name)
+    if recursive:
+        self._delete_recursive(user, child)
+    parent.remove_child(user, name)</div>
+      <div class="ann-why">
+        <span class="wlabel">Why is recursive=False the default?</span>
+        <span class="wmain">Recursive deletion is irreversible and potentially catastrophic. By defaulting to <code>False</code>, any call to <code>delete()</code> on a non-empty directory fails loudly. The developer must explicitly opt in to <code>recursive=True</code>, making the destructive intent unambiguous in the code. The Unix principle: the safe operation is the default. The dangerous operation requires an explicit flag. This is also why <code>rm -rf</code> requires both <code>-r</code> and <code>-f</code> flags — two explicit opt-ins for the most dangerous operation.</span>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ======== SECTION 4: KEY FLOWS ======== -->
+<div class="section" id="s-flow">
+  <div class="sec-eyebrow">Step 4 · ~10 minutes</div>
+  <div class="sec-title">Key Flows — Traced End to End</div>
+  <div class="sec-intro">Interviewers judge you on whether you can trace a request end-to-end. Not just "I have a method for that" — but which entity acts first, what it validates, what it passes on, and what the final state of the system is. Walk through these flows during the interview.</div>
+
+  <h3>Flow 1 — Creating a File at a Nested Path</h3>
+  <p>The request: <code>fs.create_file(alice, "/home/alice", "report.txt")</code>.</p>
+
+  <div class="ann-wrap">
+    <div class="ann-header"><span>Step-by-step: create_file() internals</span></div>
+
+    <div class="ann-row">
+      <div class="ann-code">Step 1: Resolve parent path
+parent = fs.resolve_path("/home/alice")</div>
+      <div class="ann-why">
+        <span class="wlabel">What happens during resolve_path?</span>
+        <span class="wmain">Starting from <code>fs.root</code>, we look up "home" in root's children — find a Directory. Then look up "alice" in that directory's children — find another Directory. Return it. If either lookup returns None, raise <code>FileNotFoundError</code> immediately. The path is validated before any new object is created.</span>
+      </div>
+    </div>
+
+    <div class="ann-row">
+      <div class="ann-code">Step 2: Check parent is a Directory
+if not isinstance(parent, Directory):
+    raise NotADirectoryError()</div>
+      <div class="ann-why">
+        <span class="wlabel">Why check this explicitly?</span>
+        <span class="wmain"><code>resolve_path</code> returns a <code>FileSystemNode</code>. If the resolved path is a file named "alice" (not a directory), trying to add a child to it would fail confusingly at <code>add_child()</code>. Checking explicitly here produces a clear error: "Cannot create file inside a File." The check also prevents SymbolicLink nodes from being treated as directories — a symlink to a file is not a directory, even if it resolves to one through indirection (the resolution already handled that).</span>
+      </div>
+    </div>
+
+    <div class="ann-row">
+      <div class="ann-code">Step 3: Create File object
+new_file = File("report.txt", alice)</div>
+      <div class="ann-why">
+        <span class="wlabel">Why create the File before calling add_child?</span>
+        <span class="wmain">The file object needs to exist before it can be added anywhere. But critically: the File is created only after the parent path has been validated. If path resolution failed, we never reach this line. The object is created knowing it will be inserted successfully. This is the "read-only phase then mutation phase" principle — we've already confirmed the parent exists. Now we create the child.</span>
+      </div>
+    </div>
+
+    <div class="ann-row">
+      <div class="ann-code">Step 4: Add to parent directory
+parent.add_child(alice, new_file)
+<span class="cm"># Checks: write permission on parent</span>
+<span class="cm"># Checks: no duplicate name</span>
+<span class="cm"># Inserts into parent._children</span></div>
+      <div class="ann-why">
+        <span class="wlabel">Why does add_child do its own permission check rather than trusting FileSystem?</span>
+        <span class="wmain"><strong>Design by contract</strong>. <code>add_child()</code> must enforce its own preconditions regardless of what the caller did. Today the only caller is <code>FileSystem.create_file()</code>. Tomorrow someone might call <code>parent.add_child()</code> directly from a test, a script, or a new feature — bypassing the FileSystem entirely. The permission check inside <code>add_child()</code> ensures the rule is always enforced, no matter who calls it. Rules about an entity's own state must live on the entity.</span>
+      </div>
+    </div>
+  </div>
+
+  <h3>Flow 2 — Recursive get_size() on a Directory Tree</h3>
+  <p>The Composite pattern in action. Call <code>fs.root.get_size()</code> on a tree: root → /home (dir) → /home/alice (dir) → report.txt (file, 1024 bytes), notes.txt (file, 512 bytes).</p>
+
+  <div class="state-row">
+    <span class="sp sg">root.get_size()</span>
+    <span class="sarrow">→</span>
+    <span class="sp sb">home.get_size()</span>
+    <span class="sarrow">→</span>
+    <span class="sp spu">alice.get_size()</span>
+    <span class="sarrow">→</span>
+    <span class="sp sam">report: 1024</span>
+    <span class="sarrow">+</span>
+    <span class="sp ste">notes: 512</span>
+    <span class="sarrow">= 1536</span>
+  </div>
+
+  <p>Each directory calls <code>get_size()</code> on its children and sums. Each file returns its own size. No <code>isinstance</code> check anywhere. No special case for "what if the child is a symlink?" — the <code>SymbolicLink.get_size()</code> handles that. The tree traversal is completely uniform. This is why the Composite pattern exists: it removes the type-checking branching from the traversal code and pushes it into each node's own class.</p>
+
+  <h3>Flow 3 — Search by Extension</h3>
+  <p>Request: <code>fs.search(alice, "/home", extension=".txt")</code>. This is a DFS tree traversal with a filter.</p>
+
+  <div class="ann-wrap">
+    <div class="ann-header"><span>FileSystem.search() — DFS with filter</span></div>
+
+    <div class="ann-row">
+      <div class="ann-code">  def search(self, user, path: str,
+             name: str = None,
+             extension: str = None
+            ) -> list[FileSystemNode]:
+    root_node = self.resolve_path(path)
+    results = []
+    self._dfs_search(
+        user, root_node,
+        name, extension, results)
+    return results</div>
+      <div class="ann-why">
+        <span class="wlabel">Why separate search() from _dfs_search()?</span>
+        <span class="wmain">The public <code>search()</code> method handles the entry contract: resolve the path, validate it, set up the results list. The private <code>_dfs_search()</code> handles the recursive traversal. This separation keeps the public API clean — callers don't need to provide a results list or worry about path resolution. It also makes <code>_dfs_search()</code> independently testable: you can call it on a constructed directory tree without going through path resolution. Single responsibility: one method validates inputs, one method does the traversal.</span>
+      </div>
+    </div>
+
+    <div class="ann-row">
+      <div class="ann-code">  def _dfs_search(self, user, node,
+                  name, ext, results):
+    if not isinstance(node, Directory):
+        if self._matches(node, name, ext):
+            results.append(node)
+        return
+    for child in node._children.values():
+        self._dfs_search(
+            user, child, name, ext, results)</div>
+      <div class="ann-why">
+        <span class="wlabel">Why DFS and not BFS for search?</span>
+        <span class="wmain">Both DFS and BFS find all matching nodes. DFS has better memory characteristics for deep directory trees: its call stack grows as deep as the tree (typically 10–20 levels), while BFS's queue could hold all nodes at the widest level (potentially thousands of entries in a flat directory). For a file system where directories are often deeper than they are wide, DFS is more memory-efficient. However, if the tree could have cycles (which symlinks can create), BFS with a visited set is safer. In practice, you handle cycles at the symlink resolution level, so DFS is safe here.</span>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ======== SECTION 5: PATTERNS ======== -->
+<div class="section" id="s-pat">
+  <div class="sec-eyebrow">Step 5 · Deep Dive</div>
+  <div class="sec-title">Design Patterns — Justified, Not Just Named</div>
+  <div class="sec-intro">Name a pattern only when you can complete this sentence: "Without this pattern, I would face this specific problem." Each pattern below includes the exact problem it solves, how it's applied in the file system, and a before/after showing the difference.</div>
+
+  <div class="pcard">
+    <div class="ptitle">1. Composite Pattern <span class="ptag">applied in FileSystemNode / File / Directory</span></div>
+    <p><b>The specific problem without it:</b> Every operation that traverses the file system tree — <code>get_size()</code>, <code>search()</code>, <code>delete()</code> — would need to check the type of every node: <code>if isinstance(node, File): return node.size elif isinstance(node, Directory): sum children</code>. As you add new node types (SymbolicLink, SpecialFile, MountPoint), every traversal method grows an extra branch. Adding a new node type means finding and updating every traversal in the codebase.</p>
+    <div class="compare-grid">
+      <div class="cb">
+        <div class="clabel">Without Composite</div>
+        <pre>def get_total_size(node):
+    if isinstance(node, File):
+        return node.size
+    elif isinstance(node, Directory):
+        return sum(get_total_size(c)
+                   for c in node.children)
+    elif isinstance(node, SymbolicLink):
+        target = node.resolve(fs)
+        return get_total_size(target) if target else 0
+    # Add SpecialFile → update this function
+    # Add MountPoint → update this function
+    # Every new type = update every traversal</pre>
+        <div class="cexplain">The function must know about every node type. Adding a new type requires updating every function that traverses the tree. The traversal logic and the type logic are tangled together.</div>
+      </div>
+      <div class="cg">
+        <div class="clabel">With Composite</div>
+        <pre>class File(FileSystemNode):
+    def get_size(self): return self.size
+
+class Directory(FileSystemNode):
+    def get_size(self):
+        return sum(c.get_size()
+                   for c in self._children.values())
+
+class SymbolicLink(FileSystemNode):
+    def get_size(self):
+        node = self.resolve(self._fs)
+        return node.get_size() if node else 0
+
+# Adding SpecialFile:
+# class SpecialFile(FileSystemNode):
+#     def get_size(self): return 0
+# Zero changes to existing code.</pre>
+        <div class="cexplain">Each node type owns its size computation. Traversal code calls <code>get_size()</code> with no type checks. Adding a new node type requires only implementing the interface — zero changes to existing traversal code.</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="pcard">
+    <div class="ptitle">2. Facade Pattern <span class="ptag">applied in FileSystem</span></div>
+    <p><b>The specific problem without it:</b> External code must know which entity owns which operation. "Create a file" — do I call <code>Directory.add_child()</code> directly? Do I construct a <code>File</code> object first? Do I call <code>resolve_path()</code> separately? Without a Facade, callers must understand the internal structure of the entire system — coupling them tightly to implementation details that may change.</p>
+    <p><b>How it's applied:</b> <code>FileSystem</code> is the single public interface. <code>fs.create_file(user, path, name)</code> internally resolves the path, constructs the File, adds it to the parent directory, and returns the result — all in one call. Callers never touch <code>Directory._children</code> directly. If the internal implementation changes (e.g., switching to an inode model), only <code>FileSystem</code> changes. Callers are unaffected.</p>
+    <div class="why-inline">
+      <b>What to say in the interview:</b> "FileSystem acts as a Facade — a single, clean entry point that hides the complexity of path resolution, object creation, and tree manipulation. External code only talks to FileSystem. Nothing inside the system is directly accessible from outside."
+    </div>
+  </div>
+
+  <div class="pcard">
+    <div class="ptitle">3. Template Method Pattern <span class="ptag">applied in FileSystemNode base operations</span></div>
+    <p><b>The specific problem without it:</b> Every node type's <code>delete()</code> or <code>move()</code> method starts with the same steps: check permissions, acquire the lock, validate the operation is allowed. If you implement these in each subclass independently, you have three copies of the same boilerplate that must all be kept in sync. When the permission model changes, you update three places.</p>
+    <p><b>How it's applied:</b> The base class <code>FileSystemNode</code> defines a template method <code>_perform_write_op(user, op_fn)</code> that handles the invariant steps — check permissions, acquire lock — and then calls the abstract <code>op_fn()</code> which each subclass supplies. The structure (check → lock → execute → release) is fixed in the base class. The specifics (what "execute" means) vary per subclass.</p>
+    <div class="code-block"><span class="cm"># In FileSystemNode (base class)</span>
+<span class="kw">def</span> <span class="nm">_perform_write_op</span>(self, user, op_fn):
+    perm.check(user, self, WRITE)   <span class="cm"># invariant step 1</span>
+    <span class="kw">with</span> self._lock:                <span class="cm"># invariant step 2</span>
+        op_fn()                     <span class="cm"># varies per subclass</span>
+        self.modified_at = datetime.now()  <span class="cm"># invariant step 3</span>
+
+<span class="cm"># In File (subclass)</span>
+<span class="kw">def</span> <span class="nm">write</span>(self, user, data):
+    self._perform_write_op(
+        user,
+        <span class="kw">lambda</span>: self._do_write(data)  <span class="cm"># the varying part only</span>
+    )</div>
+  </div>
+
+  <div class="pcard">
+    <div class="ptitle">4. Strategy Pattern <span class="ptag">applied in FileSearcher</span></div>
+    <p><b>The specific problem without it:</b> Search is currently hard-coded as DFS inside <code>FileSystem._dfs_search()</code>. If you need BFS (breadth-first search for files closest to the top of the tree), or parallel search across many subtrees, you modify <code>FileSystem</code> itself. Adding search strategies means growing a single method with if/else branches: <code>if strategy == "dfs" ... elif strategy == "bfs" ...</code></p>
+    <p><b>How it's applied:</b> Extract a <code>SearchStrategy</code> abstract class with a <code>search(root, predicate)</code> method. <code>DFSSearchStrategy</code> and <code>BFSSearchStrategy</code> implement it. <code>FileSystem</code> accepts a <code>SearchStrategy</code> in its constructor. Swapping strategies requires zero changes to <code>FileSystem</code> — inject a different strategy object.</p>
+    <div class="code-block"><span class="kw">class</span> <span class="cls">SearchStrategy</span>(ABC):
+    @abstractmethod
+    <span class="kw">def</span> <span class="nm">search</span>(self, root: FileSystemNode,
+               predicate) -> list[FileSystemNode]: ...
+
+<span class="kw">class</span> <span class="cls">DFSSearchStrategy</span>(SearchStrategy):
+    <span class="kw">def</span> <span class="nm">search</span>(self, root, predicate):
+        results = []
+        stack = [root]
+        <span class="kw">while</span> stack:
+            node = stack.pop()
+            <span class="kw">if</span> predicate(node): results.append(node)
+            <span class="kw">if</span> isinstance(node, Directory):
+                stack.extend(node._children.values())
+        <span class="kw">return</span> results
+
+<span class="kw">class</span> <span class="cls">FileSystem</span>:
+    <span class="kw">def</span> <span class="nm">__init__</span>(self,
+        strategy: SearchStrategy = DFSSearchStrategy()):
+        self._search_strategy = strategy
+        ...</div>
+  </div>
+
+  <div class="pcard">
+    <div class="ptitle">5. Singleton Pattern <span class="ptag">applied (carefully) to FileSystem</span></div>
+    <p><b>The specific problem it solves:</b> There should be exactly one file system instance in the process. If two <code>FileSystem</code> objects are created, they have separate roots — no paths from one are visible in the other. Any operation that crosses systems (copying a file from one FS to another) must handle two different root trees. In practice, you want one authoritative root.</p>
+    <p><b>Why to use it with caution:</b> Singleton is a controversial pattern precisely because it makes testing hard — you cannot inject a fresh, clean FileSystem for each test if the class enforces single-instance semantics at the class level. The modern alternative is Dependency Injection: make FileSystem a regular class, but create only one instance at startup and inject it everywhere. This gives singleton-like behaviour at runtime while keeping the class testable in isolation.</p>
+    <div class="why-inline">
+      <b>What to say in the interview:</b> "I'd use a single shared <code>FileSystem</code> instance rather than enforcing Singleton at the class level — the same effect, but easier to test because I can create a fresh instance for each test without fighting the class design."
+    </div>
+  </div>
+</div>
+
+<!-- ======== SECTION 6: SOLID ======== -->
+<div class="section" id="s-sol">
+  <div class="sec-eyebrow">Step 6 · Deep Dive</div>
+  <div class="sec-title">SOLID Principles — Applied to This Design</div>
+  <div class="sec-intro">Don't recite SOLID definitions. Show the interviewer where each principle appears in this specific design, what problem it solves, and what would go wrong if you violated it. One concrete example per principle beats a textbook definition every time.</div>
+
+  <div class="solid-grid">
+    <div class="solid-card">
+      <div class="solid-letter">S</div>
+      <div class="solid-name">Single Responsibility Principle</div>
+      <div class="solid-def">"A class should have only one reason to change."</div>
+      <p><b>Where it appears:</b> <code>Permission</code> is a separate class. It only changes if permission rules change. <code>File</code> only changes if file content semantics change. <code>FileSystem</code> only changes if the public API changes.</p>
+      <div class="vbox"><b>Violation:</b> Embedding permission checking inside <code>File.write()</code> directly. Now <code>File</code> changes for two reasons: content semantics changes, or permission rules change. The same class is touched by the filesystem team and the security team.</div>
+      <div class="fbox"><b>Fix:</b> <code>Permission</code> class owns all permission logic. <code>File.write()</code> calls <code>perm.check()</code>. The two concerns evolve independently.</div>
+    </div>
+
+    <div class="solid-card">
+      <div class="solid-letter">O</div>
+      <div class="solid-name">Open/Closed Principle</div>
+      <div class="solid-def">"Open for extension, closed for modification."</div>
+      <p><b>Where it appears:</b> Adding a new node type (<code>SpecialFile</code>, <code>MountPoint</code>) requires only implementing <code>FileSystemNode</code> — no changes to existing traversal code. Adding a new search strategy requires only a new <code>SearchStrategy</code> subclass.</p>
+      <div class="vbox"><b>Violation:</b> Hardcoding <code>if isinstance(node, File) ... elif isinstance(node, Directory)</code> in traversal methods. Every new node type requires modifying existing methods.</div>
+      <div class="fbox"><b>Fix:</b> The Composite abstract interface. Each node type handles its own behaviour. Traversal code is closed for modification when new types are added.</div>
+    </div>
+
+    <div class="solid-card">
+      <div class="solid-letter">L</div>
+      <div class="solid-name">Liskov Substitution Principle</div>
+      <div class="solid-def">"Subtypes must be substitutable for their base type."</div>
+      <p><b>Where it appears:</b> Any code that holds a <code>FileSystemNode</code> reference can call <code>get_size()</code> and get a valid integer — regardless of whether the node is a File, Directory, or SymbolicLink. No caller needs to know the concrete type.</p>
+      <div class="vbox"><b>Violation:</b> A <code>SymbolicLink.get_size()</code> that raises <code>NotImplementedError</code>. Code that works fine on File and Directory now crashes on SymbolicLink. The subtype is not substitutable — it breaks callers that trusted the interface.</div>
+      <div class="fbox"><b>Fix:</b> Every subclass provides a meaningful implementation of <code>get_size()</code>. SymbolicLink resolves its target and returns 0 for dangling links — never raises from a method the base class declares as returnable.</div>
+    </div>
+
+    <div class="solid-card">
+      <div class="solid-letter">I</div>
+      <div class="solid-name">Interface Segregation Principle</div>
+      <div class="solid-def">"Clients should not depend on interfaces they don't use."</div>
+      <p><b>Where it appears:</b> <code>File</code> has <code>read()</code> and <code>write()</code>. <code>Directory</code> has <code>add_child()</code> and <code>list_children()</code>. These are not on the base class. Code that handles generic nodes only calls <code>get_size()</code> — which all nodes share. Code that needs to write only holds a <code>File</code> reference.</p>
+      <div class="vbox"><b>Violation:</b> Putting <code>read()</code>, <code>write()</code>, <code>add_child()</code>, and <code>list_children()</code> all on <code>FileSystemNode</code>. Now every Directory must implement <code>read()</code> and <code>write()</code> (which make no sense for a directory). Every File must implement <code>add_child()</code> (which makes no sense for a file). Forced to provide meaningless implementations everywhere.</div>
+    </div>
+
+    <div class="solid-card solid-full">
+      <div class="solid-letter">D</div>
+      <div class="solid-name">Dependency Inversion Principle</div>
+      <div class="solid-def">"High-level modules should not depend on low-level modules. Both should depend on abstractions."</div>
+      <p><b>Where it appears:</b> <code>FileSystem.search()</code> depends on the <code>SearchStrategy</code> abstract class, not on <code>DFSSearchStrategy</code> concretely. If you need BFS, inject <code>BFSSearchStrategy()</code> — <code>FileSystem</code> never changes. Similarly, <code>SymbolicLink.resolve()</code> accepts a <code>FileSystem</code> parameter rather than holding a direct reference — it depends on the interface, not the concrete state.</p>
+      <div class="vbox"><b>Violation:</b> <code>FileSystem</code> directly instantiates <code>DFSSearchStrategy</code> inside its methods: <code>strategy = DFSSearchStrategy(); strategy.search(...)</code>. You cannot swap strategies without modifying <code>FileSystem</code>. Unit testing with a mock strategy is impossible.</div>
+      <div class="fbox"><b>Fix:</b> Inject <code>SearchStrategy</code> into <code>FileSystem.__init__</code>. In production, pass <code>DFSSearchStrategy()</code>. In tests, pass a <code>MockSearchStrategy()</code> that returns predetermined results without traversing any actual tree. Testable, flexible, zero changes to <code>FileSystem</code> when the strategy changes.</div>
+    </div>
+  </div>
+</div>
+
+<!-- ======== SECTION 7: TRADE-OFFS ======== -->
+<div class="section" id="s-trd">
+  <div class="sec-eyebrow">Step 7 · Deep Dive</div>
+  <div class="sec-title">Trade-offs — Show You Can Think Beyond the Obvious</div>
+  <div class="sec-intro">The best LLD candidates don't just design — they acknowledge what their design sacrifices and when a different design would be the right choice. Raising trade-offs unprompted signals engineering maturity. These are the ones most likely to come up in a file system interview.</div>
+
+  <div class="tsec">
+    <div class="thead">In-Memory Content vs. Metadata-Only Design</div>
+    <div class="tbody">
+      <div class="scenario"><b>The question:</b> Should <code>File</code> store actual content as a string in <code>self._content</code>, or should it only hold metadata (size, timestamps) with content stored elsewhere?</div>
+      <div class="td-grid">
+        <div class="tpro"><span class="tlabel">In-Memory Content ✓</span>Simple to implement. <code>read()</code> and <code>write()</code> are trivial. Perfect for an LLD interview scope. get_size() is always correct.</div>
+        <div class="tcon"><span class="tlabel">Limitation</span>Entire file content lives in RAM. A 4GB file object crashes the process. Real file systems never store content in objects — they use block pointers to disk sectors. This design doesn't scale beyond toy usage.</div>
+      </div>
+      <p>In an interview, say: "I'm using in-memory strings for simplicity. In a real implementation, <code>File</code> would hold an inode reference with block pointers to disk sectors. The class interface — <code>read()</code>, <code>write()</code> — stays the same; only the storage layer changes. This is the Dependency Inversion principle: <code>File</code> depends on a storage abstraction, not on in-memory strings directly."</p>
+    </div>
+  </div>
+
+  <div class="tsec">
+    <div class="thead">Per-Node Locks vs. Global Lock</div>
+    <div class="tbody">
+      <div class="scenario"><b>The question:</b> Should every node have its own lock (per-node locking), or should the entire file system use one global lock?</div>
+      <div class="td-grid">
+        <div class="tpro"><span class="tlabel">Per-Node Locks ✓</span>Maximum concurrency. Multiple threads can read different files simultaneously. Only writers on the same node block each other. Scales well with many concurrent users.</div>
+        <div class="tcon"><span class="tlabel">Limitation</span>Complex. Moving a file (locking both source directory and destination directory simultaneously) risks deadlock if two threads move files in opposite directions. Must establish a lock-ordering protocol to prevent deadlocks.</div>
+      </div>
+      <div class="td-grid">
+        <div class="tpro"><span class="tlabel">Global Lock (simple)</span>Zero deadlock risk. Simple to implement. Every operation just acquires one lock. Easy to reason about correctness.</div>
+        <div class="tcon"><span class="tlabel">Limitation</span>All operations serialize — one thread runs at a time. A long <code>get_size()</code> on a large directory tree blocks all concurrent reads. Poor throughput under load.</div>
+      </div>
+      <p>In an interview: "Per-node locking is the right answer for production, but requires careful lock ordering to prevent deadlocks. For a two-directory <code>move()</code> operation, always acquire locks in a consistent order (e.g. lower node_id first) to avoid the classic ABBA deadlock where thread 1 holds A and waits for B while thread 2 holds B and waits for A."</p>
+    </div>
+  </div>
+
+  <div class="tsec">
+    <div class="thead">Recursive vs. Iterative Directory Traversal</div>
+    <div class="tbody">
+      <div class="scenario"><b>The question:</b> <code>get_size()</code> and <code>search()</code> use recursive calls. Is this a problem?</div>
+      <div class="td-grid">
+        <div class="tpro"><span class="tlabel">Recursive (elegant)</span>Clean, readable code. Exactly mirrors the recursive structure of the tree. Easy to reason about correctness. Default Python call stack of 1000 is deep enough for almost all real directory structures.</div>
+        <div class="tcon"><span class="tlabel">Limitation</span>A malicious or corrupt file system with 1500-deep nesting causes a <code>RecursionError</code> in Python. In production, paths like <code>/a/b/c/d/...</code> nested 10,000 deep are theoretically possible. Default stack limit is not guaranteed.</div>
+      </div>
+      <p>Defensive fix: convert recursion to an explicit stack (iterative DFS). Replace the call stack with a Python <code>list</code> used as a stack — identical logic, but the "stack" lives on the heap, not the call stack. No recursion limit. Say this in the interview if the interviewer pushes on "what happens with very deep trees?"</p>
+      <div class="code-block"><span class="cm"># Iterative DFS — avoids RecursionError on deep trees</span>
+<span class="kw">def</span> <span class="nm">get_size_iterative</span>(root: Directory) -> int:
+    total = <span class="dn">0</span>
+    stack = [root]
+    <span class="kw">while</span> stack:
+        node = stack.pop()
+        <span class="kw">if</span> isinstance(node, File):
+            total += node.size
+        <span class="kw">elif</span> isinstance(node, Directory):
+            stack.extend(node._children.values())
+    <span class="kw">return</span> total</div>
+    </div>
+  </div>
+
+  <div class="tsec">
+    <div class="thead">Absolute Paths Only vs. Supporting Relative Paths</div>
+    <div class="tbody">
+      <div class="scenario"><b>The question:</b> Should the file system only accept absolute paths (starting with "/") or also relative paths (relative to a "current working directory")?</div>
+      <div class="td-grid">
+        <div class="tpro"><span class="tlabel">Absolute Paths Only ✓</span>Simple to implement. Resolution always starts at root — no ambiguity. <code>resolve_path()</code> is deterministic regardless of who calls it.</div>
+        <div class="tcon"><span class="tlabel">Limitation</span>Verbose for users who are already deep in a directory. Real shells default to relative paths for usability. Supporting relative paths requires each user session to track a "current working directory" (cwd) — adding session state to the design.</div>
+      </div>
+      <p>Extension: add a <code>Session</code> class with a <code>cwd: str</code> field. <code>resolve_path()</code> takes an optional session parameter. If path doesn't start with "/", prepend the session's <code>cwd</code>. <code>FileSystem</code> itself stays stateless — all session state lives in <code>Session</code>. Clean separation.</p>
+    </div>
+  </div>
+</div>
+
+<!-- ======== SECTION 8: Q&A ======== -->
+<div class="section" id="s-qa">
+  <div class="sec-eyebrow">Step 8 · Deep Dive</div>
+  <div class="sec-title">Interview Q&amp;A</div>
+  <div class="sec-intro">These are the follow-up questions interviewers ask after you've laid out the design. The best answers are specific, acknowledge trade-offs, and show that you've thought beyond the obvious solution.</div>
+
+  <div class="qa">
+    <div class="qa-q" onclick="t(this)">Walk me through what happens when I call <code>fs.delete(user, "/home/alice/report.txt")</code>. <i class="fa-solid fa-chevron-down"></i></div>
+    <div class="qa-a">
+      <p><b>1. Path split:</b> Split "/home/alice/report.txt" into parent path "/home/alice" and name "report.txt".</p>
+      <p><b>2. Resolve parent:</b> Call <code>resolve_path("/home/alice")</code> → traverses root → home → alice. Returns the <code>alice</code> Directory.</p>
+      <p><b>3. Validate parent:</b> Confirm it's a Directory (not a File or SymbolicLink). If it's a File, raise <code>NotADirectoryError</code>.</p>
+      <p><b>4. Look up the target:</b> <code>alice._children.get("report.txt")</code>. If None, raise <code>FileNotFoundError</code>.</p>
+      <p><b>5. Empty check:</b> The target is a <code>File</code>, not a <code>Directory</code>, so the "non-empty directory" check doesn't apply.</p>
+      <p><b>6. Remove:</b> <code>alice.remove_child(user, "report.txt")</code> — checks write permission on <code>alice</code> (not on the file), acquires alice's lock, deletes the entry from <code>_children</code>.</p>
+      <p><b>Key point for the interviewer:</b> Deletion requires write permission on the <em>parent directory</em>, not on the file itself. This is how Unix works: "write" on a directory means "modify the directory's contents." You can delete a file you don't own if you own (or have write access to) the directory containing it. This is why Unix has the "sticky bit" — to prevent other users from deleting your files from a shared directory.</p>
+    </div>
+  </div>
+
+  <div class="qa">
+    <div class="qa-q" onclick="t(this)">How would you handle a move operation (rename/move a file to a different directory)? <i class="fa-solid fa-chevron-down"></i></div>
+    <div class="qa-a">
+      <p>A move is: remove from source directory, add to destination directory — while holding locks on both simultaneously to prevent a race condition where another thread sees neither location between the two operations.</p>
+      <p><b>The naive approach:</b> <code>source_dir.remove_child(user, name)</code> then <code>dest_dir.add_child(user, node)</code>. Between these two calls, the file exists nowhere in the tree. Any concurrent search will miss it entirely.</p>
+      <p><b>The correct approach:</b> Acquire both locks together before mutating either. But this creates a deadlock risk: Thread A wants to move file from dir1 to dir2 (locks dir1 first). Thread B wants to move file from dir2 to dir1 (locks dir2 first). Both threads are now waiting for each other forever.</p>
+      <p><b>Solution — lock ordering:</b> Always acquire directory locks in a consistent order based on their <code>node_id</code> (alphabetically or numerically). Both Thread A and Thread B will attempt to acquire the lock with the smaller <code>node_id</code> first. One of them acquires it, proceeds, and releases. The other waits and then acquires both. No deadlock possible.</p>
+      <div class="code-block"><span class="kw">def</span> <span class="nm">move</span>(self, user, src_path, dst_dir_path, new_name):
+    src_parent_path, src_name = src_path.rsplit(<span class="st">"/"</span>, <span class="dn">1</span>)
+    src_dir = self._get_dir(src_parent_path)
+    dst_dir = self._get_dir(dst_dir_path)
+
+    <span class="cm"># Acquire locks in consistent order to prevent deadlock</span>
+    first, second = sorted(
+        [src_dir, dst_dir], key=<span class="kw">lambda</span> d: d.node_id)
+    <span class="kw">with</span> first._lock:
+        <span class="kw">with</span> second._lock:
+            node = src_dir._children.pop(src_name)
+            node.name = new_name <span class="kw">or</span> src_name
+            dst_dir._children[node.name] = node</div>
+    </div>
+  </div>
+
+  <div class="qa">
+    <div class="qa-q" onclick="t(this)">How would you add a "file watcher" feature — notify interested parties when a file changes? <i class="fa-solid fa-chevron-down"></i></div>
+    <div class="qa-a">
+      <p>This is the Observer pattern. The interviewer is testing whether you can extend your design without modifying existing classes.</p>
+      <p><b>The design:</b> Add a <code>FileChangeObserver</code> abstract class with an <code>on_change(file, event_type)</code> method. <code>File</code> maintains a list of registered observers. <code>write()</code> notifies all observers after the write completes. <code>FileSystem.watch(user, path, observer)</code> registers an observer on the target node.</p>
+      <p><b>What existing code changes:</b> <code>File.write()</code> gets two extra lines: iterate observers, call <code>on_change</code>. That's it. The observer list on <code>File</code> starts empty — all existing code that never registers an observer is completely unaffected. This is the Observer pattern's core promise: adding notification capability doesn't break anything that existed before.</p>
+      <p><b>Extension examples:</b> A <code>LoggingObserver</code> appends to an audit log. A <code>CacheInvalidationObserver</code> clears any cached read of this file. A <code>SyncObserver</code> pushes the changed content to a remote replica. All added without touching <code>File</code>'s core logic. New observers are new classes — zero modifications to existing code. Open/Closed Principle in action.</p>
+    </div>
+  </div>
+
+  <div class="qa">
+    <div class="qa-q" onclick="t(this)">Why is <code>get_size()</code> on <code>Directory</code> not cached? Wouldn't a large tree be slow to recompute every time? <i class="fa-solid fa-chevron-down"></i></div>
+    <div class="qa-a">
+      <p>Good question — you're right that recomputing recursively every time is O(n) in the number of nodes. Let's think through caching.</p>
+      <p><b>The problem with caching size:</b> A cache is a stored derived value. It's correct only if nothing in the subtree has changed since the last computation. In our design, <code>File.write()</code> updates <code>file.size</code>, but it doesn't notify parent directories. So if you cache <code>directory.cached_size = 1024</code> and then a file inside is written with new content, the cache is stale. To fix this, every write must propagate size updates up the tree — adding O(depth) work to every write operation.</p>
+      <p><b>The right trade-off:</b> Depends on read/write ratio. If <code>get_size()</code> is called far more often than files are written to, cache with invalidation on write (propagate up). If writes are frequent and <code>get_size()</code> is rare, compute lazily. For an interview, say: "I'd add lazy caching with a <code>_size_cache: int | None = None</code> field on Directory. <code>File.write()</code> calls a <code>_invalidate_parent_cache()</code> method. Each Directory recomputes and re-caches on the next <code>get_size()</code> call after invalidation." This trades write overhead for read performance and is the approach real file systems take for directory size accounting.</p>
+    </div>
+  </div>
+
+  <div class="qa">
+    <div class="qa-q" onclick="t(this)">How would you support disk persistence — surviving a process restart? <i class="fa-solid fa-chevron-down"></i></div>
+    <div class="qa-a">
+      <p>This is the domain of real file systems (ext4, NTFS, APFS) and is out of scope for LLD — but knowing the concepts shows depth.</p>
+      <p><b>The core concept — inodes:</b> Real file systems separate the tree structure (directories, names, paths) from the data (file content, metadata). An inode is a fixed-size metadata record stored at a known disk offset. Every file and directory has an inode. A directory is a special file whose content is a list of (name → inode number) mappings. File content is stored in data blocks pointed to by the inode.</p>
+      <p><b>What changes in our design:</b> Instead of <code>File._content: str</code>, a <code>File</code> would hold an <code>inode_number: int</code>. Content would be fetched via <code>block_device.read_blocks(inode.block_pointers)</code>. The <code>FileSystem</code> would have a <code>InodeTable</code> and a <code>BlockAllocator</code>. On restart, the entire tree is reconstructed by reading the root inode and recursively following directory inodes.</p>
+      <p><b>Key insight for the interviewer:</b> The public interface — <code>File.read()</code>, <code>File.write()</code>, <code>Directory.get_size()</code> — stays completely the same. Only the storage layer behind those methods changes. This is the Dependency Inversion principle: the high-level logic (what a file system does) is decoupled from the storage mechanism (how it persists). Our LLD design is already structured to support this swap without changing a single interface.</p>
+    </div>
+  </div>
+
+  <div class="qa">
+    <div class="qa-q" onclick="t(this)">How do you test this design in isolation? <i class="fa-solid fa-chevron-down"></i></div>
+    <div class="qa-a">
+      <p>Testability follows directly from Dependency Inversion. Here's what a meaningful test suite looks like:</p>
+      <div class="code-block"><span class="kw">def</span> <span class="nm">test_write_updates_size</span>():
+    user = User(<span class="st">"alice"</span>)
+    f = File(<span class="st">"test.txt"</span>, user)
+    f.write(user, <span class="st">"hello world"</span>)
+    assert f.size == <span class="dn">11</span>
+    assert f.read(user) == <span class="st">"hello world"</span>
+
+<span class="kw">def</span> <span class="nm">test_directory_size_recursive</span>():
+    user = User(<span class="st">"alice"</span>)
+    root = Directory(<span class="st">"root"</span>, user)
+    subdir = Directory(<span class="st">"sub"</span>, user)
+    f1 = File(<span class="st">"a.txt"</span>, user); f1.write(user, <span class="st">"hello"</span>)  <span class="cm"># 5 bytes</span>
+    f2 = File(<span class="st">"b.txt"</span>, user); f2.write(user, <span class="st">"hi"</span>)      <span class="cm"># 2 bytes</span>
+    subdir.add_child(user, f2)
+    root.add_child(user, f1)
+    root.add_child(user, subdir)
+    assert root.get_size() == <span class="dn">7</span>  <span class="cm"># 5 + 2</span>
+
+<span class="kw">def</span> <span class="nm">test_permission_denied_on_read</span>():
+    owner = User(<span class="st">"alice"</span>)
+    other = User(<span class="st">"bob"</span>)
+    f = File(<span class="st">"secret.txt"</span>, owner)
+    f.write(owner, <span class="st">"classified"</span>)
+    f.permissions = Permission(
+        owner=READ|WRITE, group=PermBit(0), others=PermBit(<span class="dn">0</span>),
+        group_name=<span class="st">"admin"</span>)
+    with pytest.raises(PermissionDeniedError):
+        f.read(other)  <span class="cm"># bob should not be able to read</span></div>
+      <p>Each test: runs in milliseconds, no disk I/O, no real threads. All because each entity is independently constructible with simple arguments. This is only possible because we kept concerns separated — File doesn't reach into FileSystem, Permission is injectable, and the lock in each node doesn't affect single-threaded tests.</p>
+    </div>
+  </div>
+
+</div>
+
+</main>
+
+<script>
+function show(id, el) {
+  document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
+  document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+  document.getElementById('s-' + id).classList.add('active');
+  el.classList.add('active');
+  window.scrollTo(0, 0);
+}
+function t(el) {
+  el.classList.toggle('open');
+  el.nextElementSibling.classList.toggle('show');
+}
+</script>
+</body>
+</html>

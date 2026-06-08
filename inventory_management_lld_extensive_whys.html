@@ -1,0 +1,1084 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Inventory Management LLD — Extensive Whys Edition</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Serif:ital,wght@0,400;0,600;1,400&family=JetBrains+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+:root {
+  --teal: #0d7c66; --teal2: #14b89a; --teal-bg: #f0fdf9; --teal-border: #99e6d8;
+  --bg: #f8faf9; --surface: #ffffff; --surface2: #f1f5f3; --surface3: #e6ede9;
+  --border: #d8e4de; --text: #111c18; --text2: #3d5248; --text3: #7a9186;
+  --green: #166534; --green-bg: #f0fdf4; --green-border: #bbf7d0;
+  --red: #991b1b; --red-bg: #fef2f2; --red-border: #fecaca;
+  --blue: #1e3a8a; --blue-bg: #eff6ff; --blue-border: #bfdbfe;
+  --amber: #92400e; --amber-bg: #fffbeb; --amber-border: #fde68a;
+  --purple: #5b21b6; --purple-bg: #f5f3ff; --purple-border: #ddd6fe;
+  --mono: 'JetBrains Mono', monospace;
+  --sans: 'IBM Plex Sans', sans-serif;
+  --serif: 'IBM Plex Serif', serif;
+  --sidebar-w: 258px;
+  --r: 8px;
+}
+body { font-family: var(--sans); background: var(--bg); color: var(--text); display: flex; min-height: 100vh; }
+
+/* SIDEBAR */
+.sidebar {
+  width: var(--sidebar-w); position: fixed; top: 0; left: 0; bottom: 0;
+  background: var(--surface); border-right: 2px solid var(--border);
+  overflow-y: auto; z-index: 100; display: flex; flex-direction: column;
+}
+.logo-wrap { padding: 22px 18px 18px; border-bottom: 1px solid var(--border); }
+.logo { display: flex; align-items: center; gap: 10px; }
+.logo-icon { width: 38px; height: 38px; border-radius: 9px; background: var(--teal2); display: flex; align-items: center; justify-content: center; font-size: 20px; }
+.logo-name { font-size: 15px; font-weight: 600; font-family: var(--serif); }
+.logo-tag { font-size: 11px; color: var(--text3); margin-top: 3px; letter-spacing: 0.03em; }
+.nav-group { padding: 14px 18px 4px; font-size: 9px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.1em; color: var(--text3); }
+.nav-item { display: flex; align-items: center; gap: 9px; padding: 9px 18px; font-size: 13px; color: var(--text2); cursor: pointer; border-left: 3px solid transparent; transition: all 0.12s; }
+.nav-item:hover { background: var(--surface2); color: var(--text); }
+.nav-item.active { border-left-color: var(--teal2); background: var(--teal-bg); color: var(--teal); font-weight: 500; }
+.nav-item i { width: 15px; text-align: center; font-size: 12px; }
+.nav-item .step-num { font-size: 9px; font-weight: 700; background: var(--surface3); border-radius: 3px; padding: 1px 5px; margin-left: auto; color: var(--text3); }
+.nav-item.active .step-num { background: var(--teal-border); color: var(--teal); }
+
+/* MAIN */
+.main { margin-left: var(--sidebar-w); padding: 52px 60px; max-width: 920px; width: 100%; }
+.section { display: none; }
+.section.active { display: block; }
+
+/* SECTION HEADER */
+.sec-eyebrow { font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.1em; color: var(--teal2); margin-bottom: 10px; }
+.sec-title { font-family: var(--serif); font-size: 30px; font-weight: 600; line-height: 1.2; margin-bottom: 10px; }
+.sec-intro { font-size: 15px; color: var(--text2); line-height: 1.8; margin-bottom: 36px; border-left: 3px solid var(--border); padding-left: 16px; }
+
+h3 { font-family: var(--serif); font-size: 19px; font-weight: 600; margin: 40px 0 14px; padding-top: 16px; border-top: 1px solid var(--border); color: var(--text); }
+h4 { font-size: 13px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.06em; margin: 18px 0 8px; color: var(--text3); }
+p { font-size: 14px; color: var(--text2); line-height: 1.8; margin: 10px 0; }
+
+.prompt-box { background: var(--surface2); border: 1px solid var(--border); border-radius: var(--r); padding: 16px 20px; margin: 20px 0; }
+.prompt-box .plabel { font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.08em; color: var(--text3); margin-bottom: 7px; }
+.prompt-box .ptext { font-family: var(--serif); font-size: 16px; font-style: italic; color: var(--text); line-height: 1.6; }
+
+.dialogue { border: 1px solid var(--border); border-radius: var(--r); overflow: hidden; margin: 20px 0; }
+.d-row { padding: 14px 18px; border-bottom: 1px solid var(--border); font-size: 14px; line-height: 1.7; }
+.d-row:last-child { border-bottom: none; }
+.d-row.you { background: var(--surface); }
+.d-row.iv { background: var(--surface2); }
+.d-speaker { font-size: 9px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.09em; margin-bottom: 5px; }
+.d-row.you .d-speaker { color: var(--teal2); }
+.d-row.iv .d-speaker { color: var(--text3); }
+.why-inline {
+  margin-top: 12px; padding: 12px 14px;
+  background: var(--amber-bg); border-left: 3px solid #f59e0b;
+  border-radius: 0 6px 6px 0; font-size: 13px; color: var(--amber); line-height: 1.7;
+}
+.why-inline b { font-weight: 600; }
+.why-inline code { font-family: var(--mono); font-size: 11px; background: rgba(0,0,0,0.06); padding: 1px 5px; border-radius: 3px; }
+
+/* ANNOTATED CODE */
+.ann-wrap { margin: 22px 0; border: 1px solid var(--border); border-radius: var(--r); overflow: hidden; }
+.ann-header { background: #181825; padding: 10px 18px; display: flex; align-items: center; gap: 10px; border-bottom: 1px solid #2a2a3e; }
+.ann-header span { font-family: var(--mono); font-size: 12px; color: #6c7086; }
+.ann-row { display: grid; grid-template-columns: 46% 54%; border-bottom: 1px solid #2a2a3e; }
+.ann-row:last-child { border-bottom: none; }
+.ann-code { background: #1e1e2e; padding: 14px 18px; font-family: var(--mono); font-size: 12.5px; line-height: 1.75; color: #cdd6f4; overflow-x: auto; white-space: pre; }
+.ann-why { background: var(--surface2); padding: 14px 16px; border-left: 1px solid var(--border); font-size: 13px; line-height: 1.7; color: var(--text2); display: flex; flex-direction: column; gap: 6px; }
+.ann-why .wlabel { font-size: 9px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.09em; color: var(--teal2); }
+.ann-why .wmain { color: var(--text2); }
+.ann-why .wfail { background: var(--red-bg); border: 1px solid var(--red-border); border-radius: 5px; padding: 8px 10px; font-size: 12px; color: var(--red); }
+.ann-why .wfail b { font-weight: 600; }
+.ann-why .wfix { background: var(--green-bg); border: 1px solid var(--green-border); border-radius: 5px; padding: 8px 10px; font-size: 12px; color: var(--green); }
+.ann-why .wfix b { font-weight: 600; }
+
+/* SYNTAX HIGHLIGHT */
+.kw { color: #cba6f7; } .cls { color: #a6e3a1; font-weight: 500; }
+.cm { color: #585b70; font-style: italic; } .st { color: #f38ba8; }
+.nm { color: #89b4fa; } .dn { color: #fab387; }
+
+.code-block { background: #1e1e2e; border-radius: var(--r); padding: 18px 20px; font-family: var(--mono); font-size: 13px; line-height: 1.8; overflow-x: auto; margin: 14px 0; color: #cdd6f4; white-space: pre; }
+
+.why-box { background: var(--surface); border: 1px solid var(--border); border-radius: var(--r); padding: 18px 20px; margin: 18px 0; }
+.why-box .wl { display: flex; align-items: center; gap: 8px; font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.09em; color: var(--teal2); margin-bottom: 10px; }
+.why-box p { margin: 6px 0; }
+
+.etable { width: 100%; border-collapse: collapse; margin: 18px 0; font-size: 13.5px; }
+.etable th { text-align: left; padding: 10px 14px; background: var(--surface2); font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.07em; color: var(--text3); border-bottom: 2px solid var(--border); }
+.etable td { padding: 14px 14px; border-bottom: 1px solid var(--border); vertical-align: top; line-height: 1.7; color: var(--text2); }
+.etable td:first-child { font-weight: 500; color: var(--text); white-space: nowrap; }
+.etable tr:last-child td { border-bottom: none; }
+.etable tr:hover td { background: var(--surface2); }
+.badge { display: inline-block; font-size: 9px; font-weight: 700; padding: 2px 7px; border-radius: 20px; margin-right: 6px; text-transform: uppercase; letter-spacing: 0.05em; }
+.bk { background: var(--green-bg); color: var(--green); }
+.bs { background: var(--red-bg); color: var(--red); }
+
+.req-box { background: var(--surface2); border: 1px solid var(--border); border-radius: var(--r); padding: 18px 20px; margin: 14px 0; }
+.req-list { list-style: none; }
+.req-list li { font-size: 14px; color: var(--text2); padding: 6px 0; display: flex; gap: 10px; align-items: flex-start; line-height: 1.7; }
+.req-list li::before { font-weight: 700; flex-shrink: 0; margin-top: 1px; content: "✓"; color: var(--green); }
+.req-list.out li::before { content: "✗"; color: var(--red); }
+
+.pcard { border: 1px solid var(--border); border-radius: var(--r); padding: 20px 22px; margin: 16px 0; background: var(--surface); }
+.ptitle { font-family: var(--serif); font-size: 17px; font-weight: 600; margin-bottom: 4px; display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+.ptag { font-size: 10px; background: var(--surface2); border-radius: 20px; padding: 2px 9px; font-weight: 500; color: var(--text3); font-family: var(--sans); }
+.pcard p { margin: 8px 0; }
+.pcard b { font-weight: 600; color: var(--text); }
+
+.solid-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin: 14px 0; }
+.solid-card { border: 1px solid var(--border); border-radius: var(--r); padding: 18px 20px; background: var(--surface); }
+.solid-letter { font-family: var(--serif); font-size: 32px; font-weight: 600; color: var(--teal2); line-height: 1; margin-bottom: 4px; }
+.solid-name { font-size: 13px; font-weight: 600; margin-bottom: 10px; }
+.solid-def { font-size: 13px; color: var(--text3); margin-bottom: 10px; font-style: italic; line-height: 1.6; }
+.solid-full { grid-column: 1 / -1; }
+.vbox { background: var(--red-bg); border: 1px solid var(--red-border); border-radius: 6px; padding: 11px 13px; margin: 8px 0; font-size: 12.5px; color: var(--red); line-height: 1.65; }
+.fbox { background: var(--green-bg); border: 1px solid var(--green-border); border-radius: 6px; padding: 11px 13px; margin: 8px 0; font-size: 12.5px; color: var(--green); line-height: 1.65; }
+.vbox b, .fbox b { font-weight: 600; }
+
+.compare-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin: 14px 0; }
+.cb { background: var(--red-bg); border: 1px solid var(--red-border); border-radius: var(--r); padding: 14px 16px; }
+.cg { background: var(--green-bg); border: 1px solid var(--green-border); border-radius: var(--r); padding: 14px 16px; }
+.clabel { font-size: 9px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 9px; }
+.cb .clabel { color: var(--red); } .cg .clabel { color: var(--green); }
+.cb pre, .cg pre { font-family: var(--mono); font-size: 12px; line-height: 1.7; white-space: pre-wrap; }
+.cb pre { color: #7f1d1d; } .cg pre { color: #14532d; }
+.cexplain { font-size: 13px; color: var(--text2); margin-top: 10px; line-height: 1.65; }
+
+.tsec { margin: 24px 0; border: 1px solid var(--border); border-radius: var(--r); overflow: hidden; }
+.thead { padding: 13px 18px; background: var(--surface2); border-bottom: 1px solid var(--border); font-size: 15px; font-weight: 600; font-family: var(--serif); }
+.tbody { padding: 16px 18px; }
+.scenario { background: var(--amber-bg); border-left: 3px solid #f59e0b; border-radius: 0 6px 6px 0; padding: 12px 15px; margin: 10px 0; font-size: 13px; color: var(--amber); line-height: 1.7; }
+.scenario b { font-weight: 600; }
+.td-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin: 12px 0; }
+.tpro { background: var(--green-bg); border: 1px solid var(--green-border); border-radius: 6px; padding: 13px 15px; font-size: 13px; color: var(--green); line-height: 1.65; }
+.tcon { background: var(--amber-bg); border: 1px solid var(--amber-border); border-radius: 6px; padding: 13px 15px; font-size: 13px; color: var(--amber); line-height: 1.65; }
+.tlabel { font-size: 9px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 7px; display: block; }
+
+.qa { border: 1px solid var(--border); border-radius: var(--r); overflow: hidden; margin: 12px 0; }
+.qa-q { padding: 15px 18px; cursor: pointer; font-size: 14px; font-weight: 500; display: flex; justify-content: space-between; align-items: center; background: var(--surface); user-select: none; gap: 12px; }
+.qa-q:hover { background: var(--surface2); }
+.qa-q i { color: var(--text3); transition: transform 0.2s; font-size: 11px; flex-shrink: 0; }
+.qa-q.open i { transform: rotate(180deg); }
+.qa-a { display: none; padding: 18px 20px; font-size: 14px; line-height: 1.85; color: var(--text2); background: var(--surface2); border-top: 1px solid var(--border); }
+.qa-a.show { display: block; }
+.qa-a code { font-family: var(--mono); font-size: 12px; background: var(--surface3); padding: 1px 6px; border-radius: 4px; color: var(--text); }
+.qa-a .code-block { margin: 12px 0; font-size: 12px; }
+
+code { font-family: var(--mono); font-size: 12px; background: var(--surface2); padding: 1px 5px; border-radius: 4px; color: var(--teal); border: 1px solid var(--border); }
+
+.flow-step { border: 1px solid var(--border); border-radius: var(--r); margin: 10px 0; overflow: hidden; }
+.flow-step-header { background: var(--surface2); padding: 12px 16px; display: flex; align-items: center; gap: 12px; border-bottom: 1px solid var(--border); }
+.flow-num { width: 26px; height: 26px; border-radius: 50%; background: var(--teal2); color: white; display: flex; align-items: center; justify-content: center; font-size: 11px; font-weight: 700; flex-shrink: 0; }
+.flow-title { font-size: 14px; font-weight: 600; }
+.flow-body { padding: 14px 16px; font-size: 13.5px; color: var(--text2); line-height: 1.75; }
+.flow-arrow { text-align: center; color: var(--text3); font-size: 18px; margin: 2px 0; }
+
+::-webkit-scrollbar { width: 5px; height: 5px; }
+::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+</style>
+</head>
+<body>
+
+<nav class="sidebar">
+  <div class="logo-wrap">
+    <div class="logo">
+      <div class="logo-icon">📦</div>
+      <div><div class="logo-name">Inventory Mgmt LLD</div><div class="logo-tag">Extensive Whys Edition</div></div>
+    </div>
+  </div>
+  <div class="nav-group">Foundations</div>
+  <div class="nav-item active" onclick="show('req',this)"><i class="fa-solid fa-list-check"></i> Requirements <span class="step-num">01</span></div>
+  <div class="nav-item" onclick="show('ent',this)"><i class="fa-solid fa-diagram-project"></i> Core Entities <span class="step-num">02</span></div>
+  <div class="nav-group">Implementation</div>
+  <div class="nav-item" onclick="show('cls',this)"><i class="fa-solid fa-code"></i> Class Design <span class="step-num">03</span></div>
+  <div class="nav-item" onclick="show('impl',this)"><i class="fa-solid fa-terminal"></i> Full Implementation <span class="step-num">04</span></div>
+  <div class="nav-item" onclick="show('flow',this)"><i class="fa-solid fa-arrow-right-arrow-left"></i> Key Flows <span class="step-num">05</span></div>
+  <div class="nav-group">Deep Dives</div>
+  <div class="nav-item" onclick="show('conc',this)"><i class="fa-solid fa-lock"></i> Thread Safety <span class="step-num">06</span></div>
+  <div class="nav-item" onclick="show('pat',this)"><i class="fa-solid fa-puzzle-piece"></i> Design Patterns <span class="step-num">07</span></div>
+  <div class="nav-item" onclick="show('sol',this)"><i class="fa-solid fa-layer-group"></i> SOLID Principles <span class="step-num">08</span></div>
+  <div class="nav-item" onclick="show('qa',this)"><i class="fa-solid fa-circle-question"></i> Interview Q&amp;A <span class="step-num">09</span></div>
+</nav>
+
+<main class="main">
+
+<!-- ======== 1: REQUIREMENTS ======== -->
+<div class="section active" id="s-req">
+  <div class="sec-eyebrow">Step 1 · ~5 minutes</div>
+  <div class="sec-title">Requirements &amp; Clarifications</div>
+  <div class="sec-intro">You'll be handed a vague sentence. Your first job is not to design — it's to interrogate. Every clarifying question you ask is a bug you're preventing before writing a single class. Notice how much the prompt below leaves unsaid.</div>
+
+  <div class="prompt-box">
+    <div class="plabel">The prompt you'll receive</div>
+    <div class="ptext">"Design an inventory management system that tracks products across multiple warehouses. The system needs to handle adding and removing inventory, transferring stock between locations, and alerting when inventory runs low."</div>
+  </div>
+
+  <p>This sentence leaves almost everything ambiguous. How many warehouses? Fixed or dynamic? What does "alert" mean — email, webhook, log? Can stock go negative? What if two threads try to modify the same warehouse simultaneously? These aren't nitpicks — each answer changes a class you must write or eliminates one you shouldn't.</p>
+
+  <h3>Clarifying Questions — with deep reasoning</h3>
+  <div class="dialogue">
+
+    <div class="d-row you">
+      <div class="d-speaker">You</div>
+      "When you say 'multiple warehouses' — is the set of warehouses fixed at startup, or can we add/remove warehouses dynamically at runtime?"
+      <div class="why-inline">
+        <b>Why ask this first:</b> "Multiple warehouses" is an architectural fork. If warehouses are <b>dynamic</b>, you need warehouse lifecycle management: create, delete, maybe even merge. If they're <b>fixed</b>, you skip all of that and just configure them in the constructor. This one question can remove an entire class (<code>WarehouseRegistry</code>) from your design. Asking it takes 5 seconds. Missing it means you might design a warehouse-creation flow the interviewer never wanted, using up precious time.
+      </div>
+    </div>
+    <div class="d-row iv"><div class="d-speaker">Interviewer</div>"Keep it simple. Fixed set of warehouses. They're configured when the system initializes."</div>
+
+    <div class="d-row you">
+      <div class="d-speaker">You</div>
+      "For the low-stock alerts — is the threshold global per product, or is it warehouse-specific? E.g., Warehouse A might need 50 units of Product X as a buffer, while Warehouse B only needs 10."
+      <div class="why-inline">
+        <b>Why this matters enormously:</b> If thresholds are global, you store one number per product. Simple. If thresholds are per product per warehouse, you need a 2D mapping: <code>(product_id, warehouse_id) → threshold</code>. The storage structure is completely different. Additionally, "per warehouse" thresholds mean a product can be "low" in Warehouse A but "fine" in Warehouse B — so your alert logic must check per location, not globally. This question defines the shape of your <code>AlertConfig</code> class.
+      </div>
+    </div>
+    <div class="d-row iv"><div class="d-speaker">Interviewer</div>"Per product per warehouse. Different locations have different needs for the same product."</div>
+
+    <div class="d-row you">
+      <div class="d-speaker">You</div>
+      "How should alerts be delivered? Should the system send emails, call a webhook, or just invoke some callback interface that the caller provides?"
+      <div class="why-inline">
+        <b>Why "pluggable" is the right answer:</b> If you hardcode email or logging into your alert logic, you've violated the Open/Closed Principle — adding a new notification channel requires modifying core inventory code. The right design is an <b>Observer pattern</b>: your system fires an event, and whoever subscribed (email sender, Slack bot, dashboard) handles it. This also makes your system unit-testable — you can register a mock listener in tests instead of sending real emails. By asking this question, you signal you know about OCP and the Observer pattern without having to say so explicitly.
+      </div>
+    </div>
+    <div class="d-row iv"><div class="d-speaker">Interviewer</div>"Keep it pluggable. The system calls a callback interface when stock is low. What happens after — email, webhook, logging — is someone else's problem."</div>
+
+    <div class="d-row you">
+      <div class="d-speaker">You</div>
+      "What happens if someone tries to remove more units than exist? Should we allow negative inventory, or reject the operation with an error?"
+      <div class="why-inline">
+        <b>Why this defines your entire validation story:</b> If negative inventory is allowed, you never need to validate before a remove — just decrement and move on. If it's disallowed, you must validate before every remove AND every transfer (both the subtract and add sides). The answer also tells you what exception/error type to define. A surprisingly large portion of your implementation logic hinges on this one answer — yet it takes one sentence to ask.
+      </div>
+    </div>
+    <div class="d-row iv"><div class="d-speaker">Interviewer</div>"Reject them. If someone tries to remove 100 units but we only have 50, that should fail. Same with transfers — validate before moving anything."</div>
+
+    <div class="d-row you">
+      <div class="d-speaker">You</div>
+      "What about concurrency? If two processes try to modify the same warehouse's inventory simultaneously — say, one shipment arriving while an order is being fulfilled — do we need to handle that?"
+      <div class="why-inline">
+        <b>Why you must ask this explicitly:</b> Concurrency changes nearly every method signature. Without it, you write simple Python dicts and plain assignments. With it, you must think about locks, deadlocks (especially for transfers which touch two warehouses), and granularity — do you lock the whole system or per-warehouse? Asking this question before coding shows the interviewer you think about production realities, not just happy-path logic. It also sets up your Thread Safety deep-dive section.
+      </div>
+    </div>
+    <div class="d-row iv"><div class="d-speaker">Interviewer</div>"Yes, concurrency is important. Multiple operations could be happening simultaneously. Make sure operations are thread-safe."</div>
+
+    <div class="d-row you">
+      <div class="d-speaker">You</div>
+      "Last one — what's out of scope? Are we managing the product catalog, handling orders, payments, or shipment logistics?"
+      <div class="why-inline">
+        <b>Why scoping out matters:</b> Calling out what you're NOT building does three things. First, it proves you thought about those things and deliberately excluded them. Second, it protects you from scope creep — if the interviewer drifts toward order management, you can redirect cleanly. Third, it makes your design look complete rather than incomplete. A design with no stated boundaries looks like you forgot things. A design with explicit exclusions looks like engineering judgement.
+      </div>
+    </div>
+    <div class="d-row iv"><div class="d-speaker">Interviewer</div>"Correct. Products are external — they arrive with an ID and name. Orders and payments are handled upstream. Keep focus on inventory tracking."</div>
+
+  </div>
+
+  <h3>Final Requirements</h3>
+  <div class="req-box">
+    <h4>In scope</h4>
+    <ul class="req-list">
+      <li>Track inventory (product → quantity) across a fixed set of warehouses configured at startup.</li>
+      <li>Add stock to a specific warehouse (receiving shipments).</li>
+      <li>Remove stock from a specific warehouse (fulfilling orders). Reject if insufficient stock.</li>
+      <li>Check availability: given a product and quantity, return which warehouses can fulfill it.</li>
+      <li>Transfer stock between warehouses atomically. Validate before moving anything.</li>
+      <li>Low-stock alerts: per product per warehouse threshold. Fire a pluggable callback when stock drops below threshold.</li>
+      <li>Thread-safe: concurrent operations on different or same warehouses must not corrupt state.</li>
+    </ul>
+    <h4 style="margin-top:16px;">Out of scope</h4>
+    <ul class="req-list out">
+      <li>Product catalog management (products arrive with an external ID).</li>
+      <li>Order processing, payment, or purchase flow.</li>
+      <li>Persistence / database layer.</li>
+      <li>Warehouse lifecycle (create, delete, merge).</li>
+      <li>GPS, routing, or logistics optimization.</li>
+    </ul>
+  </div>
+</div>
+
+<!-- ======== 2: ENTITIES ======== -->
+<div class="section" id="s-ent">
+  <div class="sec-eyebrow">Step 2 · ~5 minutes</div>
+  <div class="sec-title">Core Entities &amp; Relationships</div>
+  <div class="sec-intro">Scan the requirements for nouns. Circle every one. Then apply a ruthless filter: does this noun have <em>state that changes over time</em> AND <em>behavior that enforces rules on that state</em>? If yes → class. If only data → dataclass. If neither → it's a field on something else. The most common beginner mistake is either making everything a class, or collapsing things that should be separate.</div>
+
+  <h3>Noun-by-noun evaluation</h3>
+  <table class="etable">
+    <thead><tr><th style="width:18%">Noun</th><th style="width:14%">Decision</th><th>Deep reasoning — including what breaks if you get it wrong</th></tr></thead>
+    <tbody>
+      <tr>
+        <td><span class="badge bk">Keep</span>Warehouse</td>
+        <td>Full class</td>
+        <td>Has mutable state (a dict mapping product → quantity that changes constantly) and rich behavior: add stock, remove stock with validation, transfer, fire alerts. If Warehouse were just a nested dict inside <code>InventoryManager</code>, the validation and alert logic would have to live elsewhere — probably scattered across the manager. That means two places can modify warehouse stock, which is where concurrency bugs are born. Encapsulating stock inside <code>Warehouse</code> means there is exactly one place to enforce "stock can't go negative" — the <code>Warehouse</code> class itself.</td>
+      </tr>
+      <tr>
+        <td><span class="badge bk">Keep</span>InventoryManager</td>
+        <td>Full class</td>
+        <td>This is the <b>façade</b> — the single public entry point for all operations. It owns the collection of warehouses and orchestrates cross-warehouse operations like transfers. Without it, the caller would have to know about individual warehouses, find the right one, lock it, etc. The manager hides that complexity. It's also where the "check availability across all warehouses" feature lives naturally, since it needs to query multiple warehouses in one pass.</td>
+      </tr>
+      <tr>
+        <td><span class="badge bk">Keep</span>AlertConfig</td>
+        <td>Dataclass</td>
+        <td>Pure configuration data: a threshold value for a specific (product, warehouse) combination. It has no behavior of its own — it just holds the number. A dataclass or named tuple is the right choice here. The behavior that <em>uses</em> the config (checking if current stock is below threshold) lives in <code>Warehouse</code>, not in <code>AlertConfig</code> itself.</td>
+      </tr>
+      <tr>
+        <td><span class="badge bk">Keep</span>AlertListener</td>
+        <td>Abstract class / Interface</td>
+        <td>This is the <b>Observer interface</b>. It defines the contract: "any class that wants to receive low-stock notifications must implement <code>on_low_stock()</code>." You never instantiate <code>AlertListener</code> directly — you subclass it (EmailAlerter, SlackAlerter, LogAlerter). If you skip this abstraction and call a specific alerter directly (e.g., <code>send_email()</code> hardcoded in Warehouse), you've broken OCP — adding a new alert channel requires modifying inventory code. The interface decouples inventory logic from notification logic completely.</td>
+      </tr>
+      <tr>
+        <td><span class="badge bs">Skip</span>Product</td>
+        <td>Just an ID string</td>
+        <td>Products are external per our requirements. The system doesn't manage a product catalog — it just stores quantities indexed by a product ID. A <code>product_id: str</code> field is sufficient everywhere. Creating a full <code>Product</code> class would give us something with no behavior that just wraps a string — that's over-engineering. If requirements changed to include product metadata (weight, category, reorder formula), we'd add it then.</td>
+      </tr>
+      <tr>
+        <td><span class="badge bs">Skip</span>Shipment / Order</td>
+        <td>Out of scope</td>
+        <td>These represent the events that trigger <code>add_stock()</code> or <code>remove_stock()</code>. The calling system handles them. Our system only cares about the resulting quantity change, not the cause. Modeling Shipment or Order here would pull in order IDs, customer data, payment state — none of which we need for inventory tracking.</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <h3>Relationships at a glance</h3>
+  <div class="why-box">
+    <div class="wl"><i class="fa-solid fa-sitemap"></i> How the four entities connect</div>
+    <p><b>InventoryManager</b> owns a dict of <code>warehouse_id → Warehouse</code>. It also holds a list of registered <code>AlertListener</code> instances.</p>
+    <p><b>Warehouse</b> owns a dict of <code>product_id → quantity</code> and a dict of <code>(product_id) → AlertConfig</code>. It has a <code>threading.Lock</code> for thread safety.</p>
+    <p><b>AlertConfig</b> is a small dataclass with just <code>product_id</code> and <code>threshold</code>.</p>
+    <p><b>AlertListener</b> is an abstract base class. Concrete implementations (EmailAlerter, LogAlerter, etc.) register themselves with the InventoryManager and are called when stock drops below threshold.</p>
+  </div>
+</div>
+
+<!-- ======== 3: CLASS DESIGN ======== -->
+<div class="section" id="s-cls">
+  <div class="sec-eyebrow">Step 3 · ~10 minutes</div>
+  <div class="sec-title">Class Design</div>
+  <div class="sec-intro">For each class, think about: what state does it own, what methods does it expose, and what invariants must it always maintain? The key question for each method is — who is the right owner? The class that owns the state is the right owner of the behavior that changes it.</div>
+
+  <h3>Warehouse — the heart of the system</h3>
+  <div class="ann-wrap">
+    <div class="ann-header"><span>warehouse.py (design sketch)</span></div>
+    <div class="ann-row">
+      <div class="ann-code"><span class="kw">class</span> <span class="cls">Warehouse</span>:
+    <span class="kw">def</span> <span class="nm">__init__</span>(self, warehouse_id):
+        self.id = warehouse_id
+        self._stock: dict[str, int] = {}
+        self._alert_configs: dict[str, <span class="cls">AlertConfig</span>] = {}
+        self._lock = threading.Lock()</div>
+      <div class="ann-why">
+        <span class="wlabel">Why</span>
+        <span class="wmain"><code>_stock</code> is private (underscore prefix). The only way to change stock is through <code>add_stock()</code> and <code>remove_stock()</code> — never by direct assignment from outside. This is encapsulation: the rules (no negatives, fire alerts) are always enforced because no one can bypass the method.</span>
+        <span class="wfix"><b>Key insight:</b> If stock were public (<code>self.stock</code>), any caller could write <code>wh.stock["apples"] -= 200</code> and bypass every validation. Private state + public methods is what makes invariants hold.</span>
+      </div>
+    </div>
+    <div class="ann-row">
+      <div class="ann-code">    <span class="kw">def</span> <span class="nm">add_stock</span>(self, product_id, quantity,
+                       listeners):
+        <span class="kw">with</span> self._lock:
+            <span class="kw">if</span> quantity &lt;= 0:
+                <span class="kw">raise</span> ValueError(...)
+            self._stock[product_id] = \
+                self._stock.get(product_id, 0) \
+                + quantity</div>
+      <div class="ann-why">
+        <span class="wlabel">Why the lock is inside the method</span>
+        <span class="wmain">The <code>with self._lock</code> block ensures that the read-then-write sequence (get current stock, add to it) is atomic. Without this, two threads could both read "stock = 10", both add 5, and both write "stock = 15" — resulting in 15 instead of the correct 20. This is called a <b>race condition</b>.</span>
+      </div>
+    </div>
+    <div class="ann-row">
+      <div class="ann-code">    <span class="kw">def</span> <span class="nm">remove_stock</span>(self, product_id, quantity,
+                          listeners):
+        <span class="kw">with</span> self._lock:
+            current = self._stock.get(product_id, 0)
+            <span class="kw">if</span> current &lt; quantity:
+                <span class="kw">raise</span> InsufficientStockError(...)
+            self._stock[product_id] = current - quantity
+            self._check_alert(product_id, listeners)</div>
+      <div class="ann-why">
+        <span class="wlabel">Why validate-then-modify inside the lock</span>
+        <span class="wmain">The check (<code>current &lt; quantity</code>) and the modification (<code>-= quantity</code>) must happen together atomically. If you check outside the lock and modify inside, another thread could remove stock between your check and your write — making stock go negative. Checking and modifying inside the same lock block eliminates this window entirely.</span>
+        <span class="wfail"><b>If you forget the lock here:</b> Two orders for the last 10 units could both pass the validation check, both subtract 10, and you end up with -10 inventory.</span>
+      </div>
+    </div>
+    <div class="ann-row">
+      <div class="ann-code">    <span class="kw">def</span> <span class="nm">_check_alert</span>(self, product_id, listeners):
+        <span class="cm"># called inside lock already</span>
+        cfg = self._alert_configs.get(product_id)
+        <span class="kw">if</span> cfg <span class="kw">and</span> \
+           self._stock.get(product_id, 0) &lt; cfg.threshold:
+            <span class="kw">for</span> listener <span class="kw">in</span> listeners:
+                listener.on_low_stock(
+                    self.id, product_id,
+                    self._stock[product_id])</div>
+      <div class="ann-why">
+        <span class="wlabel">Why private helper, not public method</span>
+        <span class="wmain">Alert checking is an internal consequence of stock removal — it's not something external callers invoke directly. Making it a private helper (<code>_check_alert</code>) keeps the public interface clean. The caller just calls <code>remove_stock()</code> and alerts fire automatically as a side-effect.</span>
+      </div>
+    </div>
+  </div>
+
+  <h3>InventoryManager — the façade</h3>
+  <div class="ann-wrap">
+    <div class="ann-header"><span>inventory_manager.py (design sketch)</span></div>
+    <div class="ann-row">
+      <div class="ann-code"><span class="kw">class</span> <span class="cls">InventoryManager</span>:
+    <span class="kw">def</span> <span class="nm">__init__</span>(self, warehouse_ids: list[str]):
+        self._warehouses = {
+            wid: <span class="cls">Warehouse</span>(wid)
+            <span class="kw">for</span> wid <span class="kw">in</span> warehouse_ids
+        }
+        self._listeners: list[<span class="cls">AlertListener</span>] = []</div>
+      <div class="ann-why">
+        <span class="wlabel">Why a dict, not a list</span>
+        <span class="wmain">Callers identify warehouses by ID (a string like "warehouse_nyc"). A dict gives O(1) lookup by ID. A list would require iterating all warehouses to find the right one — O(n) for every operation. For 100 warehouses, this is a 100× slowdown on every stock operation.</span>
+      </div>
+    </div>
+    <div class="ann-row">
+      <div class="ann-code">    <span class="kw">def</span> <span class="nm">transfer</span>(self, product_id, quantity,
+                      from_wh, to_wh):
+        <span class="cm"># Must lock BOTH warehouses to avoid</span>
+        <span class="cm"># partial transfers and deadlocks</span>
+        first, second = <span class="nm">sorted</span>([from_wh, to_wh])
+        <span class="kw">with</span> first._lock:
+            <span class="kw">with</span> second._lock:
+                from_wh._transfer_out(product_id, qty)
+                to_wh._transfer_in(product_id, qty)</div>
+      <div class="ann-why">
+        <span class="wlabel">Why sorted lock ordering prevents deadlocks</span>
+        <span class="wmain">Imagine Thread A transfers A→B (locks A, then B) while Thread B simultaneously transfers B→A (locks B, then A). Both threads hold one lock and wait for the other — a deadlock. <b>Sorted ordering</b> ensures both threads always acquire locks in the same order (alphabetically), so deadlock is impossible. This is a classic concurrency interview topic.</span>
+        <span class="wfail"><b>Without sorted ordering:</b> Your transfer() can deadlock under concurrent load, hanging indefinitely — a production-killing bug.</span>
+      </div>
+    </div>
+    <div class="ann-row">
+      <div class="ann-code">    <span class="kw">def</span> <span class="nm">check_availability</span>(self,
+            product_id, quantity) -> list[str]:
+        <span class="kw">return</span> [
+            wid <span class="kw">for</span> wid, wh
+            <span class="kw">in</span> self._warehouses.items()
+            <span class="kw">if</span> wh.get_stock(product_id) &gt;= quantity
+        ]</div>
+      <div class="ann-why">
+        <span class="wlabel">Why this lives in the Manager, not Warehouse</span>
+        <span class="wmain"><code>check_availability</code> queries <em>multiple</em> warehouses and returns a list of IDs. A single <code>Warehouse</code> instance has no visibility into its siblings — it only knows its own stock. Cross-entity queries must live in the object that owns the collection of entities: the Manager.</span>
+      </div>
+    </div>
+  </div>
+
+  <h3>AlertListener — the Observer interface</h3>
+  <div class="ann-wrap">
+    <div class="ann-header"><span>alert_listener.py</span></div>
+    <div class="ann-row">
+      <div class="ann-code"><span class="kw">from</span> abc <span class="kw">import</span> ABC, abstractmethod
+
+<span class="kw">class</span> <span class="cls">AlertListener</span>(ABC):
+    <span class="nm">@abstractmethod</span>
+    <span class="kw">def</span> <span class="nm">on_low_stock</span>(self,
+        warehouse_id: str,
+        product_id: str,
+        current_stock: int) -> <span class="kw">None</span>: ...</div>
+      <div class="ann-why">
+        <span class="wlabel">Why ABC, not a plain class</span>
+        <span class="wmain">Using Python's <code>ABC</code> (Abstract Base Class) makes <code>AlertListener</code> un-instantiable directly and forces every subclass to implement <code>on_low_stock()</code>. If you forget to implement it, Python raises a <code>TypeError</code> at instantiation time — a fast, clear error instead of a silent runtime failure where no alerts fire because the method is missing.</span>
+        <span class="wfix"><b>Concrete example of a subclass:</b><br><code>class LogAlerter(AlertListener):<br>  def on_low_stock(self, wh_id, prod_id, qty):<br>    print(f"LOW STOCK: {prod_id} in {wh_id}: {qty}")</code></span>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ======== 4: FULL IMPLEMENTATION ======== -->
+<div class="section" id="s-impl">
+  <div class="sec-eyebrow">Step 4 · Complete Code</div>
+  <div class="sec-title">Full Python Implementation</div>
+  <div class="sec-intro">The complete, runnable implementation with every piece connected. Read this as one file — notice how the classes are short and focused, each with one clear responsibility.</div>
+
+  <div class="code-block"><span class="kw">from</span> __future__ <span class="kw">import</span> annotations
+<span class="kw">import</span> threading
+<span class="kw">from</span> abc <span class="kw">import</span> ABC, abstractmethod
+<span class="kw">from</span> dataclasses <span class="kw">import</span> dataclass
+<span class="kw">from</span> typing <span class="kw">import</span> Optional
+
+
+<span class="cm"># ─────────────────────────────────────────────────────────
+# EXCEPTIONS
+# ─────────────────────────────────────────────────────────</span>
+
+<span class="kw">class</span> <span class="cls">WarehouseNotFoundError</span>(Exception):
+    <span class="kw">pass</span>
+
+<span class="kw">class</span> <span class="cls">InsufficientStockError</span>(Exception):
+    <span class="kw">pass</span>
+
+
+<span class="cm"># ─────────────────────────────────────────────────────────
+# ALERT CONFIG — pure data, no behavior
+# ─────────────────────────────────────────────────────────</span>
+
+<span class="nm">@dataclass</span>
+<span class="kw">class</span> <span class="cls">AlertConfig</span>:
+    product_id: str
+    threshold: int   <span class="cm"># fire alert when stock drops below this</span>
+
+
+<span class="cm"># ─────────────────────────────────────────────────────────
+# ALERT LISTENER — Observer interface
+# ─────────────────────────────────────────────────────────</span>
+
+<span class="kw">class</span> <span class="cls">AlertListener</span>(ABC):
+    <span class="nm">@abstractmethod</span>
+    <span class="kw">def</span> <span class="nm">on_low_stock</span>(self,
+        warehouse_id: str,
+        product_id: str,
+        current_stock: int
+    ) -> <span class="kw">None</span>: ...
+
+
+<span class="kw">class</span> <span class="cls">ConsoleAlerter</span>(<span class="cls">AlertListener</span>):
+    <span class="cm">"""A simple alerter that prints to console."""</span>
+    <span class="kw">def</span> <span class="nm">on_low_stock</span>(self, wh_id, prod_id, qty):
+        print(<span class="st">f"⚠ LOW STOCK: {prod_id} in {wh_id} — only {qty} left"</span>)
+
+
+<span class="cm"># ─────────────────────────────────────────────────────────
+# WAREHOUSE — owns stock for one location
+# ─────────────────────────────────────────────────────────</span>
+
+<span class="kw">class</span> <span class="cls">Warehouse</span>:
+    <span class="kw">def</span> <span class="nm">__init__</span>(self, warehouse_id: str):
+        self.id = warehouse_id
+        self._stock: dict[str, int] = {}
+        self._alert_configs: dict[str, <span class="cls">AlertConfig</span>] = {}
+        self._lock = threading.Lock()
+
+    <span class="cm"># ── Public interface ──────────────────────────────────</span>
+
+    <span class="kw">def</span> <span class="nm">add_stock</span>(self, product_id: str, quantity: int,
+                   listeners: list[<span class="cls">AlertListener</span>]) -> <span class="kw">None</span>:
+        <span class="kw">if</span> quantity &lt;= 0:
+            <span class="kw">raise</span> ValueError(<span class="st">f"Quantity must be positive, got {quantity}"</span>)
+        <span class="kw">with</span> self._lock:
+            self._stock[product_id] = (
+                self._stock.get(product_id, 0) + quantity
+            )
+            <span class="cm"># No alert check on add — stock just increased</span>
+
+    <span class="kw">def</span> <span class="nm">remove_stock</span>(self, product_id: str, quantity: int,
+                      listeners: list[<span class="cls">AlertListener</span>]) -> <span class="kw">None</span>:
+        <span class="kw">if</span> quantity &lt;= 0:
+            <span class="kw">raise</span> ValueError(<span class="st">f"Quantity must be positive, got {quantity}"</span>)
+        <span class="kw">with</span> self._lock:
+            current = self._stock.get(product_id, 0)
+            <span class="kw">if</span> current &lt; quantity:
+                <span class="kw">raise</span> <span class="cls">InsufficientStockError</span>(
+                    <span class="st">f"Warehouse {self.id}: need {quantity} of "
+                    f"'{product_id}', have {current}"</span>
+                )
+            self._stock[product_id] = current - quantity
+            self._check_alert(product_id, listeners)
+
+    <span class="kw">def</span> <span class="nm">get_stock</span>(self, product_id: str) -> int:
+        <span class="kw">with</span> self._lock:
+            <span class="kw">return</span> self._stock.get(product_id, 0)
+
+    <span class="kw">def</span> <span class="nm">set_alert</span>(self, config: <span class="cls">AlertConfig</span>) -> <span class="kw">None</span>:
+        <span class="kw">with</span> self._lock:
+            self._alert_configs[config.product_id] = config
+
+    <span class="cm"># ── Private helpers ───────────────────────────────────</span>
+
+    <span class="kw">def</span> <span class="nm">_transfer_out</span>(self, product_id: str, quantity: int) -> <span class="kw">None</span>:
+        <span class="cm"># Called only while BOTH warehouse locks are held (by Manager)</span>
+        current = self._stock.get(product_id, 0)
+        <span class="kw">if</span> current &lt; quantity:
+            <span class="kw">raise</span> <span class="cls">InsufficientStockError</span>(
+                <span class="st">f"Transfer failed: need {quantity} of '{product_id}' "
+                f"in {self.id}, have {current}"</span>
+            )
+        self._stock[product_id] = current - quantity
+
+    <span class="kw">def</span> <span class="nm">_transfer_in</span>(self, product_id: str, quantity: int) -> <span class="kw">None</span>:
+        <span class="cm"># Called only while BOTH warehouse locks are held (by Manager)</span>
+        self._stock[product_id] = (
+            self._stock.get(product_id, 0) + quantity
+        )
+
+    <span class="kw">def</span> <span class="nm">_check_alert</span>(self, product_id: str,
+                       listeners: list[<span class="cls">AlertListener</span>]) -> <span class="kw">None</span>:
+        <span class="cm"># Must be called while self._lock is already held</span>
+        cfg = self._alert_configs.get(product_id)
+        <span class="kw">if</span> cfg <span class="kw">is</span> <span class="kw">None</span>:
+            <span class="kw">return</span>
+        current = self._stock.get(product_id, 0)
+        <span class="kw">if</span> current &lt; cfg.threshold:
+            <span class="kw">for</span> listener <span class="kw">in</span> listeners:
+                listener.on_low_stock(self.id, product_id, current)
+
+
+<span class="cm"># ─────────────────────────────────────────────────────────
+# INVENTORY MANAGER — façade / coordinator
+# ─────────────────────────────────────────────────────────</span>
+
+<span class="kw">class</span> <span class="cls">InventoryManager</span>:
+    <span class="kw">def</span> <span class="nm">__init__</span>(self, warehouse_ids: list[str]):
+        self._warehouses: dict[str, <span class="cls">Warehouse</span>] = {
+            wid: <span class="cls">Warehouse</span>(wid) <span class="kw">for</span> wid <span class="kw">in</span> warehouse_ids
+        }
+        self._listeners: list[<span class="cls">AlertListener</span>] = []
+
+    <span class="cm"># ── Listener registration ─────────────────────────────</span>
+
+    <span class="kw">def</span> <span class="nm">register_listener</span>(self, listener: <span class="cls">AlertListener</span>) -> <span class="kw">None</span>:
+        self._listeners.append(listener)
+
+    <span class="kw">def</span> <span class="nm">set_alert</span>(self, warehouse_id: str,
+                   config: <span class="cls">AlertConfig</span>) -> <span class="kw">None</span>:
+        self._get_warehouse(warehouse_id).set_alert(config)
+
+    <span class="cm"># ── Core operations ───────────────────────────────────</span>
+
+    <span class="kw">def</span> <span class="nm">add_stock</span>(self, warehouse_id: str,
+                   product_id: str, quantity: int) -> <span class="kw">None</span>:
+        self._get_warehouse(warehouse_id).add_stock(
+            product_id, quantity, self._listeners
+        )
+
+    <span class="kw">def</span> <span class="nm">remove_stock</span>(self, warehouse_id: str,
+                      product_id: str, quantity: int) -> <span class="kw">None</span>:
+        self._get_warehouse(warehouse_id).remove_stock(
+            product_id, quantity, self._listeners
+        )
+
+    <span class="kw">def</span> <span class="nm">get_stock</span>(self, warehouse_id: str,
+                   product_id: str) -> int:
+        <span class="kw">return</span> self._get_warehouse(warehouse_id).get_stock(product_id)
+
+    <span class="kw">def</span> <span class="nm">check_availability</span>(self, product_id: str,
+                             quantity: int) -> list[str]:
+        <span class="cm">"""Return list of warehouse IDs that have enough stock."""</span>
+        <span class="kw">return</span> [
+            wid <span class="kw">for</span> wid, wh <span class="kw">in</span> self._warehouses.items()
+            <span class="kw">if</span> wh.get_stock(product_id) >= quantity
+        ]
+
+    <span class="kw">def</span> <span class="nm">transfer</span>(self,
+                  product_id: str,
+                  quantity: int,
+                  from_warehouse_id: str,
+                  to_warehouse_id: str) -> <span class="kw">None</span>:
+        <span class="cm">"""Atomically transfer stock between two warehouses.
+        Uses sorted lock ordering to prevent deadlocks."""</span>
+        <span class="kw">if</span> from_warehouse_id == to_warehouse_id:
+            <span class="kw">raise</span> ValueError(<span class="st">"Source and destination cannot be the same."</span>)
+
+        from_wh = self._get_warehouse(from_warehouse_id)
+        to_wh = self._get_warehouse(to_warehouse_id)
+
+        <span class="cm"># Sort by warehouse ID to establish a consistent lock order.
+        # This is the key deadlock-prevention technique.</span>
+        warehouses = sorted([from_wh, to_wh], key=<span class="kw">lambda</span> w: w.id)
+        first, second = warehouses[0], warehouses[1]
+
+        <span class="kw">with</span> first._lock:
+            <span class="kw">with</span> second._lock:
+                from_wh._transfer_out(product_id, quantity)
+                to_wh._transfer_in(product_id, quantity)
+
+        <span class="cm"># Check alerts AFTER releasing locks (listeners may be slow)</span>
+        self._check_alerts_after_transfer(from_warehouse_id, product_id)
+
+    <span class="cm"># ── Private helpers ───────────────────────────────────</span>
+
+    <span class="kw">def</span> <span class="nm">_get_warehouse</span>(self, warehouse_id: str) -> <span class="cls">Warehouse</span>:
+        wh = self._warehouses.get(warehouse_id)
+        <span class="kw">if</span> wh <span class="kw">is</span> <span class="kw">None</span>:
+            <span class="kw">raise</span> <span class="cls">WarehouseNotFoundError</span>(<span class="st">f"No warehouse: {warehouse_id}"</span>)
+        <span class="kw">return</span> wh
+
+    <span class="kw">def</span> <span class="nm">_check_alerts_after_transfer</span>(self, warehouse_id: str,
+                                       product_id: str) -> <span class="kw">None</span>:
+        wh = self._warehouses[warehouse_id]
+        <span class="kw">with</span> wh._lock:
+            wh._check_alert(product_id, self._listeners)
+
+
+<span class="cm"># ─────────────────────────────────────────────────────────
+# USAGE EXAMPLE
+# ─────────────────────────────────────────────────────────</span>
+
+<span class="kw">if</span> __name__ == <span class="st">"__main__"</span>:
+    manager = <span class="cls">InventoryManager</span>([<span class="st">"wh_delhi"</span>, <span class="st">"wh_mumbai"</span>])
+    manager.register_listener(<span class="cls">ConsoleAlerter</span>())
+    manager.set_alert(<span class="st">"wh_delhi"</span>, <span class="cls">AlertConfig</span>(<span class="st">"apples"</span>, threshold=<span class="dn">20</span>))
+
+    manager.add_stock(<span class="st">"wh_delhi"</span>, <span class="st">"apples"</span>, <span class="dn">100</span>)
+    manager.remove_stock(<span class="st">"wh_delhi"</span>, <span class="st">"apples"</span>, <span class="dn">85</span>)
+    <span class="cm"># → 15 remaining, below threshold of 20 → alert fires!</span>
+
+    manager.transfer(<span class="st">"apples"</span>, <span class="dn">10</span>, <span class="st">"wh_mumbai"</span>, <span class="st">"wh_delhi"</span>)
+    print(manager.check_availability(<span class="st">"apples"</span>, <span class="dn">20</span>))</div>
+
+</div>
+
+<!-- ======== 5: KEY FLOWS ======== -->
+<div class="section" id="s-flow">
+  <div class="sec-eyebrow">Step 5</div>
+  <div class="sec-title">Key Flows — Step by Step</div>
+  <div class="sec-intro">Walk through each major operation as a sequence of steps. In an interview, tracing a flow on the whiteboard shows you understand runtime behavior, not just class structure.</div>
+
+  <h3>Flow 1: remove_stock() with alert trigger</h3>
+  <div class="flow-step">
+    <div class="flow-step-header"><div class="flow-num">1</div><div class="flow-title">Caller: <code>manager.remove_stock("wh_delhi", "apples", 85)</code></div></div>
+    <div class="flow-body">The caller doesn't know anything about warehouses directly. They call the manager's public API with a warehouse ID string.</div>
+  </div>
+  <div class="flow-arrow">↓</div>
+  <div class="flow-step">
+    <div class="flow-step-header"><div class="flow-num">2</div><div class="flow-title">InventoryManager: Look up warehouse object</div></div>
+    <div class="flow-body"><code>self._get_warehouse("wh_delhi")</code> does a dict lookup → returns the <code>Warehouse</code> object. Raises <code>WarehouseNotFoundError</code> if the ID doesn't exist.</div>
+  </div>
+  <div class="flow-arrow">↓</div>
+  <div class="flow-step">
+    <div class="flow-step-header"><div class="flow-num">3</div><div class="flow-title">Warehouse: Acquire lock</div></div>
+    <div class="flow-body"><code>with self._lock:</code> — the thread blocks here until no other thread holds the lock. This ensures the read-validate-modify sequence below is atomic.</div>
+  </div>
+  <div class="flow-arrow">↓</div>
+  <div class="flow-step">
+    <div class="flow-step-header"><div class="flow-num">4</div><div class="flow-title">Warehouse: Validate</div></div>
+    <div class="flow-body">Read current stock: <code>current = self._stock.get("apples", 0)</code> → say it's 100. Check: <code>100 &lt; 85</code> is False → validation passes. If validation failed, raise <code>InsufficientStockError</code> immediately (lock is released automatically by the <code>with</code> block).</div>
+  </div>
+  <div class="flow-arrow">↓</div>
+  <div class="flow-step">
+    <div class="flow-step-header"><div class="flow-num">5</div><div class="flow-title">Warehouse: Modify &amp; check alert</div></div>
+    <div class="flow-body">Set <code>self._stock["apples"] = 100 - 85 = 15</code>. Then call <code>self._check_alert("apples", listeners)</code>. Alert config says threshold = 20. Current stock (15) &lt; threshold (20) → alert fires. All registered listeners have <code>on_low_stock("wh_delhi", "apples", 15)</code> called.</div>
+  </div>
+  <div class="flow-arrow">↓</div>
+  <div class="flow-step">
+    <div class="flow-step-header"><div class="flow-num">6</div><div class="flow-title">Lock released, call returns</div></div>
+    <div class="flow-body">The <code>with self._lock</code> block exits, releasing the lock. Other threads waiting on this warehouse can now proceed.</div>
+  </div>
+
+  <h3>Flow 2: transfer() with deadlock prevention</h3>
+
+  <div class="flow-step">
+    <div class="flow-step-header"><div class="flow-num">1</div><div class="flow-title">Caller: <code>manager.transfer("apples", 30, "wh_mumbai", "wh_delhi")</code></div></div>
+    <div class="flow-body">A transfer touches two warehouses. The challenge: we need both warehouse locks held simultaneously so the operation is atomic — no other thread sees a state where stock has been removed from one but not yet added to the other.</div>
+  </div>
+  <div class="flow-arrow">↓</div>
+  <div class="flow-step">
+    <div class="flow-step-header"><div class="flow-num">2</div><div class="flow-title">Manager: Sort lock order</div></div>
+    <div class="flow-body"><code>sorted(["wh_mumbai", "wh_delhi"])</code> → <code>["wh_delhi", "wh_mumbai"]</code>. Regardless of which direction the transfer goes, we always acquire "wh_delhi"'s lock first. This prevents deadlocks. See Thread Safety section for the full explanation.</div>
+  </div>
+  <div class="flow-arrow">↓</div>
+  <div class="flow-step">
+    <div class="flow-step-header"><div class="flow-num">3</div><div class="flow-title">Acquire first lock, then second</div></div>
+    <div class="flow-body"><code>with first._lock: with second._lock:</code> — both locks now held. The "inside" body runs exclusively — no other thread can touch either warehouse.</div>
+  </div>
+  <div class="flow-arrow">↓</div>
+  <div class="flow-step">
+    <div class="flow-step-header"><div class="flow-num">4</div><div class="flow-title">_transfer_out then _transfer_in</div></div>
+    <div class="flow-body">Validate and subtract from source. Then add to destination. If the validation in step one fails (insufficient stock), an exception is raised and neither warehouse is modified — the operation is all-or-nothing.</div>
+  </div>
+  <div class="flow-arrow">↓</div>
+  <div class="flow-step">
+    <div class="flow-step-header"><div class="flow-num">5</div><div class="flow-title">Both locks released</div></div>
+    <div class="flow-body">Nested <code>with</code> blocks exit, releasing both locks in reverse acquisition order. State is consistent: stock moved cleanly from source to destination with no windows of inconsistency.</div>
+  </div>
+</div>
+
+<!-- ======== 6: CONCURRENCY ======== -->
+<div class="section" id="s-conc">
+  <div class="sec-eyebrow">Step 6 · Deep Dive</div>
+  <div class="sec-title">Thread Safety</div>
+  <div class="sec-intro">Concurrency is the most interview-differentiating topic in this problem. Understanding <em>why</em> specific choices were made — not just that locks exist — is what separates junior from senior candidates.</div>
+
+  <h3>Why per-warehouse locks, not one global lock?</h3>
+  <div class="compare-grid">
+    <div class="cb">
+      <div class="clabel">❌ One global lock (bad)</div>
+      <pre>class InventoryManager:
+    def __init__(self):
+        self._lock = threading.Lock()
+
+    def add_stock(self, wh_id, prod, qty):
+        with self._lock:
+            # ALL warehouses blocked
+            # even if they're unrelated</pre>
+      <div class="cexplain">A global lock means operations on <b>completely unrelated warehouses</b> — say Delhi and Mumbai — block each other. Only one operation can run system-wide at a time. This is a huge bottleneck in a real system with hundreds of warehouses.</div>
+    </div>
+    <div class="cg">
+      <div class="clabel">✅ Per-warehouse locks (correct)</div>
+      <pre>class Warehouse:
+    def __init__(self):
+        self._lock = threading.Lock()
+
+# Result:
+# Thread A modifies wh_delhi
+# Thread B modifies wh_mumbai
+# → Both proceed simultaneously ✓</pre>
+      <div class="cexplain">Per-warehouse locks allow operations on <b>different warehouses to run in parallel</b>. Only threads touching the <em>same</em> warehouse serialize. This is much more scalable — parallelism is O(warehouses) instead of 1.</div>
+    </div>
+  </div>
+
+  <h3>The deadlock problem in transfer()</h3>
+  <p>Transfers are dangerous because they require holding two locks simultaneously. Consider this scenario:</p>
+  <div class="compare-grid">
+    <div class="cb">
+      <div class="clabel">❌ No lock ordering — DEADLOCK</div>
+      <pre>Thread A: transfer(Delhi → Mumbai)
+  → acquires Delhi lock ✓
+  → waiting for Mumbai lock...
+
+Thread B: transfer(Mumbai → Delhi)
+  → acquires Mumbai lock ✓
+  → waiting for Delhi lock...
+
+→ Both wait forever. DEADLOCK.</pre>
+    </div>
+    <div class="cg">
+      <div class="clabel">✅ Sorted lock ordering — SAFE</div>
+      <pre>Both threads sort: [Delhi, Mumbai]
+Both acquire Delhi first, then Mumbai
+
+Thread A: acquires Delhi, then Mumbai ✓
+Thread B: tries Delhi — blocked, waits
+
+When A finishes:
+Thread B: acquires Delhi, then Mumbai ✓
+
+→ No deadlock. Correct serialization.</pre>
+    </div>
+  </div>
+
+  <div class="why-box">
+    <div class="wl"><i class="fa-solid fa-lightbulb"></i> The intuition behind sorted lock ordering</div>
+    <p>Deadlocks happen when two threads each hold one lock and wait for the other. The fix is to ensure all threads always acquire locks in the <b>same global order</b>. Since dictionary keys are strings, sorting alphabetically gives a consistent, deterministic order that every thread follows — no matter which direction the transfer goes.</p>
+    <p>This technique is called <b>Lock Ordering</b> (also known as the "resource hierarchy" solution to deadlock). It's a classic concurrency pattern and an extremely common interview question at senior levels.</p>
+  </div>
+
+  <h3>The race condition in remove_stock()</h3>
+  <div class="compare-grid">
+    <div class="cb">
+      <div class="clabel">❌ Check outside lock — RACE CONDITION</div>
+      <pre>def remove_stock(self, product_id, qty):
+    current = self._stock.get(product_id, 0)
+    # THREAD SWITCH HAPPENS HERE
+    if current < qty:
+        raise InsufficientStockError(...)
+    with self._lock:  # lock acquired too late!
+        self._stock[product_id] -= qty
+
+# Thread A and B both check current=10,
+# both pass validation, both subtract 10
+# Result: stock = -10 ← IMPOSSIBLE STATE</pre>
+    </div>
+    <div class="cg">
+      <div class="clabel">✅ Check and modify inside lock — SAFE</div>
+      <pre>def remove_stock(self, product_id, qty):
+    with self._lock:
+        current = self._stock.get(product_id, 0)
+        if current < qty:
+            raise InsufficientStockError(...)
+        self._stock[product_id] = current - qty
+
+# Thread A acquires lock, checks, subtracts.
+# Thread B waits. When B runs, current
+# reflects A's change → validation correct.
+# Stock never goes negative. ✓</pre>
+    </div>
+  </div>
+</div>
+
+<!-- ======== 7: DESIGN PATTERNS ======== -->
+<div class="section" id="s-pat">
+  <div class="sec-eyebrow">Step 7 · Deep Dive</div>
+  <div class="sec-title">Design Patterns</div>
+  <div class="sec-intro">Good LLD doesn't just mean working code — it means recognizing the recurring problems in your design and applying proven solutions. Here are three patterns baked into this system, each solving a real problem.</div>
+
+  <div class="pcard">
+    <div class="ptitle">🏭 Façade Pattern <span class="ptag">InventoryManager</span></div>
+    <p><b>The problem it solves:</b> The caller shouldn't have to know about <code>Warehouse</code> objects, their lock management, or which warehouse to look up for a given ID. That's internal complexity.</p>
+    <p><b>How it's applied:</b> <code>InventoryManager</code> is the single entry point for all operations. Callers call <code>manager.add_stock("wh_delhi", "apples", 100)</code> — they don't interact with <code>Warehouse</code> directly at all. The manager handles warehouse lookup, lock orchestration for transfers, and listener notification.</p>
+    <p><b>The concrete benefit:</b> If you later change the internal representation (say, switching from dict to a database-backed structure), no caller code changes — only the manager changes.</p>
+  </div>
+
+  <div class="pcard">
+    <div class="ptitle">👁 Observer Pattern <span class="ptag">AlertListener</span></div>
+    <p><b>The problem it solves:</b> The inventory system shouldn't need to know <em>how</em> alerts are delivered. If it calls <code>send_email()</code> directly, you can never add Slack notifications without modifying inventory code. That's an OCP violation.</p>
+    <p><b>How it's applied:</b> <code>AlertListener</code> defines a contract. Any class implementing <code>on_low_stock()</code> can register with the manager. When stock drops below threshold, all registered listeners are notified. The inventory code calls a method on an interface — it has zero knowledge of email, Slack, or anything else.</p>
+    <p><b>The concrete benefit:</b> Adding a new notification channel is <b>zero-change to inventory code</b> — just write a new subclass and register it. You can also add multiple listeners simultaneously (email + Slack + log, all at once).</p>
+  </div>
+
+  <div class="pcard">
+    <div class="ptitle">🔒 Template Method (lock-then-act) <span class="ptag">Warehouse operations</span></div>
+    <p><b>The problem it solves:</b> Every warehouse operation follows the same skeleton: acquire lock → validate → modify → release lock → fire side effects. Without a consistent structure, developers might forget the lock, or check before locking, or fire alerts before modifying.</p>
+    <p><b>How it's applied:</b> Each warehouse method follows the same rigid structure. The lock acquisition is always the first thing in the method body. Validation always precedes modification. Alert checking always follows modification. This isn't formalized as a classic Template Method class hierarchy, but the <em>pattern</em> — a fixed skeleton with hook points — is identical.</p>
+    <p><b>The concrete benefit:</b> Consistency. Every operation in the codebase is safe by construction because they all follow the same template.</p>
+  </div>
+
+  <div class="pcard">
+    <div class="ptitle">🏗 Strategy Pattern (extensibility) <span class="ptag">AlertListener subclasses</span></div>
+    <p><b>The problem it solves:</b> Different production environments need different alert strategies. Unit tests need a mock that records calls. Production needs email. A monitoring dashboard needs a webhook. Each is a different "strategy" for the same operation.</p>
+    <p><b>How it's applied:</b> The <code>AlertListener</code> interface lets you swap notification strategies at runtime by choosing which subclass to register. The inventory system is parameterized on the strategy — it never hardcodes a choice.</p>
+    <p><b>The concrete benefit:</b> Testability. In pytest, you register a <code>MockAlerter</code> that records calls. You assert it was called with the right arguments. No emails sent, no side effects, fast tests.</p>
+  </div>
+</div>
+
+<!-- ======== 8: SOLID ======== -->
+<div class="section" id="s-sol">
+  <div class="sec-eyebrow">Step 8 · Deep Dive</div>
+  <div class="sec-title">SOLID Principles</div>
+  <div class="sec-intro">SOLID is a checklist of five design principles. The goal isn't to recite them — it's to show you applied them. For each one, the question is: where does this design follow the principle, and what would happen if it didn't?</div>
+
+  <div class="solid-grid">
+
+    <div class="solid-card">
+      <div class="solid-letter">S</div>
+      <div class="solid-name">Single Responsibility Principle</div>
+      <div class="solid-def">"A class should have only one reason to change."</div>
+      <div class="vbox"><b>Violation:</b> If <code>Warehouse</code> also contained email-sending logic, it would have two reasons to change: inventory rules AND notification format changes.</div>
+      <div class="fbox"><b>Applied:</b> <code>Warehouse</code> manages stock. <code>AlertListener</code> handles notifications. <code>AlertConfig</code> holds thresholds. <code>InventoryManager</code> coordinates. Each has one job.</div>
+    </div>
+
+    <div class="solid-card">
+      <div class="solid-letter">O</div>
+      <div class="solid-name">Open/Closed Principle</div>
+      <div class="solid-def">"Open for extension, closed for modification."</div>
+      <div class="vbox"><b>Violation:</b> Hardcoding <code>send_email()</code> in <code>_check_alert()</code>. Adding Slack would require modifying <code>Warehouse</code> — which is "closed" and shouldn't be touched for new features.</div>
+      <div class="fbox"><b>Applied:</b> Adding a new alert channel = write a new <code>AlertListener</code> subclass + register it. Zero changes to existing classes. The system is extended, not modified.</div>
+    </div>
+
+    <div class="solid-card">
+      <div class="solid-letter">L</div>
+      <div class="solid-name">Liskov Substitution Principle</div>
+      <div class="solid-def">"Subclasses must be substitutable for their base class."</div>
+      <div class="vbox"><b>Violation:</b> A subclass of <code>AlertListener</code> that throws an exception inside <code>on_low_stock()</code> would break the inventory system's assumption that listeners complete without error.</div>
+      <div class="fbox"><b>Applied:</b> All <code>AlertListener</code> subclasses honor the contract: accept the three arguments, return None, don't throw. The caller (<code>Warehouse._check_alert</code>) can treat any subclass identically.</div>
+    </div>
+
+    <div class="solid-card">
+      <div class="solid-letter">I</div>
+      <div class="solid-name">Interface Segregation Principle</div>
+      <div class="solid-def">"Clients shouldn't be forced to implement interfaces they don't use."</div>
+      <div class="vbox"><b>Violation:</b> A fat <code>AlertHandler</code> interface with <code>on_low_stock()</code>, <code>on_overstock()</code>, <code>on_shipment_arrived()</code> forces every implementer to stub out methods they don't care about.</div>
+      <div class="fbox"><b>Applied:</b> <code>AlertListener</code> has exactly one method: <code>on_low_stock()</code>. It's the only thing the inventory system needs. Implementers only provide what's actually used.</div>
+    </div>
+
+    <div class="solid-card solid-full">
+      <div class="solid-letter">D</div>
+      <div class="solid-name">Dependency Inversion Principle</div>
+      <div class="solid-def">"Depend on abstractions, not concretions."</div>
+      <div class="vbox"><b>Violation:</b> <code>InventoryManager.__init__</code> instantiates <code>ConsoleAlerter()</code> directly. Now the manager depends on a concrete implementation — you can't swap it without modifying the manager.</div>
+      <div class="fbox"><b>Applied:</b> <code>InventoryManager</code> depends on <code>AlertListener</code> (the abstract interface), not <code>ConsoleAlerter</code> or <code>EmailAlerter</code>. Listeners are injected at runtime via <code>register_listener()</code>. The manager has zero knowledge of how alerts are delivered.</div>
+    </div>
+
+  </div>
+</div>
+
+<!-- ======== 9: Q&A ======== -->
+<div class="section" id="s-qa">
+  <div class="sec-eyebrow">Step 9</div>
+  <div class="sec-title">Common Interview Q&amp;A</div>
+  <div class="sec-intro">These are the follow-up questions interviewers actually ask after you walk through your design. Having crisp, reasoned answers here is what pushes you from "decent" to "strong hire."</div>
+
+  <div class="qa">
+    <div class="qa-q" onclick="toggleQA(this)">How would you prevent overselling — e.g., two orders claiming the last 10 units simultaneously? <i class="fa-solid fa-chevron-down"></i></div>
+    <div class="qa-a">
+      <p>This is exactly what the per-warehouse lock in <code>remove_stock()</code> prevents. The read-validate-modify sequence inside <code>with self._lock</code> is atomic. Thread A acquires the lock, reads stock = 10, validates 10 ≥ 10 (passes), subtracts → stock = 0, releases lock. Thread B then acquires the lock, reads stock = 0, validates 0 ≥ 10 (fails) → raises <code>InsufficientStockError</code>. Exactly one order succeeds.</p>
+      <p>If you're asking about reservations — e.g., "hold 10 units while the user is on the payment screen" — that requires a <b>reservation/hold pattern</b>: a separate <code>reserved</code> field alongside <code>available</code>. Stock is split into (available, reserved, sold). <code>reserve()</code> moves units from available to reserved; <code>confirm()</code> moves from reserved to sold; <code>cancel()</code> returns from reserved to available. This is how e-commerce systems like Amazon handle cart-level holds.</p>
+    </div>
+  </div>
+
+  <div class="qa">
+    <div class="qa-q" onclick="toggleQA(this)">How would you handle inventory in-transit between warehouses? <i class="fa-solid fa-chevron-down"></i></div>
+    <div class="qa-a">
+      <p>Today's <code>transfer()</code> is instant — stock vanishes from source and appears at destination atomically. In the real world, a truck takes 2 days. During that time, the stock is neither here nor there — it's in-transit.</p>
+      <p>The solution is a third state in the data model. Instead of just <code>available_stock</code>, each warehouse tracks three quantities: <code>available</code>, <code>in_transit_out</code> (removed from source, not yet arrived), and <code>in_transit_in</code> (expected to arrive). The transfer becomes a two-phase operation:</p>
+      <div class="code-block">Phase 1 (on dispatch):
+  source._available -= quantity
+  source._in_transit_out += quantity
+  Create a Transfer object with status=IN_TRANSIT
+
+Phase 2 (on arrival, triggered externally):
+  source._in_transit_out -= quantity
+  dest._available += quantity
+  Transfer.status = COMPLETED</div>
+      <p>This also naturally enables the "check availability" query to be smarter: "available now" vs "available including incoming transfers."</p>
+    </div>
+  </div>
+
+  <div class="qa">
+    <div class="qa-q" onclick="toggleQA(this)">Your lock is per-warehouse. What if you need to check availability across all warehouses atomically? <i class="fa-solid fa-chevron-down"></i></div>
+    <div class="qa-a">
+      <p>Today's <code>check_availability()</code> queries each warehouse one at a time. In theory, a warehouse's stock could change between the first and last query, so the result isn't a "snapshot" of the whole system at one moment.</p>
+      <p>For most use cases this is fine — availability checking is advisory, not transactional. The actual reservation happens in a subsequent <code>remove_stock()</code> which is fully atomic.</p>
+      <p>If you needed a truly consistent global snapshot, you'd have to acquire all warehouse locks at once (sorted to prevent deadlock), perform all reads, then release all locks. This is expensive and should only be done if the use case demands it — for example, a regulatory audit report requiring point-in-time accuracy.</p>
+    </div>
+  </div>
+
+  <div class="qa">
+    <div class="qa-q" onclick="toggleQA(this)">How would you add support for product expiry / FIFO lot management? <i class="fa-solid fa-chevron-down"></i></div>
+    <div class="qa-a">
+      <p>Currently, <code>_stock</code> is a flat <code>dict[product_id → quantity]</code>. For expiry tracking, you need <b>lot-level granularity</b>: each batch of stock has a lot ID and expiry date.</p>
+      <p>The change: <code>_stock</code> becomes <code>dict[product_id → list[Lot]]</code>, where each <code>Lot</code> has <code>(lot_id, quantity, expiry_date)</code>. When removing stock, you implement FIFO: always consume from the lot with the nearest expiry date first. When checking availability, you can filter out expired lots entirely.</p>
+      <div class="code-block">@dataclass
+class Lot:
+    lot_id: str
+    quantity: int
+    expiry_date: date
+
+def remove_stock(self, product_id, quantity, ...):
+    with self._lock:
+        lots = sorted(self._stock.get(product_id, []),
+                      key=lambda l: l.expiry_date)
+        # consume from earliest-expiry lots first (FIFO)
+        remaining = quantity
+        for lot in lots:
+            if remaining <= 0: break
+            taken = min(lot.quantity, remaining)
+            lot.quantity -= taken
+            remaining -= taken
+        if remaining > 0:
+            raise InsufficientStockError(...)</div>
+      <p>The <code>AlertConfig</code> threshold logic also gains a new dimension: alert when any lot expires within N days, even if total quantity is fine.</p>
+    </div>
+  </div>
+
+  <div class="qa">
+    <div class="qa-q" onclick="toggleQA(this)">Why did you use ABC for AlertListener rather than just duck-typing? <i class="fa-solid fa-chevron-down"></i></div>
+    <div class="qa-a">
+      <p>Python technically supports duck-typing — if a class has <code>on_low_stock()</code>, it "works" without inheriting from <code>AlertListener</code>. So why bother with ABC?</p>
+      <p>Three reasons: <b>(1) Error timing.</b> With ABC, if you write a class that inherits from <code>AlertListener</code> but forget to implement <code>on_low_stock()</code>, Python raises <code>TypeError</code> at instantiation time — before the class is ever registered. With duck-typing, you get a runtime <code>AttributeError</code> only when the alert fires, potentially in production at 2am. <b>(2) Documentation.</b> The abstract base class is a contract that's discoverable in the codebase. New developers know exactly what interface to implement. <b>(3) Type-checking.</b> Static analyzers (mypy, pyright) can verify that everything registered is actually an <code>AlertListener</code>, catching errors before runtime.</p>
+    </div>
+  </div>
+
+  <div class="qa">
+    <div class="qa-q" onclick="toggleQA(this)">How would you make this system persistent across restarts? <i class="fa-solid fa-chevron-down"></i></div>
+    <div class="qa-a">
+      <p>Currently all state is in-memory — restart = data lost. Adding persistence means deciding where to write state and when.</p>
+      <p><b>Option 1 — Database-backed:</b> Each <code>add_stock()</code> and <code>remove_stock()</code> writes to a database row. The <code>Warehouse</code>'s <code>_stock</code> dict becomes a write-through cache — changes are persisted immediately. On startup, <code>InventoryManager.__init__</code> reads current stock from the database to populate the in-memory cache.</p>
+      <p><b>Option 2 — Event sourcing:</b> Instead of storing the current quantity, store every operation as an immutable event: <code>(timestamp, warehouse, product, delta)</code>. Current stock = replay all events. This gives you a complete audit trail and the ability to time-travel to any past state. Kafka or a simple append-only log works as the event store.</p>
+      <p>The current design supports both — since all state changes funnel through <code>add_stock()</code> and <code>remove_stock()</code>, you only need to add persistence hooks in two places.</p>
+    </div>
+  </div>
+
+</div>
+
+</main>
+
+<script>
+function show(id, el) {
+  document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
+  document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+  document.getElementById('s-' + id).classList.add('active');
+  el.classList.add('active');
+  window.scrollTo(0, 0);
+}
+function toggleQA(el) {
+  el.classList.toggle('open');
+  const ans = el.nextElementSibling;
+  ans.classList.toggle('show');
+}
+</script>
+</body>
+</html>
